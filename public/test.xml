@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Racine>
+  <IdentificationFlux>
+  </IdentificationFlux>
+  <InfoDemandeRSA>
+    <DonneesAdministratives>
+    </DonneesAdministratives>
+    <ModesContacts>
+      <ADRELEC>test@beta.gouv.fr</ADRELEC>
+      <AUTORUTIADRELEC>A</AUTORUTIADRELEC>
+    </ModesContacts>
+  </InfoDemandeRSA>
+  <InfoDemandeRSA>
+    <DonneesAdministratives>
+    </DonneesAdministratives>
+    <ModesContacts>
+      <ADRELEC>test@beta.gouv.fr</ADRELEC>
+      <AUTORUTIADRELEC>I</AUTORUTIADRELEC>
+    </ModesContacts>
+  </InfoDemandeRSA>
+  <InfoDemandeRSA>
+    <DonneesAdministratives>
+    </DonneesAdministratives>
+    <ModesContacts>
+    </ModesContacts>
+  </InfoDemandeRSA>
+  <TransmissionFlux>
+  </TransmissionFlux>
+</Racine>
