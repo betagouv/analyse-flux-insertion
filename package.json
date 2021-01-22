@@ -3,13 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build": "NODE_ENV=production next build && NODE_ENV=production next export",
+    "deploy": "npm run build && npm run deploy:github",
+    "deploy:github": "touch out/.nojekyll && gh-pages -d out --dotfiles",
     "dev": "next dev",
-    "build": "next build",
     "start": "next start"
   },
   "dependencies": {
     "next": "10.0.5",
     "react": "17.0.1",
     "react-dom": "17.0.1"
+  },
+  "devDependencies": {
+    "gh-pages": "^3.1.0"
   }
 }
