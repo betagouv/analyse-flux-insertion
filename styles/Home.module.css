@@ -52,12 +52,20 @@
   font-size: 4rem;
 }
 
+.subtitle {
+  margin: 0;
+  line-height: 1.15;
+  font-size: 3rem;
+}
+
 .title,
+.subtitle,
 .description {
   text-align: center;
 }
 
-.description {
+.description,
+.text {
   line-height: 1.5;
   font-size: 1.5rem;
 }
@@ -76,8 +84,12 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  max-width: 800px;
   margin-top: 3rem;
+}
+
+.grid,
+.text {
+  max-width: 800px;
 }
 
 .card {
@@ -116,7 +128,10 @@
 
 @media (max-width: 600px) {
   .grid {
-    width: 100%;
     flex-direction: column;
+  }
+  .grid,
+  .text {
+    width: 100%;
   }
 }

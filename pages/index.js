@@ -89,6 +89,10 @@ export default function Home() {
           Les opérations sont toutes réalisées sur votre ordinateur.<br/>Aucune donnée n'est transférée.
         </p>
 
+        <p className={styles.description}>
+          <a href="#pourquoi">Pourquoi un tel testeur&nbsp;?</a>
+        </p>
+
         {hasError && <div className={styles.grid}>
           <a href="mailto:data.insertion@beta.gouv.fr?subject=[Flux CNAF]" className={styles.card} style={{borderColor: 'red'}}>
             <h3>Oups... Une erreur s'est produite.</h3>
@@ -121,6 +125,20 @@ export default function Home() {
 
         <p className={styles.description}>
           Un problème, une question ? Contactez-nous à <a href="mailto:data.insertion@beta.gouv.fr?subject=[Flux CNAF]">data.insertion@beta.gouv.fr</a>
+        </p>
+
+        <h2 id="pourquoi" className={styles.subtitle}>
+          Pourquoir un testeur de fichier CNAF&nbsp;?
+        </h2>
+
+        <p className={styles.text}>
+          Tous les départements n'ont pas les outils pour analyser les fichiers envoyés par la CNAF. Cela peut ralentier et compliquer nos échanges.
+        </p>
+        <p className={styles.text}>
+          Avec cet outil, nous souhaitons permettre aux personnes qui ont accès à ces fichiers d'en extraire des statistiques générales sans avoir mettre les mains dans le camboui elles-même.
+        </p>
+        <p className={styles.text}>
+          Aujourd'hui, nous cherchons à comprendre pourquoi pour la CNAF les fichiers quotidiens d'instructions contiennent des dossiers avec des email à 90% alors que pour certains départements c'est plutôt 50% voire 30% des dossiers qui ont un email associé.
         </p>
 
       </main>
