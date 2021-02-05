@@ -132,13 +132,13 @@ export default function Home() {
         </h2>
 
         <p className={styles.text}>
-          Tous les départements n'ont pas les outils pour analyser les fichiers envoyés par la CNAF. Cela peut ralentier et compliquer nos échanges.
+          Tous les départements n'ont pas les outils pour analyser les fichiers envoyés par la CNAF. Cela peut ralentir et compliquer nos échanges.
         </p>
         <p className={styles.text}>
-          Avec cet outil, nous souhaitons permettre aux personnes qui ont accès à ces fichiers d'en extraire des statistiques générales sans avoir mettre les mains dans le camboui elles-même.
+          Avec cet outil, nous souhaitons permettre aux personnes qui ont accès à ces fichiers d'en extraire des statistiques générales sans avoir à mettre les mains dans le camboui elles-même.
         </p>
         <p className={styles.text}>
-          Aujourd'hui, nous cherchons à comprendre pourquoi pour la CNAF les fichiers quotidiens d'instructions contiennent des dossiers avec des email à 90% alors que pour certains départements c'est plutôt 50% voire 30% des dossiers qui ont un email associé.
+          Aujourd'hui, nous cherchons à comprendre pourquoi comprendre pourquoi pour la CNAF 90% des dossiers présents dans les fichiers quotidiens d'instructions contiennent des emails alors que ce taux est de 30% à 50% pour certains départements.
         </p>
 
       </main>
