@@ -71,13 +71,13 @@ export default function Home() {
   return (
     <div className={styles.container} style={{backgroundColor:color}}>
       <Head>
-        <title>Testeur de fichier CNAF</title>
+        <title>Lecteur de fichier CNAF</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main} onDragOver={dragHandler('#0070f3')} onDragLeave={dragHandler(defaultColor)} onDrop={dropHandler}>
         <h1 className={styles.title}>
-          Testeur de fichier CNAF
+          Lecteur de fichier CNAF
         </h1>
 
         <p className={styles.description}>
@@ -90,7 +90,7 @@ export default function Home() {
         </p>
 
         <p className={styles.description}>
-          <a href="#pourquoi">Pourquoi un tel testeur&nbsp;?</a>
+          <a href="#pourquoi">Pourquoi un tel lecteur&nbsp;?</a>
         </p>
 
         {hasError && <div className={styles.grid}>
@@ -128,7 +128,7 @@ export default function Home() {
         </p>
 
         <h2 id="pourquoi" className={styles.subtitle}>
-          Pourquoir un testeur de fichier CNAF&nbsp;?
+          Pourquoir un lecteur de fichier CNAF&nbsp;?
         </h2>
 
         <p className={styles.text}>
