@@ -14,3 +14,14 @@ a {
 * {
   box-sizing: border-box;
 }
+
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  padding: 0.2em;
+}
+
+table {
+  margin: 2em;
+  width: 100%;
+}

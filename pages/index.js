@@ -1,6 +1,24 @@
-import {useCallback, useEffect, useState} from 'react'
+import {useCallback, useEffect, useState, useReducer} from 'react'
 import Head from 'next/head'
+import { push } from "@socialgouv/matomo-next"
 import styles from '../styles/Home.module.css'
+
+
+function init() {
+  return []
+}
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'append':
+      push(['trackEvent', 'Test', JSON.stringify(action.item)])
+      return [action.item, ...state]
+    case 'reset':
+      return init()
+    default:
+      throw new Error()
+  }
+}
 
 export default function Home() {
   const defaultColor = 'white'
@@ -9,126 +27,120 @@ export default function Home() {
   const [total, setTotal] = useState('?')
   const [countWithEmail, setCountWithEmail] = useState('?')
   const [countWithUsableEmail, setCountWithUsableEmail] = useState('?')
-  const [hasError, setHasError] = useState(false)
 
-  useEffect(() => {
-    if (!file) {
-      return
-    }
-    const items = new Array(...file.getElementsByTagName('InfoDemandeRSA'))
-    setTotal(items.length)
-
-    const withEmail = items.filter(i => i.getElementsByTagName('ADRELEC').length)
-    setCountWithEmail(withEmail.length)
-
-    const withUsableEmail = items.filter(i => {
-      const ok = i.getElementsByTagName('AUTORUTIADRELEC')[0]
-      return i.getElementsByTagName('ADRELEC').length && ok && ok.innerHTML == "A"
-    })
-    setCountWithUsableEmail(withUsableEmail.length)
-  }, [file])
-
-
-  // useEffect(() => {
-  //   fetch('/test.xml').then(response => {
-  //     const parser = new DOMParser();
-  //     response.text().then(text => {
-  //       const dom = parser.parseFromString(text, "application/xml");
-  //       setFile(dom)
-  //     })
-  //   })
-  // }, [])
+  const [runs, dispatchRuns] = useReducer(reducer, [], init)
 
   const dragHandler = color => useCallback((event) => {
     setColor(color)
-    event.preventDefault(); // Prevent file from being open on drop
+    event.preventDefault() // Prevent file from being open on drop
   })
 
-  const dropHandler = useCallback((event) => {
-    event.preventDefault();
-
-    setColor(defaultColor)
+  const fileHandler = (file) => {
     var reader = new FileReader()
     reader.onload = function(event) {
-      const parser = new DOMParser();
-      const dom = parser.parseFromString(event.target.result, "application/xml");
-      setFile(dom)
-      setHasError(dom.activeElement.nodeName == "parsererror")
+      const parser = new DOMParser()
+      const dom = parser.parseFromString(event.target.result, "application/xml")
+
+      const items = new Array(...dom.getElementsByTagName('InfoDemandeRSA'))
+      const withEmail = items.filter(i => i.getElementsByTagName('ADRELEC').length)
+      const withUsableEmail = items.filter(i => {
+        const ok = i.getElementsByTagName('AUTORUTIADRELEC')[0]
+        return i.getElementsByTagName('ADRELEC').length && ok && ok.innerHTML == "A"
+      })
+
+      dispatchRuns({
+        type: 'append',
+        item: {
+          timetamp: (new Date()).toISOString().slice(0,19),
+          filename: file.name,
+          error: dom.activeElement.nodeName == "parsererror",
+          total: items.length,
+          withEmail: withEmail.length,
+          withAutorisation: withUsableEmail.length
+        }
+      })
     }
-    reader.readAsText(event.dataTransfer.files[0])
+    reader.readAsText(file)
+  }
+
+  const dropHandler = useCallback((event) => {
+    event.preventDefault()
+    setColor(defaultColor)
+    for (var i = 0; i<event.dataTransfer.files.length; i++) {
+      fileHandler(event.dataTransfer.files[i])
+    }
   })
 
   const selectHandler = useCallback((event) => {
-    var reader = new FileReader()
-    reader.onload = function(event) {
-      const parser = new DOMParser();
-      const dom = parser.parseFromString(event.target.result, "application/xml");
-      setFile(dom)
-      setHasError(dom.activeElement.nodeName == "parsererror")
+    for (var i = 0; i<event.target.files.length; i++) {
+      fileHandler(event.target.files[i])
     }
-    reader.readAsText(event.target.files[0])
+    event.target.value = ''
   })
+
+  const round = (value) => Math.round(value)
   return (
-    <div className={styles.container} style={{backgroundColor:color}}>
+    <div className={styles.container} style={{backgroundColor:color}} onDragOver={dragHandler('#0070f3')} onDragLeave={dragHandler(defaultColor)} onDrop={dropHandler}>
       <Head>
         <title>Lecteur de fichier CNAF</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles.main} onDragOver={dragHandler('#0070f3')} onDragLeave={dragHandler(defaultColor)} onDrop={dropHandler}>
+      <main className={styles.main}>
         <h1 className={styles.title}>
           Lecteur de fichier CNAF
         </h1>
 
         <p className={styles.description}>
           Glissez et déposez le fichier CNAF à analyser ou sélectionnez le.<br/>
-          <input type="file" onChange={selectHandler}/>
+          <input type="file" onChange={selectHandler} multiple/>
         </p>
 
         <p className={styles.description}>
-          Les opérations sont toutes réalisées sur votre ordinateur.<br/>Aucune donnée n'est transférée.
+          Les opérations sont toutes réalisées sur votre ordinateur.<br/>
+          Aucune donnée personnelle n'est transférée.
         </p>
 
         <p className={styles.description}>
           <a href="#pourquoi">Pourquoi un tel lecteur&nbsp;?</a>
         </p>
 
-        {hasError && <div className={styles.grid}>
-          <a href="mailto:data.insertion@beta.gouv.fr?subject=[Flux CNAF]" className={styles.card} style={{borderColor: 'red'}}>
-            <h3>Oups... Une erreur s'est produite.</h3>
-            <p>Essayez-vous d'ouvrir un fichier XML ?</p>
-            <p>Contactez-nous à data.insertion@beta.gouv.fr</p>
-          </a>
-        </div>}
+        { runs && runs.length > 0 && (<>
+          <h2 className={styles.subtitle}>
+            Historique
+          </h2>
 
-        <div className={styles.grid}>
-          <div className={styles.card}>
-            <h3>{total}</h3>
-            <p>dossiers</p>
-          </div>
+          <table>
+            <tbody>
+              <tr>
+                <th>Date</th>
+                <th>Fichier</th>
+                <th>Dossiers</th>
+                <th>avec email</th>
+                <th>et autorisation</th>
+                <th>Erreur</th>
+              </tr>
+              {runs.map(r => (<tr key={`${r.timetamp}-${r.filename}` }>
+                <td>{r.timetamp}</td>
+                <td>{r.filename}</td>
+                <td className={styles.numeric}>{r.total}</td>
+                <td className={styles.numeric}>{r.withEmail} ({round(r.withEmail/r.total*100)}%)</td>
+                <td className={styles.numeric}>{r.withAutorisation} ({round(r.withAutorisation/r.total*100)}%)</td>
+                <td>{r.error ? 'Oui' : 'Non'}</td>
+              </tr>
+            ))}
+            </tbody>
+          </table>
 
-          <div className={styles.card}>
-            <h3>{countWithEmail}</h3>
-            <p>dossiers avec email</p>
-          </div>
-
-          <div className={styles.card}>
-            <h3>{countWithUsableEmail}</h3>
-            <p>dossiers avec email et autorisation de l'utiliser</p>
-          </div>
-
-          <a href="mailto:data.insertion@beta.gouv.fr?subject=[Flux CNAF]" className={styles.card}>
-            <h3></h3>
-            <p>Et si ces personnes pouvaient prendre leur 1er RDV dès aujourd'hui&nbsp;?</p>
-          </a>
-        </div>
+          <button onClick={() => dispatchRuns({type: 'reset'})}>Vider l'historique</button>
+        </>)}
 
         <p className={styles.description}>
           Un problème, une question ? Contactez-nous à <a href="mailto:data.insertion@beta.gouv.fr?subject=[Flux CNAF]">data.insertion@beta.gouv.fr</a>
         </p>
 
         <h2 id="pourquoi" className={styles.subtitle}>
-          Pourquoir un lecteur de fichier CNAF&nbsp;?
+          Pourquoi un lecteur de fichier CNAF&nbsp;?
         </h2>
 
         <p className={styles.text}>

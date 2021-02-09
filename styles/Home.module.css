@@ -135,3 +135,7 @@
     width: 100%;
   }
 }
+
+.numeric {
+  text-align: right;
+}
