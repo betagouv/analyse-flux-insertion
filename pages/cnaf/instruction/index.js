@@ -13,7 +13,7 @@ function init() {
 function reducer(state, action) {
   switch (action.type) {
     case 'append':
-      push(['trackEvent', 'Test', JSON.stringify(action.item)])
+      push(['trackEvent', 'Test - CNAF - Instruction', JSON.stringify(action.item)])
       return [action.item, ...state]
     case 'reset':
       return init()
