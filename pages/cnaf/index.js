@@ -23,10 +23,10 @@ export default function Home() {
               <p>Envoyé quotidiennement</p>
             </a>
           </Link>
-
-          <Mailer subject="Flux stock mensuel" className={styles.card}>
+   
+          <Mailer subject="Flux stock" className={styles.card}>
             <h3>Autre chose &rarr;</h3>
-            <p>Envoyez-nous un email.</p>
+            <p>Envoyé mensuellement.</p>
           </Mailer>
     
           <Mailer subject="Autre flux CNAF" className={styles.card}>
