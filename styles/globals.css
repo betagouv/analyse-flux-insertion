@@ -21,6 +21,11 @@ table, th, td {
   padding: 0.2em;
 }
 
+td.shrink {
+  width:0.1%;
+  white-space: nowrap;
+}
+
 table {
   margin: 2em;
   width: 100%;
