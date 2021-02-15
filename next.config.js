@@ -1,10 +1,13 @@
 const isProduction = 'production' === process.env.NODE_ENV
 
 module.exports = {
-  assetPrefix: isProduction ? '/demo-flux-cnaf' : '',
+  basePath: isProduction ? '/analyse-flux-insertion' : '',
+  assetPrefix: isProduction ? '/analyse-flux-insertion' : '',
   exportPathMap: function(defaultPathMap) {
     return {
-      '/': { page: '/' }
+      '/': { page: '/' },
+      '/cnaf': { page: '/cnaf' },
+      '/cnaf/instruction': { page: '/cnaf/instruction' },
     }
   }
 }

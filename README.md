@@ -1,6 +1,6 @@
-Ce projet est une première brique pour inciter les départements à expérimenter pour accélérer le 1er RDV des bénéficiaires du RSA.
+Ce projet à pour objectif de faciliter les discussions autour des fichiers échangés entre les parties prenantes du secteur de l'insertion.
 
-Il permet d'afficher certaines informations résumées sur les flux envoyés par la CNAF, en particulier le nombre de dossier avec une adresse email associées.
+Il permet d'afficher certaines informations résumées sur les flux échangés.
 
 # Section technique
 

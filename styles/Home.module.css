@@ -81,8 +81,7 @@
 
 .grid {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
   flex-wrap: wrap;
   margin-top: 3rem;
 }
