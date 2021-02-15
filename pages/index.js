@@ -25,7 +25,7 @@ export default function Home() {
 
           <Mailer subject="Flux Pole Emploi" className={styles.card}>
             <h3>Pole Emploi &rarr;</h3>
-            <p>…</p>
+            <p>Fichier stock mensuel</p>
           </Mailer>
 
           <Mailer subject="Autre source de données" className={styles.card}>
