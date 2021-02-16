@@ -119,7 +119,7 @@ export default function Home() {
   const selectHandler = useCallback((event) => {
     for (var i = 0; i<event.target.files.length; i++) {
       fileHandler(event.target.files[i])
-      setFile(event.target.files[i])
+      //setFile(event.target.files[i])
     }
     event.target.value = ''
   })
