@@ -29,6 +29,9 @@ export default function Home() {
   const [total, setTotal] = useState('?')
   const [countWithEmail, setCountWithEmail] = useState('?')
   const [countWithUsableEmail, setCountWithUsableEmail] = useState('?')
+  const [countWithTelephone, setCountWithTelephone] = useState('?')
+  const [countWithUsableTelephone, setCountWithUsableTelephone] = useState('?')
+
 
   const [runs, dispatchRuns] = useReducer(reducer, [], init)
 
@@ -49,6 +52,11 @@ export default function Home() {
         const ok = i.getElementsByTagName('AUTORUTIADRELEC')[0]
         return i.getElementsByTagName('ADRELEC').length && ok && ok.innerHTML == "A"
       })
+      const withTelephone = items.filter(i => i.getElementsByTagName('NUMTEL').length)
+      const withUsableTelephone = items.filter(i => {
+        const ok = i.getElementsByTagName('AUTORUTITEL')[0]
+        return i.getElementsByTagName('ADRELEC').length && ok && ok.innerHTML == "A"
+      })
 
       dispatchRuns({
         type: 'append',
@@ -58,7 +66,9 @@ export default function Home() {
           error: dom.activeElement.nodeName == "parsererror",
           total: items.length,
           withEmail: withEmail.length,
-          withAutorisation: withUsableEmail.length
+          withAutorisation_mail: withUsableEmail.length,
+          withTelephone: withTelephone.length,  
+          withAutorisation_tel: withUsableTelephone.length
         }
       })
     }
@@ -115,7 +125,9 @@ export default function Home() {
                 <th>Fichier</th>
                 <th>Dossiers</th>
                 <th>avec email</th>
-                <th>et autorisation</th>
+                <th>et autorisation_mail</th>
+                <th>avec telephone</th> 
+                <th>et autorisation_telephone</th>                
                 <th>Erreur</th>
               </tr>
               {runs.map(r => (<tr key={`${r.timetamp}-${r.filename}` }>
@@ -123,7 +135,9 @@ export default function Home() {
                 <td>{r.filename}</td>
                 <td className={styles.numeric}>{r.total}</td>
                 <td className={styles.numeric}>{r.withEmail} ({round(r.withEmail/r.total*100)}%)</td>
-                <td className={styles.numeric}>{r.withAutorisation} ({round(r.withAutorisation/r.total*100)}%)</td>
+                <td className={styles.numeric}>{r.withAutorisation_mail} ({round(r.withAutorisation_mail/r.total*100)}%)</td>
+                <td className={styles.numeric}>{r.withTelephone} ({round(r.withTelephone/r.total*100)}%)</td>
+                <td className={styles.numeric}>{r.withAutorisation_tel} ({round(r.withAutorisation_tel/r.total*100)}%)</td>                
                 <td>{r.error ? 'Oui' : 'Non'}</td>
               </tr>
             ))}
