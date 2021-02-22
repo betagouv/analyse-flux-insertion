@@ -95,7 +95,8 @@ export default function Home() {
           fileDatetime: `${dt}-${time}`,
           frequency,
           type,
-          error: dom.activeElement.nodeName == "parsererror",
+          // WIP: OK sur Firefox KO sur Chrome
+          error: dom.activeElement && dom.activeElement.nodeName == "parsererror",
           total: items.length,
           withEmail: withEmail.length,
           withAutorisation: withUsableEmail.length,
