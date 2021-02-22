@@ -7,9 +7,13 @@ import Mailer from './mailer'
 export default function Layout({
   children,
   title = 'Analyser les flux de données dans l\'insertion',
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  style,
 }) {
   return (
-    <div>
+    <div style={style} onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}>
       <Head>
         <title>{title}</title>
         <link rel="icon" href="/favicon.ico" />

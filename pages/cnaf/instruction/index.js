@@ -119,14 +119,17 @@ export default function Home() {
   const selectHandler = useCallback((event) => {
     for (var i = 0; i<event.target.files.length; i++) {
       fileHandler(event.target.files[i])
-      //setFile(event.target.files[i])
+      // setFile(event.target.files[i])
     }
     event.target.value = ''
   })
 
   const round = (value) => Math.round(value)
   return (
-    <Layout className={styles.container} style={{backgroundColor:color}} onDragOver={dragHandler('#0070f3')} onDragLeave={dragHandler(defaultColor)} onDrop={dropHandler}>
+    <Layout className={styles.container} style={{backgroundColor:color}}
+      onDragOver={dragHandler('#0070f3')}
+      onDragLeave={dragHandler(defaultColor)}
+      onDrop={dropHandler}>
 
       <main className={styles.main}>
         <h1 className={styles.title}>
