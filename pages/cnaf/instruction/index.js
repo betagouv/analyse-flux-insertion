@@ -33,7 +33,8 @@ const frequencyNames = {
 // NATFLUX
 const typeNames = {
   D: 'Bénéficiaires',
-  I: 'Instructions'
+  I: 'Instructions',
+  R: 'Nouveau recueil'
 }
 
 export default function Home() {
@@ -62,7 +63,6 @@ export default function Home() {
     reader.onload = function(event) {
       const parser = new DOMParser()
       const dom = parser.parseFromString(event.target.result, "application/xml")
-
 
       const desc = dom.getElementsByTagName('IdentificationFlux')[0]
       const frequency = desc.getElementsByTagName('TYPEFLUX')[0].innerHTML
