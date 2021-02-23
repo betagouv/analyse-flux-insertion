@@ -37,6 +37,8 @@ const typeNames = {
   R: 'Nouveau recueil'
 }
 
+const devMode = process.env.NODE_ENV == 'development'
+
 export default function Home() {
   const defaultColor = 'white'
   const [color, setColor] = useState(defaultColor)
@@ -124,7 +126,8 @@ export default function Home() {
             withExplicitRefusal: withForbiddenEmailUsage.length,
             withoutAutorisationDetails: withoutEmailUsage.length,
           },
-          withDSP: withDSP.length
+          withDSP: withDSP.length,
+          fileSize: file.size,
         }
       })
     }
@@ -142,7 +145,7 @@ export default function Home() {
   const selectHandler = useCallback((event) => {
     for (var i = 0; i<event.target.files.length; i++) {
       fileHandler(event.target.files[i])
-      if (process.env.NODE_ENV == 'development') {
+      if (devMode) {
         setFile(event.target.files[i])
       }
     }
@@ -185,6 +188,7 @@ export default function Home() {
               <tr>
                 <th rowspan="2">Date</th>
                 <th rowspan="2">Fichier</th>
+                { devMode && <th rowspan="2">Taille</th>}
                 <th rowspan="2">Date du fichier</th>
                 <th rowspan="2">Fréquence</th>
                 <th rowspan="2">Nature</th>
@@ -209,8 +213,9 @@ export default function Home() {
             <tbody>
               {runs.map(r => (<tr key={`${r.timetamp}-${r.filename}-${r.seed}` }>
                 <td>{r.timetamp}</td>
-                <td>{r.fileDatetime}</td>
                 <td>{r.filename}</td>
+                { devMode && <td>{r.fileSize}</td>}
+                <td>{r.fileDatetime}</td>
                 <td>{`${r.frequency} (${frequencyNames[r.frequency] || '?'})`}</td>
                 <td>{`${r.type} (${typeNames[r.type] || '?'})`}</td>
                 <td className={styles.numeric}>{r.total}</td>
