@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Racine>
   <IdentificationFlux>
+    <APPLIEME>NRA</APPLIEME>
+    <NUMVERSIONAPPLIEME>0366</NUMVERSIONAPPLIEME>
+    <TYPEFLUX>I</TYPEFLUX>
+    <NATFLUX>I</NATFLUX>
+    <DTCREAFLUX>2021-02-07</DTCREAFLUX>
+    <HEUCREAFLUX>03:00:17.52</HEUCREAFLUX>
   </IdentificationFlux>
   <InfoDemandeRSA>
     <DonneesAdministratives>
@@ -24,6 +30,27 @@
     <ModesContacts>
     </ModesContacts>
   </InfoDemandeRSA>
+  <InfosFoyerRSA>
+    <IdentificationRSA>
+      <DemandeRSA>
+        <DTDEMRSA>2021-02-06</DTDEMRSA>
+      </DemandeRSA>
+    </IdentificationRSA>
+  </InfosFoyerRSA>
+  <InfosFoyerRSA>
+    <IdentificationRSA>
+      <DemandeRSA>
+        <DTDEMRSA>2021-02-06</DTDEMRSA>
+      </DemandeRSA>
+    </IdentificationRSA>
+  </InfosFoyerRSA>
+  <InfosFoyerRSA>
+    <IdentificationRSA>
+      <DemandeRSA>
+        <DTDEMRSA>2021-01-06</DTDEMRSA>
+      </DemandeRSA>
+    </IdentificationRSA>
+  </InfosFoyerRSA>
   <TransmissionFlux>
   </TransmissionFlux>
 </Racine>

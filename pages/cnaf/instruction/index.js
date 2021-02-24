@@ -136,17 +136,17 @@ export default function Instruction() {
           <table>
             <thead>
               <tr>
-                <th rowspan="2">Date</th>
-                <th rowspan="2">Fichier</th>
-                { devMode && <th rowspan="2">Taille</th>}
-                <th rowspan="2">Date du fichier</th>
-                <th rowspan="2">Fréquence</th>
-                <th rowspan="2">Nature</th>
-                <th rowspan="2">Dossiers</th>
+                <th rowSpan="2">Date</th>
+                <th rowSpan="2">Fichier</th>
+                { devMode && <th rowSpan="2">Taille</th>}
+                <th rowSpan="2">Date du fichier</th>
+                <th rowSpan="2">Fréquence</th>
+                <th rowSpan="2">Nature</th>
+                <th rowSpan="2">Dossiers</th>
                 <th colSpan="8">avec email</th>
                 <th colSpan="8">avec téléphone</th>
-                <th colSpan="2" rowspan="2">DSP (%)</th>
-                <th rowspan="2">Erreur</th>
+                <th colSpan="2" rowSpan="2">DSP (%)</th>
+                <th rowSpan="2">Erreur</th>
               </tr>
               <tr>
                 <th colSpan="2"># (%)</th>

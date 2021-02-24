@@ -43,6 +43,14 @@ export default function Beneficiaire() {
       const time = desc.getElementsByTagName('HEUCREAFLUX')[0].innerHTML
 
       const items = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
+
+      const dates = items
+        .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
+        .reduce((accum, value) => {
+          accum[value] = (accum[value] || 0 ) + 1
+          return accum
+        }, {})
+
       dispatchRuns({
         type: 'append',
         item: {
@@ -56,6 +64,7 @@ export default function Beneficiaire() {
           error: dom.activeElement && dom.activeElement.nodeName == "parsererror",
           total: items.length,
           fileSize: file.size,
+          dates,
         }
       })
     }
@@ -93,13 +102,14 @@ export default function Beneficiaire() {
           <table>
             <thead>
               <tr>
-                <th rowspan="2">Date</th>
-                <th rowspan="2">Fichier</th>
-                { devMode && <th rowspan="2">Taille</th>}
-                <th rowspan="2">Date du fichier</th>
-                <th rowspan="2">Fréquence</th>
-                <th rowspan="2">Nature</th>
-                <th rowspan="2">Dossiers</th>
+                <th rowSpan="2">Date</th>
+                <th rowSpan="2">Fichier</th>
+                { devMode && <th rowSpan="2">Taille</th>}
+                <th rowSpan="2">Date du fichier</th>
+                <th rowSpan="2">Fréquence</th>
+                <th rowSpan="2">Nature</th>
+                <th rowSpan="2">Dossiers</th>
+                <th rowSpan="2">Erreur</th>
               </tr>
               <tr>
               </tr>
