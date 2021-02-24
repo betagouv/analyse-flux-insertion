@@ -9,6 +9,7 @@ module.exports = {
       '/cnaf': { page: '/cnaf' },
       '/cnaf/instruction': { page: '/cnaf/instruction' },
       '/cnaf/beneficiaire': { page: '/cnaf/beneficiaire' },
+      '/pole-emploi': { page: '/pole-emploi' },
     }
   }
 }
