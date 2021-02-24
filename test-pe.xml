@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fichier-PE-CG>
+  <entete>
+    <fichier>PECG</fichier>
+    <periodicite>M</periodicite>
+    <departement>06</departement>
+    <date-reference>2021-01-01</date-reference>
+    <date-fabrication>2021-01-15</date-fabrication>
+    <version>001,0</version>
+  </entete>
+  <dossier>
+  </dossier>
+  <dossier>
+    <ppae>
+      <date-signature>2011-05-31</date-signature>
+      <date-dernier-ent>2020-11-19</date-dernier-ent>
+    </ppae>
+  </dossier>
+  <dossier>
+    <ppae>
+      <date-signature>2012-05-11</date-signature>
+      <date-dernier-ent>2020</date-dernier-ent>
+    </ppae>
+  </dossier>
+  <dossier>
+    <ppae>
+      <date-signature>2011-09-09</date-signature>
+      <date-dernier-ent></date-dernier-ent>
+    </ppae>
+  </dossier>
+  <fin>
+    <departement>06</departement>
+    <date-reference>2021-01-01</date-reference>
+    <nb-dossiers>0000004</nb-dossiers>
+  </fin>
+</fichier-PE-CG>
