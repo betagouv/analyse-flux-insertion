@@ -1,5 +1,7 @@
 import {useCallback, useEffect, useState, useReducer} from 'react'
 import Head from 'next/head'
+
+import ResponsiveCalendar from '../../../components/chart'
 import Layout from '../../../components/layout'
 import Mailer from '../../../components/mailer'
 import styles from '../../../styles/Home.module.css'
@@ -13,6 +15,12 @@ const devMode = process.env.NODE_ENV == 'development'
 export default function Beneficiaire() {
   const [devFile, setDevFile] = useState(null)
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
+  const [dateData, setDateData] = useState({
+    index: undefined,
+    data: [],
+    from: "2016-03-01",
+    to: "2021-03-01",
+  })
 
   useEffect(() => {
     if(devFile) {
@@ -25,6 +33,40 @@ export default function Beneficiaire() {
       fileHandler(event.target.files[i])
     }
     event.target.value = ''
+  })
+
+  const handleDateHistogram = useCallback(event => showDateHistogram(parseInt(event.target.dataset.index)))
+  const showDateHistogram = useCallback(index => {
+    const source = runs[index]
+
+    const dates = Object.keys(source.dates)
+    let minDate = null
+    let maxDate = null
+
+    const data = dates.map(d => {
+      let date = new Date(d)
+      if (!minDate) {
+        minDate = date
+        maxDate = date
+      } else if (date < minDate) {
+        minDate = date
+      } else if (maxDate < date) {
+        maxDate = date
+      }
+      return {
+        day: date.toISOString().slice(0, 10),
+        value: source.dates[d]
+      }
+    })
+
+    const yearCount = maxDate.getYear() - minDate.getYear() + 1
+    setDateData({
+      index,
+      data,
+      from: minDate.toISOString().slice(0, 10),
+      to: maxDate.toISOString().slice(0, 10),
+      yearCount,
+    })
   })
 
   const fileHandler = (file) => {
@@ -109,13 +151,14 @@ export default function Beneficiaire() {
                 <th rowSpan="2">Fréquence</th>
                 <th rowSpan="2">Nature</th>
                 <th rowSpan="2">Dossiers</th>
+                <th rowSpan="2">Détails</th>
                 <th rowSpan="2">Erreur</th>
               </tr>
               <tr>
               </tr>
             </thead>
             <tbody>
-              {runs.map(r => (<tr key={`${r.timetamp}-${r.filename}-${r.seed}` }>
+              {runs.map((r, i) => (<tr key={`${r.timetamp}-${r.filename}-${r.seed}` } style={ i == dateData.index ? {backgroundColor: 'lightgrey'}: {} }>
                 <td>{r.timetamp}</td>
                 <td>{r.filename}</td>
                 { devMode && <td>{r.fileSize}</td>}
@@ -123,6 +166,7 @@ export default function Beneficiaire() {
                 <td>{`${r.frequency} (${frequencyNames[r.frequency] || '?'})`}</td>
                 <td>{`${r.type} (${typeNames[r.type] || '?'})`}</td>
                 <td className={styles.numeric}>{r.total}</td>
+                <td className="shrink"><button onClick={handleDateHistogram} data-index={i}>Afficher par date</button></td>
                 <td>{r.error ? 'Oui' : 'Non'}</td>
               </tr>
             ))}
@@ -131,6 +175,21 @@ export default function Beneficiaire() {
 
           <button onClick={() => dispatchRuns({type: 'reset'})}>Vider l'historique</button>
         </>)}
+
+        {runs.length != 0 && (<p className={styles.text}>
+        Vous pouvez accéder à une représentation graphique de la répartition dans les temps des demandes connues dans les fichiers analysés. Pour cela il faut cliquer sur le bouton « Afficher par date ».
+          </p>)}
+
+        {dateData.index != undefined && (
+          <>
+            <h2 className={styles.subtitle}>
+              Nombre de dossiers associés à des demandes réalisés à chaque date
+            </h2>
+            <div style={{height: (250*dateData.yearCount) + "px", width: "100%"}}>
+              {ResponsiveCalendar(dateData)}
+            </div>
+          </>
+        )}
 
         <p className={styles.description}>
           Un problème, une question ? Contactez-nous à <Mailer subject="Flux bénéficiaire CNAF">data.insertion@beta.gouv.fr</Mailer>
