@@ -1,66 +1,36 @@
 import {useCallback, useEffect, useState, useReducer} from 'react'
 import Head from 'next/head'
-import { push } from "@socialgouv/matomo-next"
 import Layout from '../../../components/layout'
 import Mailer from '../../../components/mailer'
 import styles from '../../../styles/Home.module.css'
 
+import { frequencyNames, typeNames } from '../../../lib/cnaf'
+import { initReducer, reducerFactory } from '../../../lib/historique'
 
-function init() {
-  return []
-}
-
-function reducer(state, action) {
-  switch (action.type) {
-    case 'append':
-      let data = {...action.item, seed: undefined}
-      push(['trackEvent', 'Test - CNAF - Instruction', JSON.stringify(data)])
-      return [action.item, ...state]
-    case 'reset':
-      return init()
-    default:
-      throw new Error()
-  }
-}
-
-// TYPEFLUX
-const frequencyNames = {
-  M: 'Mensuel',
-  I: 'Quotidien',
-  R: 'Reprise'
-}
-
-// NATFLUX
-const typeNames = {
-  D: 'Bénéficiaires',
-  I: 'Instructions',
-  R: 'Nouveau recueil'
-}
-
+const reducer = reducerFactory('Test - CNAF - Instruction')
 const devMode = process.env.NODE_ENV == 'development'
 
-export default function Home() {
-  const defaultColor = 'white'
-  const [color, setColor] = useState(defaultColor)
-  const [file, setFile] = useState(null)
-  const [total, setTotal] = useState('?')
-  const [countWithEmail, setCountWithEmail] = useState('?')
-  const [countWithUsableEmail, setCountWithUsableEmail] = useState('?')
-
-  const [runs, dispatchRuns] = useReducer(reducer, [], init)
-
-  const dragHandler = color => useCallback((event) => {
-    setColor(color)
-    event.preventDefault() // Prevent file from being open on drop
-  })
+export default function Instruction() {
+  const [devFile, setDevFile] = useState(null)
+  const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
 
   useEffect(() => {
-    if(file) {
-      fileHandler(file)
+    if(devFile) {
+      fileHandler(devFile)
     }
-  }, [file])
+  }, [devFile])
+
+  const selectHandler = useCallback((event) => {
+    for (var i = 0; i<event.target.files.length; i++) {
+      fileHandler(event.target.files[i])
+    }
+    event.target.value = ''
+  })
 
   const fileHandler = (file) => {
+    if (devMode && file != devFile) {
+      setDevFile(file)
+    }
     var reader = new FileReader()
     reader.onload = function(event) {
       const parser = new DOMParser()
@@ -134,34 +104,14 @@ export default function Home() {
     reader.readAsText(file)
   }
 
-  const dropHandler = useCallback((event) => {
-    event.preventDefault()
-    setColor(defaultColor)
-    for (var i = 0; i<event.dataTransfer.files.length; i++) {
-      fileHandler(event.dataTransfer.files[i])
-    }
-  })
-
-  const selectHandler = useCallback((event) => {
-    for (var i = 0; i<event.target.files.length; i++) {
-      fileHandler(event.target.files[i])
-      if (devMode) {
-        setFile(event.target.files[i])
-      }
-    }
-    event.target.value = ''
-  })
-
   const round = (value) => Math.round(value)
   return (
-    <Layout className={styles.container} style={{backgroundColor:color}}
-      onDragOver={dragHandler('#0070f3')}
-      onDragLeave={dragHandler(defaultColor)}
-      onDrop={dropHandler}>
+    <Layout className={styles.container}
+      fileHandler={fileHandler}>
 
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Lecteur de fichier CNAF
+          Lecteur de fichier « Instruction » de la CNAF
         </h1>
 
         <p className={styles.description}>

@@ -19,15 +19,17 @@ export default function Home() {
         <div className={styles.grid}>
           <Link href="/cnaf/instruction">
             <a className={styles.card}>
-              <h3>Instructions &rarr;</h3>
+              <h3>Instructions & DSP &rarr;</h3>
               <p>Envoyé quotidiennement</p>
             </a>
           </Link>
 
-          <Mailer subject="Flux stock bénéficiaires" className={styles.card}>
-            <h3>Stock bénéficiaires &rarr;</h3>
-            <p>Envoyé mensuellement</p>
-          </Mailer>
+          <Link href="/cnaf/beneficiaire">
+            <a className={styles.card}>
+              <h3>Stock bénéficiaires &rarr;</h3>
+              <p>Envoyé quotidiennement & mensuellement</p>
+            </a>
+          </Link>
 
           <Mailer subject="Autre flux CNAF" className={styles.card}>
             <h3>Autre chose &rarr;</h3>
