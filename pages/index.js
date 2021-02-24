@@ -23,10 +23,12 @@ export default function Home() {
             </a>
           </Link>
 
-          <Mailer subject="Flux Pole Emploi" className={styles.card}>
+          <Link href="/pole-emploi">
+            <a className={styles.card}>
             <h3>Pole Emploi &rarr;</h3>
-            <p>…</p>
-          </Mailer>
+            <p>Flux mensuel</p>
+            </a>
+          </Link>
 
           <Mailer subject="Autre source de données" className={styles.card}>
             <h3>Ailleurs &rarr;</h3>
