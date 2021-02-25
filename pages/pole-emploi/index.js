@@ -124,8 +124,8 @@ export default function Beneficiaire() {
                 <th rowSpan="2">Nature</th>
                 <th rowSpan="2">CD</th>
                 <th rowSpan="2">Dossiers</th>
-                <th colSpan="2" rowSpan="2">avec date de dernier entretien (%)</th>
-                <th colSpan="2" rowSpan="2"><abbr title="Par valide, on veut dire contient une date au format AAA-MM-JJ">avec date de dernier entretien <i>valide</i> (%)</abbr></th>
+                <th colSpan="2" rowSpan="2">avec date de dernier entretien PPAE (%)</th>
+                <th colSpan="2" rowSpan="2"><abbr title="Par valide, on veut dire contient une date au format AAA-MM-JJ">avec date de dernier entretien PPAE <i>valide</i> (%)</abbr></th>
                 <th rowSpan="2">Erreur</th>
               </tr>
               <tr>
