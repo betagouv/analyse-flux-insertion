@@ -42,8 +42,8 @@ export default function Layout({
           <Link href="/">
             <a>Accueil</a>
           </Link>{' '}|{' '}
-          <Link href="/a-propos">
-            <a>À propos</a>
+          <Link href="/mentions-legales">
+            <a>Mentions légales</a>
           </Link>{' '}|{' '}
           <Mailer>
             Contact
