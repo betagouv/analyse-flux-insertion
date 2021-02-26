@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useState, useReducer} from 'react'
 import Head from 'next/head'
 
+import Admin from '../../../components/admin'
 import ResponsiveCalendar from '../../../components/chart'
 import Layout from '../../../components/layout'
 import Mailer from '../../../components/mailer'
@@ -20,6 +21,13 @@ export default function Beneficiaire() {
     data: [],
     from: "2016-03-01",
     to: "2021-03-01",
+  })
+
+  const handleNewRuns = useCallback(data => {
+    dispatchRuns({
+      type: 'reset',
+      items: data
+    })
   })
 
   useEffect(() => {
@@ -97,7 +105,7 @@ export default function Beneficiaire() {
         type: 'append',
         item: {
           seed: Math.random(),
-          timetamp: (new Date()).toISOString().slice(0,19),
+          timestamp: (new Date()).toISOString().slice(0,19),
           filename: file.name,
           fileDatetime: `${dt}-${time}`,
           frequency,
@@ -116,7 +124,7 @@ export default function Beneficiaire() {
   const round = (value) => Math.round(value)
   return (
     <Layout className={styles.container}>
-
+      <Admin category="Bénéficiaire" onRunRefresh={handleNewRuns}/>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Lecteur de fichier « Bénéficiaire » de la CNAF
@@ -158,8 +166,8 @@ export default function Beneficiaire() {
               </tr>
             </thead>
             <tbody>
-              {runs.map((r, i) => (<tr key={`${r.timetamp}-${r.filename}-${r.seed}` } style={ i == dateData.index ? {backgroundColor: 'lightgrey'}: {} }>
-                <td>{r.timetamp}</td>
+              {runs.map((r, i) => (<tr key={`${r.timestamp}-${r.filename}-${r.seed}` } style={ i == dateData.index ? {backgroundColor: 'lightgrey'}: {} }>
+                <td>{r.timestamp}</td>
                 <td>{r.filename}</td>
                 { devMode && <td>{r.fileSize}</td>}
                 <td>{r.fileDatetime}</td>

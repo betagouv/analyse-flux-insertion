@@ -1,5 +1,7 @@
 import {useCallback, useEffect, useState, useReducer} from 'react'
 import Head from 'next/head'
+
+import Admin from '../../../components/admin'
 import Layout from '../../../components/layout'
 import Mailer from '../../../components/mailer'
 import styles from '../../../styles/Home.module.css'
@@ -19,6 +21,13 @@ export default function Instruction() {
       fileHandler(devFile)
     }
   }, [devFile])
+
+  const handleNewRuns = useCallback(data => {
+    dispatchRuns({
+      type: 'reset',
+      items: data
+    })
+  })
 
   const selectHandler = useCallback((event) => {
     for (var i = 0; i<event.target.files.length; i++) {
@@ -76,7 +85,7 @@ export default function Instruction() {
         type: 'append',
         item: {
           seed: Math.random(),
-          timetamp: (new Date()).toISOString().slice(0,19),
+          timestamp: (new Date()).toISOString().slice(0,19),
           filename: file.name,
           fileDatetime: `${dt}-${time}`,
           frequency,
@@ -108,7 +117,7 @@ export default function Instruction() {
   return (
     <Layout className={styles.container}
       fileHandler={fileHandler}>
-
+      <Admin category="Instruction" onRunRefresh={handleNewRuns}/>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Lecteur de fichier « Instruction » de la CNAF
@@ -161,8 +170,8 @@ export default function Instruction() {
               </tr>
             </thead>
             <tbody>
-              {runs.map(r => (<tr key={`${r.timetamp}-${r.filename}-${r.seed}` }>
-                <td>{r.timetamp}</td>
+              {runs.map(r => (<tr key={`${r.timestamp}-${r.filename}-${r.seed}` }>
+                <td>{r.timestamp}</td>
                 <td>{r.filename}</td>
                 { devMode && <td>{r.fileSize}</td>}
                 <td>{r.fileDatetime}</td>

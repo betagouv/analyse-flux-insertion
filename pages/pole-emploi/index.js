@@ -65,7 +65,7 @@ export default function Beneficiaire() {
         type: 'append',
         item: {
           seed: Math.random(),
-          timetamp: (new Date()).toISOString().slice(0,19),
+          timestamp: (new Date()).toISOString().slice(0,19),
           filename: file.name,
           frequency,
           referenceDate,
@@ -132,8 +132,8 @@ export default function Beneficiaire() {
               </tr>
             </thead>
             <tbody>
-              {runs.map((r, i) => (<tr key={`${r.timetamp}-${r.filename}-${r.seed}` } >
-                <td>{r.timetamp}</td>
+              {runs.map((r, i) => (<tr key={`${r.timestamp}-${r.filename}-${r.seed}` } >
+                <td>{r.timestamp}</td>
                 <td>{r.filename}</td>
                 { devMode && <td>{r.fileSize}</td>}
                 <td>{r.referenceDate}</td>
