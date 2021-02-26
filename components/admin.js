@@ -42,9 +42,10 @@ export default function Admin({
     <div style={{display: "flex", flexDirection: "row-reverse"}}>
       <label>
         <input onChange={handleAdminChange} type="checkbox" checked={admin}/>
-        Admin <a target="_blank" rel="noopener" href="https://stats.data.gouv.fr/index.php?module=UsersManager&action=userSettings"><abbr title="Cliquez ici pour accéder à API Authentication Token sur Matomo">?</abbr></a>&nbsp;
+        Admin
       </label>
       { admin && (<>
+        <a target="_blank" rel="noopener" href="https://stats.data.gouv.fr/index.php?module=UsersManager&action=userSettings">Récupérer mon API Authentication Token</a>
         <input onChange={handleTokenChange} type="password" value={token}/>
         <button onClick={handleRemoveTokenClick}>Supprimer le token</button>
         </>
