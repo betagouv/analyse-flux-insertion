@@ -7,21 +7,26 @@ import styles from '../styles/Home.module.css'
 export default function CreateUser() {
   const [userFirstName, setUserFirstName] = useState('');
   const [userLastName, setUserLastName] = useState('');
+  const [isPending, setIsPending] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     const user = { first_name: userFirstName, last_name: userLastName };
-    console.log(user);
-    alert(`Fiche utilisateur créée sur RDV Solidarités avec succès pour ${userFirstName} ${userLastName}`);
-    // fetch('https://www.rdv-solidarites.fr/api/v1/users', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(user)
-    // }).then(() => {
-    //   setUserFirstName('');
-    //   setUserLastName('');
-    //   alert("Fiche utilisateur créée sur RDV Solidarités avec succès");
-    // })
+    setIsPending(true);
+
+    fetch('https://www.rdv-solidarites.fr/api/v1/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(user)
+    })
+
+      .then(() => {
+      setUserFirstName('');
+      setUserLastName('');
+      setIsPending(false);
+      alert(`Fiche utilisateur créée sur RDV Solidarités avec succès pour ${userFirstName} ${userLastName}`);
+    })
   }
 
   return(
@@ -48,12 +53,12 @@ export default function CreateUser() {
               onChange={(e) => setUserLastName(e.target.value)}
               required
             />
-            <button>Créer fiche utilisateur</button>
+            {!isPending && <button>Créer fiche utilisateur</button>}
+            {isPending && <button>Fiche utilisateur en cours de création</button>}
           </form>
         </div>
 
       </main>
     </Layout>
-
   )
 }
