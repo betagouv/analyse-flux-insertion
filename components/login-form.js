@@ -1,8 +1,6 @@
 import { useState } from 'react'
 
-export default function CreateForm(
-  token
-) {
+export default function LoginForm() {
   const [userFirstName, setUserFirstName] = useState('');
   const [userLastName, setUserLastName] = useState('');
   const [isPending, setIsPending] = useState(false);
@@ -10,7 +8,7 @@ export default function CreateForm(
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const user = { first_name: userFirstName, last_name: userLastName, organisation_ids: 164, token: token };
+    const user = { first_name: userFirstName, last_name: userLastName, organisation_ids: 164 };
     const url = 'https://demo.rdv-solidarites.fr/api/v1/users';
     // ^******************* À enlever avant mise en prod ****************
     const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
@@ -25,9 +23,7 @@ export default function CreateForm(
     .then((response) => {
       setIsPending(false);
       if (response.status === 200) {
-        setUserFirstName('');
-        setUserLastName('');
-        alert(`Fiche utilisateur créée sur RDV Solidarités avec succès pour ${userFirstName} ${userLastName}`);
+
       } else {
         alert(`Un problème est survenu, et la fiche utilisateur de ${userFirstName} ${userLastName} n'a pas été créée sur RDV Solidarités. Merci de réessayer.`);
       }
