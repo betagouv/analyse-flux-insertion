@@ -26,7 +26,7 @@ export default function LoginForm({
     .then((response) => {
       setIsPending(false);
       if (response.status === 200) {
-        onLogin(response.headers.access-token, uid, client);
+        onLogin(response.headers.access-token, response.headers.uid, response.headers.client);
       } else {
         alert(`Aucun compte n'est rattaché à ce couple email/mot de passe. Merci de vérifier vos identifiants.`);
       }
