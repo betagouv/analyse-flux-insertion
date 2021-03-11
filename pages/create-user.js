@@ -6,12 +6,6 @@ import CreateForm from '../components/create-form'
 
 export default function CreateUser() {
   const [isLogged, setIsLogged] = useState(false);
-  // const form = () => {
-
-  // }
-  // const handleClick = (token) => {
-  //   document.querySelector('#create-forms').insertAdjacentHTML("afterbegin", <CreateForm token={token} />);
-  // };
 
   return(
     <Layout className={styles.container}>
