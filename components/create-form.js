@@ -10,7 +10,7 @@ export default function CreateForm(
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const user = { first_name: userFirstName, last_name: userLastName, organisation_ids: 164, token: token };
+    const user = { first_name: userFirstName, last_name: userLastName, organisation_ids: 164, "access-token": token.tokenId, uid: token.uid, client: token.client };
     const url = 'https://demo.rdv-solidarites.fr/api/v1/users';
     // ^******************* À enlever avant mise en prod ****************
     const proxyUrl = 'https://cors-anywhere.herokuapp.com/';

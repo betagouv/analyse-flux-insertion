@@ -6,6 +6,16 @@ import CreateForm from '../components/create-form'
 
 export default function CreateUser() {
   const [isLogged, setIsLogged] = useState(false);
+  const [token, setToken] = useState({
+          "access-token": '',
+          uid: '',
+          client: ''
+        });
+
+  const onLogin = (tokenId, uid, client) => {
+    setToken(tokenId, uid, client);
+    setIsLogged(true);
+  };
 
   return(
     <Layout className={styles.container}>
@@ -14,8 +24,8 @@ export default function CreateUser() {
           Créer une fiche bénéficiaire sur RDV Solidarités
         </h1>
         <div id="create-forms" className={styles.create}>
-          {!isLogged && <LoginForm />}
-          {isLogged && <CreateForm />}
+          {!isLogged && <LoginForm onLogin={onLogin} />}
+          {isLogged && <CreateForm token={token} />}
         </div>
 
       </main>

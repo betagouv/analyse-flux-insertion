@@ -1,6 +1,9 @@
 import { useState } from 'react'
 
-export default function LoginForm() {
+export default function LoginForm({
+  onLogin,
+  token
+}) {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [isPending, setIsPending] = useState(false);
@@ -23,12 +26,7 @@ export default function LoginForm() {
     .then((response) => {
       setIsPending(false);
       if (response.status === 200) {
-        const token = {
-          "access- token": response.headers.access - token,
-          uid: response.headers.uid,
-          client: client
-        };
-        setIsLogged(true);
+        onLogin(response.headers.access-token, uid, client);
       } else {
         alert(`Aucun compte n'est rattaché à ce couple email/mot de passe. Merci de vérifier vos identifiants.`);
       }
