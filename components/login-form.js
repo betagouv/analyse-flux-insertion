@@ -1,8 +1,7 @@
 import { useState } from 'react'
 
 export default function LoginForm({
-  onLogin,
-  token
+  onLogin
 }) {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
