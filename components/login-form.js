@@ -11,12 +11,10 @@ export default function LoginForm({
     e.preventDefault();
 
     const user = { email: login, password: password };
-    const url = 'https://demo/rdv-solidarites.fr/api/v1/auth/sign_in';
-    // ^******************* À enlever avant mise en prod ****************
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const url = 'http://localhost:4000/api/v1/auth/sign_in';
     setIsPending(true);
 
-    fetch(proxyUrl + url, {
+    fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(user)
@@ -24,12 +22,20 @@ export default function LoginForm({
 
     .then((response) => {
       setIsPending(false);
-      if (response.status === 200) {
-        onLogin(response.headers.access-token, response.headers.uid, response.headers.client);
+      if (response.ok) {
+        onLogin(response.headers.get("access-token"), response.headers.get("uid"), response.headers.get("client"));
+        return response.json();
       } else {
         alert(`Aucun compte n'est rattaché à ce couple email/mot de passe. Merci de vérifier vos identifiants.`);
       }
     })
+    // .then(result => {
+    //   console.log('Success:');
+    // })
+    // .catch(error => {
+    //   alert(`Une erreur s'est produite, merci de réessayer.`);
+    //   console.error('Error:', error);
+    // });
   }
 
   return (

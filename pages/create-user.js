@@ -7,13 +7,13 @@ import CreateForm from '../components/create-form'
 export default function CreateUser() {
   const [isLogged, setIsLogged] = useState(false);
   const [token, setToken] = useState({
-          "access-token": '',
+          "tokenId": '',
           uid: '',
           client: ''
         });
 
   const onLogin = (tokenId, uid, client) => {
-    setToken(tokenId, uid, client);
+    setToken({ ...token, tokenId: tokenId, uid: uid, client: client });
     setIsLogged(true);
   };
 

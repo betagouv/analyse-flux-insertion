@@ -10,15 +10,18 @@ export default function CreateForm(
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const user = { first_name: userFirstName, last_name: userLastName, organisation_ids: 164, "access-token": token.tokenId, uid: token.uid, client: token.client };
-    const url = 'https://demo.rdv-solidarites.fr/api/v1/users';
-    // ^******************* À enlever avant mise en prod ****************
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const user = { first_name: userFirstName, last_name: userLastName, organisation_ids: [1] };
+    const url = 'http://localhost:4000/api/v1/users';
     setIsPending(true);
 
-    fetch(proxyUrl + url, {
+    fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        "access-token": token.token.tokenId,
+        uid: token.token.uid,
+        client: token.token.client
+      },
       body: JSON.stringify(user)
     })
 
