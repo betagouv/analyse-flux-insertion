@@ -6,12 +6,14 @@ export default function CreateForm(
   const [userFirstName, setUserFirstName] = useState('');
   const [userLastName, setUserLastName] = useState('');
   const [isPending, setIsPending] = useState(false);
+  const RDV_URL = process.env.NEXT_PUBLIC_RDV_DEMO_URL;
+  const path = '/users';
+  const url = `${RDV_URL}/api/v1${path}`;
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const user = { first_name: userFirstName, last_name: userLastName, organisation_ids: [1] };
-    const url = 'http://localhost:4000/api/v1/users';
     setIsPending(true);
 
     fetch(url, {

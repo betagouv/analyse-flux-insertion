@@ -6,12 +6,15 @@ export default function LoginForm({
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [isPending, setIsPending] = useState(false);
+  const RDV_URL = process.env.NEXT_PUBLIC_RDV_DEMO_URL;
+  const path = '/auth/sign_in';
+  const url = `${RDV_URL}/api/v1${path}`;
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const user = { email: login, password: password };
-    const url = 'http://localhost:4000/api/v1/auth/sign_in';
     setIsPending(true);
 
     fetch(url, {
