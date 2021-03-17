@@ -49,7 +49,7 @@ export default function Layout({
             Contact
           </Mailer>{' '}|{' '}
           <Link href="/create-user">
-            <a>Créer une fiche utilisateur sur RDV-Solidarités</a>
+            <a>Expérimentations RDV-Solidarités</a>
           </Link>
         </nav>
       </header>

@@ -5,6 +5,9 @@ export default function CreateForm(
 ) {
   const [userFirstName, setUserFirstName] = useState('');
   const [userLastName, setUserLastName] = useState('');
+  const [orga, setOrga] = useState(0);
+  const [mail, setMail] = useState('');
+  const [phone, setPhone] = useState('');
   const [isPending, setIsPending] = useState(false);
   const RDV_URL = process.env.NEXT_PUBLIC_RDV_DEMO_URL;
   const path = '/users';
@@ -57,6 +60,28 @@ export default function CreateForm(
         type="text"
         value={userLastName}
         onChange={(e) => setUserLastName(e.target.value)}
+        required
+      />
+      <label htmlFor="email">Email</label>
+      <input
+        id="email"
+        type="text"
+        value={mail}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <label htmlFor="telephone">Téléphone</label>
+      <input
+        id="telephone"
+        type="text"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+      />
+      <label htmlFor="organisation">ID de l'organisation</label>
+      <input
+        id="organisation"
+        type="text"
+        value={orga}
+        onChange={(e) => setOrga(e.target.value)}
         required
       />
       {!isPending && <button>Créer fiche utilisateur</button>}
