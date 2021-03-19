@@ -4,8 +4,8 @@ import styles from '../styles/Home.module.css'
 export default function CreateForm(
   token
 ) {
-  const [userFirstName, setUserFirstName] = useState('');
-  const [userLastName, setUserLastName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [orga, setOrga] = useState('');
   const [mail, setMail] = useState('');
   const [phone, setPhone] = useState('');
@@ -17,7 +17,7 @@ export default function CreateForm(
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const user = { first_name: userFirstName, last_name: userLastName, organisation_ids: [1] };
+    const user = { first_name: firstName, last_name: lastName, email: mail, phone_number: phone, organisation_ids: [parseInt(orga)] };
     setIsPending(true);
 
     fetch(url, {
@@ -34,11 +34,14 @@ export default function CreateForm(
     .then((response) => {
       setIsPending(false);
       if (response.status === 200) {
-        setUserFirstName('');
-        setUserLastName('');
-        alert(`Fiche utilisateur créée sur RDV Solidarités avec succès pour ${userFirstName} ${userLastName}`);
+        setFirstName('');
+        setLastName('');
+        setMail('');
+        setPhone('');
+        setOrga('');
+        alert(`Fiche utilisateur créée sur RDV Solidarités avec succès pour ${firstName} ${lastName}`);
       } else {
-        alert(`Un problème est survenu, et la fiche utilisateur de ${userFirstName} ${userLastName} n'a pas été créée sur RDV Solidarités. Merci de réessayer.`);
+        alert(`Un problème est survenu, et la fiche utilisateur de ${firstName} ${lastName} n'a pas été créée sur RDV Solidarités. Merci de réessayer.`);
       }
     })
   }
@@ -50,9 +53,8 @@ export default function CreateForm(
         <input
           id="prenom"
           type="text"
-          value={userFirstName}
-          onChange={(e) => setUserFirstName(e.target.value)}
-          required
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
         />
       </div>
       <div className={styles.formCard}>
@@ -60,9 +62,8 @@ export default function CreateForm(
         <input
           id="nom"
           type="text"
-          value={userLastName}
-          onChange={(e) => setUserLastName(e.target.value)}
-          required
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
         />
       </div>
       <div className={styles.formCard}>
@@ -90,7 +91,6 @@ export default function CreateForm(
           type="text"
           value={orga}
           onChange={(e) => setOrga(e.target.value)}
-          required
         />
       </div>
       <div className={styles.formCard}></div>
