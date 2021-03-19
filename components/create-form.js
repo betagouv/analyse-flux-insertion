@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import styles from '../styles/Home.module.css'
 
 export default function CreateForm(
   token
 ) {
   const [userFirstName, setUserFirstName] = useState('');
   const [userLastName, setUserLastName] = useState('');
-  const [orga, setOrga] = useState(0);
+  const [orga, setOrga] = useState('');
   const [mail, setMail] = useState('');
   const [phone, setPhone] = useState('');
   const [isPending, setIsPending] = useState(false);
@@ -43,47 +44,56 @@ export default function CreateForm(
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-    >
-      <label htmlFor="prenom">Prénom</label>
-      <input
-        id="prenom"
-        type="text"
-        value={userFirstName}
-        onChange={(e) => setUserFirstName(e.target.value)}
-        required
-      />
-      <label htmlFor="nom">Nom</label>
-      <input
-        id="nom"
-        type="text"
-        value={userLastName}
-        onChange={(e) => setUserLastName(e.target.value)}
-        required
-      />
-      <label htmlFor="email">Email</label>
-      <input
-        id="email"
-        type="text"
-        value={mail}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <label htmlFor="telephone">Téléphone</label>
-      <input
-        id="telephone"
-        type="text"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-      />
-      <label htmlFor="organisation">ID de l'organisation</label>
-      <input
-        id="organisation"
-        type="text"
-        value={orga}
-        onChange={(e) => setOrga(e.target.value)}
-        required
-      />
+    <form className={styles.formGrid} onSubmit={handleSubmit}>
+      <div className={styles.formCard}>
+        <label htmlFor="prenom">Prénom</label>
+        <input
+          id="prenom"
+          type="text"
+          value={userFirstName}
+          onChange={(e) => setUserFirstName(e.target.value)}
+          required
+        />
+      </div>
+      <div className={styles.formCard}>
+        <label htmlFor="nom">Nom</label>
+        <input
+          id="nom"
+          type="text"
+          value={userLastName}
+          onChange={(e) => setUserLastName(e.target.value)}
+          required
+        />
+      </div>
+      <div className={styles.formCard}>
+        <label htmlFor="email">Email</label>
+        <input
+          id="email"
+          type="text"
+          value={mail}
+          onChange={(e) => setMail(e.target.value)}
+        />
+      </div>
+      <div className={styles.formCard}>
+        <label htmlFor="telephone">Téléphone</label>
+        <input
+          id="telephone"
+          type="text"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+      </div>
+      <div className={styles.formCard}>
+        <label htmlFor="organisation">ID de l'organisation</label>
+        <input
+          id="organisation"
+          type="text"
+          value={orga}
+          onChange={(e) => setOrga(e.target.value)}
+          required
+        />
+      </div>
+      <div className={styles.formCard}></div>
       {!isPending && <button>Créer fiche utilisateur</button>}
       {isPending && <button>Fiche utilisateur en cours de création</button>}
     </form>

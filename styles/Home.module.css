@@ -107,6 +107,22 @@
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 
+.formGrid {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  margin: 0 3rem;
+}
+
+.formCard {
+  display: flex;
+  flex-direction: column;
+  margin: 1rem 0;
+  width: 300px;
+  border: none;
+
+}
+
 .card:hover,
 .card:focus,
 .card:active {
@@ -130,9 +146,11 @@
 }
 
 .create {
-  max-width: 400px;
+  max-width: 800px;
   margin: 50px auto;
   text-align: center;
+  display: flex;
+  justify-content: space-between;
 }
 .create label {
   text-align: left;
@@ -147,7 +165,7 @@
   display: block;
 }
 .create button {
-  margin-top: 20px;
+  margin: 20px auto 0 auto;
   background: #3571f1;
   color: #fff;
   border: 0;
@@ -155,7 +173,6 @@
   border-radius: 3px;
   cursor: pointer;
 }
-
 
 @media (max-width: 600px) {
   .grid {
