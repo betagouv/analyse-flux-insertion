@@ -17,33 +17,37 @@ export default function CreateForm(
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const user = { first_name: firstName, last_name: lastName, email: mail, phone_number: phone, organisation_ids: [parseInt(orga)] };
-    setIsPending(true);
+    if (firstName === "" || lastName === "" || orga === "") {
+      alert(`Le prénom, le nom et l'organisation doivent être remplis. Merci de vérifier votre formulaire.`);
+    } else {
+      const user = { first_name: firstName, last_name: lastName, email: mail, phone_number: phone, organisation_ids: [parseInt(orga)] };
+      setIsPending(true);
 
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        "access-token": token.token.tokenId,
-        uid: token.token.uid,
-        client: token.token.client
-      },
-      body: JSON.stringify(user)
-    })
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          "access-token": token.token.tokenId,
+          uid: token.token.uid,
+          client: token.token.client
+        },
+        body: JSON.stringify(user)
+      })
 
-    .then((response) => {
-      setIsPending(false);
-      if (response.status === 200) {
-        setFirstName('');
-        setLastName('');
-        setMail('');
-        setPhone('');
-        setOrga('');
-        alert(`Fiche utilisateur créée sur RDV Solidarités avec succès pour ${firstName} ${lastName}`);
-      } else {
-        alert(`Un problème est survenu, et la fiche utilisateur de ${firstName} ${lastName} n'a pas été créée sur RDV Solidarités. Merci de réessayer.`);
-      }
-    })
+      .then((response) => {
+        setIsPending(false);
+        if (response.status === 200) {
+          setFirstName('');
+          setLastName('');
+          setMail('');
+          setPhone('');
+          setOrga('');
+          alert(`Fiche utilisateur créée sur RDV Solidarités avec succès pour ${firstName} ${lastName}`);
+        } else {
+          alert(`Un problème est survenu, et la fiche utilisateur de ${firstName} ${lastName} n'a pas été créée sur RDV Solidarités. Merci de réessayer.`);
+        }
+      })
+    }
   }
 
   return (
