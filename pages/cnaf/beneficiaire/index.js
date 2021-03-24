@@ -16,6 +16,8 @@ const devMode = process.env.NODE_ENV == 'development'
 export default function Beneficiaire() {
   const [devFile, setDevFile] = useState(null)
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
+  const [isPending, setIsPending] = useState(false);
+  const [size, setSize] = useState(0);
   const [dateData, setDateData] = useState({
     index: undefined,
     data: [],
@@ -81,6 +83,9 @@ export default function Beneficiaire() {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
+    setSize(file.size);
+    setIsPending(true);
+
     var reader = new FileReader()
     reader.onload = function(event) {
       const parser = new DOMParser()
@@ -94,18 +99,20 @@ export default function Beneficiaire() {
 
       const items = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
 
+      setIsPending(false);
+
       const dates = items
-        .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
-        .reduce((accum, value) => {
-          accum[value] = (accum[value] || 0 ) + 1
-          return accum
-        }, {})
+      .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
+      .reduce((accum, value) => {
+        accum[value] = (accum[value] || 0 ) + 1
+        return accum
+      }, {})
 
       dispatchRuns({
         type: 'append',
         item: {
           seed: Math.random(),
-          timestamp: (new Date()).toISOString().slice(0,19),
+          timestamp: (new Date()).toISOString().slice(0, 19),
           filename: file.name,
           fileDatetime: `${dt}-${time}`,
           frequency,
@@ -115,7 +122,7 @@ export default function Beneficiaire() {
           total: items.length,
           fileSize: file.size,
           dates,
-        }
+        },
       })
     }
     reader.readAsText(file)
@@ -134,6 +141,9 @@ export default function Beneficiaire() {
           Glissez et déposez le fichier CNAF à analyser ou sélectionnez le.<br/>
           <input type="file" onChange={selectHandler} multiple/>
         </p>
+
+        {isPending && <p className={styles.pending_warning}>Calcul des statistiques en cours, merci de patientier{(size > 100000000) && <><br/>Pour les fichiers supérieurs à 100 Mo, le temps de traitement peut dépasser 1 minute.</>}</p>}
+
 
         <p className={styles.description}>
           Les opérations sont toutes réalisées sur votre ordinateur.<br/>
