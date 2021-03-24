@@ -64,14 +64,21 @@
 
 .title,
 .subtitle,
-.description {
+.description,
+.pending_warning {
   text-align: center;
 }
 
 .description,
-.text {
+.text,
+.pending_warning {
   line-height: 1.5;
   font-size: 1.5rem;
+}
+
+.pending_warning {
+  color: rgb(199, 55, 55);
+  font-weight: 600;
 }
 
 .code {
