@@ -24,6 +24,7 @@ const typeNames = {
 export default function Beneficiaire() {
   const [devFile, setDevFile] = useState(null)
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
     if(devFile) {
@@ -42,6 +43,7 @@ export default function Beneficiaire() {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
+    setIsPending(true);
     var reader = new FileReader()
     reader.onload = function(event) {
       const parser = new DOMParser()
@@ -61,6 +63,7 @@ export default function Beneficiaire() {
         return nodes.length && nodes[0].innerHTML.match(/\d{4}-\d{2}-\d{2}/)
       })
 
+      setIsPending(false);
       dispatchRuns({
         type: 'append',
         item: {
@@ -97,6 +100,12 @@ export default function Beneficiaire() {
           Glissez et déposez le fichier PE à analyser ou sélectionnez le.<br/>
           <input type="file" onChange={selectHandler} multiple/>
         </p>
+
+        {isPending &&
+        <p className={styles.pending_warning}>Calcul des statistiques en cours, merci de patienter
+          {(size > 100000000) &&
+          <><br />Pour les fichiers supérieurs à 100 Mo, le temps de traitement peut dépasser 1 minute.</>}
+        </p>}
 
         <p className={styles.description}>
           Les opérations sont toutes réalisées sur votre ordinateur.<br/>

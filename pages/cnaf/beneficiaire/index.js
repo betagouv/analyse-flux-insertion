@@ -148,7 +148,6 @@ export default function Beneficiaire() {
           <><br />Pour les fichiers supérieurs à 100 Mo, le temps de traitement peut dépasser 1 minute.</>}
         </p>}
 
-
         <p className={styles.description}>
           Les opérations sont toutes réalisées sur votre ordinateur.<br/>
           Aucune donnée personnelle n'est transférée.

@@ -15,6 +15,7 @@ const devMode = process.env.NODE_ENV == 'development'
 export default function Instruction() {
   const [devFile, setDevFile] = useState(null)
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
     if(devFile) {
@@ -40,6 +41,8 @@ export default function Instruction() {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
+    setIsPending(true);
+
     var reader = new FileReader()
     reader.onload = function(event) {
       const parser = new DOMParser()
@@ -81,6 +84,9 @@ export default function Instruction() {
       })
 
       const withDSP = items.filter(i => i.getElementsByTagName('DonneesSocioProfessionnelles').length)
+
+      setIsPending(false);
+
       dispatchRuns({
         type: 'append',
         item: {
@@ -127,6 +133,12 @@ export default function Instruction() {
           Glissez et déposez le fichier CNAF à analyser ou sélectionnez le.<br/>
           <input type="file" onChange={selectHandler} multiple/>
         </p>
+
+        {isPending &&
+        <p className={styles.pending_warning}>Calcul des statistiques en cours, merci de patienter
+          {(size > 100000000) &&
+          <><br />Pour les fichiers supérieurs à 100 Mo, le temps de traitement peut dépasser 1 minute.</>}
+        </p>}
 
         <p className={styles.description}>
           Les opérations sont toutes réalisées sur votre ordinateur.<br/>
