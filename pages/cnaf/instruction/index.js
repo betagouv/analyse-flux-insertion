@@ -161,6 +161,7 @@ export default function Instruction() {
                 <th rowSpan="2">Date</th>
                 <th rowSpan="2">Fichier</th>
                 { devMode && <th rowSpan="2">Taille</th>}
+                { devMode && <th rowSpan="2">Durée<br/>(en s)</th>}
                 <th rowSpan="2">Date du fichier</th>
                 <th rowSpan="2">Fréquence</th>
                 <th rowSpan="2">Nature</th>
@@ -187,6 +188,7 @@ export default function Instruction() {
                 <td>{r.timestamp}</td>
                 <td>{r.filename}</td>
                 { devMode && <td>{r.fileSize}</td>}
+                { devMode && <td>{!isNaN(r.duration) ? r.duration/1000 : "n/a"}</td>}
                 <td>{r.fileDatetime}</td>
                 <td>{`${r.frequency} (${frequencyNames[r.frequency] || '?'})`}</td>
                 <td>{`${r.type} (${typeNames[r.type] || '?'})`}</td>

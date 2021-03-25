@@ -129,6 +129,7 @@ export default function Beneficiaire() {
                 <th rowSpan="2">Date</th>
                 <th rowSpan="2">Fichier</th>
                 { devMode && <th rowSpan="2">Taille</th>}
+                { devMode && <th rowSpan="2">Durée<br/>(en s)</th>}
                 <th rowSpan="2">Date de référence</th>
                 <th rowSpan="2">Date de fabrication</th>
                 <th rowSpan="2">Fréquence</th>
@@ -147,6 +148,7 @@ export default function Beneficiaire() {
                 <td>{r.timestamp}</td>
                 <td>{r.filename}</td>
                 { devMode && <td>{r.fileSize}</td>}
+                { devMode && <td>{!isNaN(r.duration) ? r.duration/1000 : "n/a"}</td>}
                 <td>{r.referenceDate}</td>
                 <td>{r.generationDate}</td>
                 <td>{`${r.frequency} (${frequencyNames[r.frequency] || '?'})`}</td>
