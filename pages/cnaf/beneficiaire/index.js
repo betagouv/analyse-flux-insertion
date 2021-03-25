@@ -142,7 +142,11 @@ export default function Beneficiaire() {
           <input type="file" onChange={selectHandler} multiple/>
         </p>
 
-        {isPending && <p className={styles.pending_warning}>Calcul des statistiques en cours, merci de patientier{(size > 100000000) && <><br/>Pour les fichiers supérieurs à 100 Mo, le temps de traitement peut dépasser 1 minute.</>}</p>}
+        {isPending &&
+        <p className={styles.pending_warning}>Calcul des statistiques en cours, merci de patienter
+          {(size > 100000000) &&
+          <><br />Pour les fichiers supérieurs à 100 Mo, le temps de traitement peut dépasser 1 minute.</>}
+        </p>}
 
 
         <p className={styles.description}>

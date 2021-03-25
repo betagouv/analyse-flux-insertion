@@ -76,9 +76,26 @@
   font-size: 1.5rem;
 }
 
+@keyframes grow {
+    0% {
+        transform: scale(1);
+      }
+    50% {
+        transform: scale(1.04);
+      }
+      100% {
+        transform: scale(1);
+    }
+}
+
 .pending_warning {
   color: rgb(199, 55, 55);
   font-weight: 600;
+  animation-duration: 3.8s; /* the duration of the animation */
+  animation-timing-function: ease-in-out; /* how the animation will behave */
+  animation-delay: 0s; /* how long to delay the animation from starting */
+  animation-iteration-count: infinite; /* how many times the animation will play */
+  animation-name: grow; /* the name of the animation we defined above */
 }
 
 .code {
