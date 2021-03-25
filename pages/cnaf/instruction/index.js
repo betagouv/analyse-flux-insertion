@@ -4,6 +4,7 @@ import Head from 'next/head'
 import Admin from '../../../components/admin'
 import Layout from '../../../components/layout'
 import Mailer from '../../../components/mailer'
+import PendingMessage from '../../../components/pending'
 import styles from '../../../styles/Home.module.css'
 
 import { frequencyNames, typeNames } from '../../../lib/cnaf'
@@ -134,11 +135,7 @@ export default function Instruction() {
           <input type="file" onChange={selectHandler} multiple/>
         </p>
 
-        {isPending &&
-        <p className={styles.pending_warning}>Calcul des statistiques en cours, merci de patienter
-          {(size > 100000000) &&
-          <><br />Pour les fichiers supérieurs à 100 Mo, le temps de traitement peut dépasser 1 minute.</>}
-        </p>}
+        {isPending && <PendingMessage fileSize={fileSize}/>}
 
         <p className={styles.description}>
           Les opérations sont toutes réalisées sur votre ordinateur.<br/>

@@ -5,6 +5,7 @@ import Admin from '../../../components/admin'
 import ResponsiveCalendar from '../../../components/chart'
 import Layout from '../../../components/layout'
 import Mailer from '../../../components/mailer'
+import PendingMessage from '../../../components/pending'
 import styles from '../../../styles/Home.module.css'
 
 import { frequencyNames, typeNames } from '../../../lib/cnaf'
@@ -17,7 +18,7 @@ export default function Beneficiaire() {
   const [devFile, setDevFile] = useState(null)
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
   const [isPending, setIsPending] = useState(false);
-  const [size, setSize] = useState(0);
+  const [fileSize, setFileSize] = useState(0);
   const [dateData, setDateData] = useState({
     index: undefined,
     data: [],
@@ -83,7 +84,7 @@ export default function Beneficiaire() {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
-    setSize(file.size);
+    setFileSize(file.size);
     setIsPending(true);
 
     var reader = new FileReader()
@@ -142,11 +143,7 @@ export default function Beneficiaire() {
           <input type="file" onChange={selectHandler} multiple/>
         </p>
 
-        {isPending &&
-        <p className={styles.pending_warning}>Calcul des statistiques en cours, merci de patienter
-          {(size > 100000000) &&
-          <><br />Pour les fichiers supérieurs à 100 Mo, le temps de traitement peut dépasser 1 minute.</>}
-        </p>}
+        {isPending && <PendingMessage fileSize={fileSize}/>}
 
         <p className={styles.description}>
           Les opérations sont toutes réalisées sur votre ordinateur.<br/>
