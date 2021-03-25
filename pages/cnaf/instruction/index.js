@@ -96,7 +96,7 @@ export default function Instruction() {
         item: {
           seed: Math.random(),
           timestamp: (new Date()).toISOString().slice(0,19),
-          duration: Math.abs((new Date()) - start_time),
+          duration: (new Date()) - start_time,
           filename: file.name,
           fileDatetime: `${dt}-${time}`,
           frequency,
