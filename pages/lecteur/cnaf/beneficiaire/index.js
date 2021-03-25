@@ -1,15 +1,15 @@
 import {useCallback, useEffect, useState, useReducer} from 'react'
 import Head from 'next/head'
 
-import Admin from '../../../components/admin'
-import ResponsiveCalendar from '../../../components/chart'
-import Layout from '../../../components/layout'
-import Mailer from '../../../components/mailer'
-import PendingMessage from '../../../components/pending'
-import styles from '../../../styles/Home.module.css'
+import Admin from '../../../../components/admin'
+import ResponsiveCalendar from '../../../../components/chart'
+import Layout from '../../../../components/layout'
+import Mailer from '../../../../components/mailer'
+import PendingMessage from '../../../../components/pending'
+import styles from '../../../../styles/Home.module.css'
 
-import { frequencyNames, typeNames } from '../../../lib/cnaf'
-import { initReducer, reducerFactory } from '../../../lib/historique'
+import { frequencyNames, typeNames } from '../../../../lib/cnaf'
+import { initReducer, reducerFactory } from '../../../../lib/historique'
 
 const reducer = reducerFactory('Test - CNAF - Bénéficiaire')
 const devMode = process.env.NODE_ENV == 'development'
@@ -137,7 +137,7 @@ export default function Beneficiaire() {
       <Admin category="Bénéficiaire" onRunRefresh={handleNewRuns}/>
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Lecteur de fichier « Bénéficiaire » de la CNAF
+          Lecteur de fichier<br/>« Bénéficiaire » de la CNAF
         </h1>
 
         <p className={styles.description}>

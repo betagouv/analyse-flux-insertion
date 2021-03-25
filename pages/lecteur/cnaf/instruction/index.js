@@ -1,14 +1,14 @@
 import {useCallback, useEffect, useState, useReducer} from 'react'
 import Head from 'next/head'
 
-import Admin from '../../../components/admin'
-import Layout from '../../../components/layout'
-import Mailer from '../../../components/mailer'
-import PendingMessage from '../../../components/pending'
-import styles from '../../../styles/Home.module.css'
+import Admin from '../../../../components/admin'
+import Layout from '../../../../components/layout'
+import Mailer from '../../../../components/mailer'
+import PendingMessage from '../../../../components/pending'
+import styles from '../../../../styles/Home.module.css'
 
-import { frequencyNames, typeNames } from '../../../lib/cnaf'
-import { initReducer, reducerFactory } from '../../../lib/historique'
+import { frequencyNames, typeNames } from '../../../../lib/cnaf'
+import { initReducer, reducerFactory } from '../../../../lib/historique'
 
 const reducer = reducerFactory('Test - CNAF - Instruction')
 const devMode = process.env.NODE_ENV == 'development'
@@ -131,7 +131,7 @@ export default function Instruction() {
       <Admin category="Instruction" onRunRefresh={handleNewRuns}/>
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Lecteur de fichier « Instruction » de la CNAF
+          Lecteur de fichier<br/>« Instruction » de la CNAF
         </h1>
 
         <p className={styles.description}>

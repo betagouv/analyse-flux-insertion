@@ -1,12 +1,12 @@
 import {useCallback, useEffect, useState, useReducer} from 'react'
 import Head from 'next/head'
 
-import Layout from '../../components/layout'
-import Mailer from '../../components/mailer'
-import PendingMessage from '../../components/pending'
-import styles from '../../styles/Home.module.css'
+import Layout from '../../../components/layout'
+import Mailer from '../../../components/mailer'
+import PendingMessage from '../../../components/pending'
+import styles from '../../../styles/Home.module.css'
 
-import { initReducer, reducerFactory } from '../../lib/historique'
+import { initReducer, reducerFactory } from '../../../lib/historique'
 
 const reducer = reducerFactory('Test - Pole Emploi')
 const devMode = process.env.NODE_ENV == 'development'
@@ -99,7 +99,7 @@ export default function Beneficiaire() {
 
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Lecteur de fichier de Pôle Emploi
+          Analyser les fichiers Pôle Emploi
         </h1>
 
         <p className={styles.description}>
