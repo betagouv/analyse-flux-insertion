@@ -103,17 +103,17 @@ export default function Beneficiaire() {
       setIsPending(false);
 
       const dates = items
-      .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
-      .reduce((accum, value) => {
-        accum[value] = (accum[value] || 0 ) + 1
-        return accum
-      }, {})
+        .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
+        .reduce((accum, value) => {
+          accum[value] = (accum[value] || 0 ) + 1
+          return accum
+        }, {})
 
       dispatchRuns({
         type: 'append',
         item: {
           seed: Math.random(),
-          timestamp: (new Date()).toISOString().slice(0, 19),
+          timestamp: (new Date()).toISOString().slice(0,19),
           filename: file.name,
           fileDatetime: `${dt}-${time}`,
           frequency,
@@ -123,7 +123,7 @@ export default function Beneficiaire() {
           total: items.length,
           fileSize: file.size,
           dates,
-        },
+        }
       })
     }
     reader.readAsText(file)
