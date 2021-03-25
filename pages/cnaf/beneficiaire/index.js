@@ -5,6 +5,7 @@ import Admin from '../../../components/admin'
 import ResponsiveCalendar from '../../../components/chart'
 import Layout from '../../../components/layout'
 import Mailer from '../../../components/mailer'
+import PendingMessage from '../../../components/pending'
 import styles from '../../../styles/Home.module.css'
 
 import { frequencyNames, typeNames } from '../../../lib/cnaf'
@@ -16,6 +17,8 @@ const devMode = process.env.NODE_ENV == 'development'
 export default function Beneficiaire() {
   const [devFile, setDevFile] = useState(null)
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
+  const [isPending, setIsPending] = useState(false);
+  const [fileSize, setFileSize] = useState(0);
   const [dateData, setDateData] = useState({
     index: undefined,
     data: [],
@@ -81,6 +84,10 @@ export default function Beneficiaire() {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
+    setFileSize(file.size);
+    setIsPending(true);
+    const start_time = new Date();
+
     var reader = new FileReader()
     reader.onload = function(event) {
       const parser = new DOMParser()
@@ -94,6 +101,8 @@ export default function Beneficiaire() {
 
       const items = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
 
+      setIsPending(false);
+
       const dates = items
         .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
         .reduce((accum, value) => {
@@ -105,7 +114,8 @@ export default function Beneficiaire() {
         type: 'append',
         item: {
           seed: Math.random(),
-          timestamp: (new Date()).toISOString().slice(0,19),
+          timestamp: (new Date()).toISOString().slice(0, 19),
+          duration: (new Date()) - start_time,
           filename: file.name,
           fileDatetime: `${dt}-${time}`,
           frequency,
@@ -134,6 +144,8 @@ export default function Beneficiaire() {
           Glissez et déposez le fichier CNAF à analyser ou sélectionnez le.<br/>
           <input type="file" onChange={selectHandler} multiple/>
         </p>
+
+        {isPending && <PendingMessage fileSize={fileSize}/>}
 
         <p className={styles.description}>
           Les opérations sont toutes réalisées sur votre ordinateur.<br/>
