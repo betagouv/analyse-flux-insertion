@@ -45,6 +45,7 @@ export default function Instruction() {
     }
     setFileSize(file.size);
     setIsPending(true);
+    const start_time = new Date();
 
     var reader = new FileReader()
     reader.onload = function(event) {
@@ -95,6 +96,7 @@ export default function Instruction() {
         item: {
           seed: Math.random(),
           timestamp: (new Date()).toISOString().slice(0,19),
+          duration: `${((Math.abs((new Date()) - start_time))/1000).toString()}s`,
           filename: file.name,
           fileDatetime: `${dt}-${time}`,
           frequency,

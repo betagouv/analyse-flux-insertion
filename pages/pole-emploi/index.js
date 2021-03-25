@@ -47,6 +47,8 @@ export default function Beneficiaire() {
     }
     setFileSize(file.size);
     setIsPending(true);
+    const start_time = new Date();
+
     var reader = new FileReader()
     reader.onload = function(event) {
       const parser = new DOMParser()
@@ -71,7 +73,8 @@ export default function Beneficiaire() {
         type: 'append',
         item: {
           seed: Math.random(),
-          timestamp: (new Date()).toISOString().slice(0,19),
+          timestamp: (new Date()).toISOString().slice(0, 19),
+          duration: `${((Math.abs((new Date()) - start_time))/1000).toString()}s`,
           filename: file.name,
           frequency,
           referenceDate,
