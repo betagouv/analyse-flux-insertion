@@ -17,6 +17,7 @@ export default function Instruction() {
   const [devFile, setDevFile] = useState(null)
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
   const [isPending, setIsPending] = useState(false);
+  const [fileSize, setFileSize] = useState(0);
 
   useEffect(() => {
     if(devFile) {
@@ -42,6 +43,7 @@ export default function Instruction() {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
+    setFileSize(file.size);
     setIsPending(true);
 
     var reader = new FileReader()

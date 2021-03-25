@@ -26,6 +26,7 @@ export default function Beneficiaire() {
   const [devFile, setDevFile] = useState(null)
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
   const [isPending, setIsPending] = useState(false);
+  const [fileSize, setFileSize] = useState(0);
 
   useEffect(() => {
     if(devFile) {
@@ -44,6 +45,7 @@ export default function Beneficiaire() {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
+    setFileSize(file.size);
     setIsPending(true);
     var reader = new FileReader()
     reader.onload = function(event) {
