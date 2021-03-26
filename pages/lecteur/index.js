@@ -18,14 +18,14 @@ export default function Home() {
 
         <div className={styles.grid}>
 
-          <Link href="/lecteur/cnaf">
+          <Link href="/cnaf">
             <a className={styles.card}>
               <h3>CNAF &rarr;</h3>
               <p>Flux instruction, bénéficiaire, données socio-professionnelles…</p>
             </a>
           </Link>
 
-          <Link href="/lecteur/pole-emploi">
+          <Link href="/pole-emploi">
             <a className={styles.card}>
             <h3>Pole Emploi &rarr;</h3>
             <p>Flux mensuel</p>

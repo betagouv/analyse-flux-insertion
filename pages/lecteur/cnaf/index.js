@@ -17,14 +17,14 @@ export default function Home() {
         </p>
 
         <div className={styles.grid}>
-          <Link href="/lecteur/cnaf/instruction">
+          <Link href="/cnaf/instruction">
             <a className={styles.card}>
               <h3>Instructions & DSP &rarr;</h3>
               <p>Envoyé quotidiennement</p>
             </a>
           </Link>
 
-          <Link href="/lecteur/cnaf/beneficiaire">
+          <Link href="/cnaf/beneficiaire">
             <a className={styles.card}>
               <h3>Stock bénéficiaires &rarr;</h3>
               <p>Envoyé quotidiennement & mensuellement</p>
