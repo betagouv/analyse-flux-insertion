@@ -1,9 +1,8 @@
 import {useCallback, useEffect, useState, useReducer} from 'react'
-import Head from 'next/head'
 
 import Layout from '../../../components/layout'
-import Mailer from '../../../components/mailer'
-import PendingMessage from '../../../components/pending'
+import FileHandler from '../../../components/file'
+import Footer from '../../../components/footer'
 import styles from '../../../styles/Home.module.css'
 
 import { initReducer, reducerFactory } from '../../../lib/historique'
@@ -33,13 +32,6 @@ export default function Beneficiaire() {
       fileHandler(devFile)
     }
   }, [devFile])
-
-  const selectHandler = useCallback((event) => {
-    for (var i = 0; i<event.target.files.length; i++) {
-      fileHandler(event.target.files[i])
-    }
-    event.target.value = ''
-  })
 
   const fileHandler = (file) => {
     if (devMode && file != devFile) {
@@ -102,21 +94,7 @@ export default function Beneficiaire() {
           Analyser les fichiers Pôle Emploi
         </h1>
 
-        <p className={styles.description}>
-          Glissez et déposez le fichier PE à analyser ou sélectionnez le.<br/>
-          <input type="file" onChange={selectHandler} multiple/>
-        </p>
-
-        {isPending && <PendingMessage fileSize={fileSize}/>}
-
-        <p className={styles.description}>
-          Les opérations sont toutes réalisées sur votre ordinateur.<br/>
-          Aucune donnée personnelle n'est transférée.
-        </p>
-
-        <p className={styles.description}>
-          <a href="#pourquoi">Pourquoi un tel lecteur&nbsp;?</a>
-        </p>
+        <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
 
         { runs && runs.length > 0 && (<>
           <h2 className={styles.subtitle}>
@@ -169,22 +147,14 @@ export default function Beneficiaire() {
           <button onClick={() => dispatchRuns({type: 'reset'})}>Vider l'historique</button>
         </>)}
 
-
-        <p className={styles.description}>
-          Un problème, une question ? Contactez-nous à <Mailer subject="Flux Pole Emploi">data.insertion@beta.gouv.fr</Mailer>
-        </p>
-
-        <h2 id="pourquoi" className={styles.subtitle}>
-          Pourquoi un lecteur de fichier Pôle Emploi&nbsp;?
-        </h2>
-
-        <p className={styles.text}>
-          Tous les départements n'ont pas les outils pour analyser les fichiers envoyés par Pôle Emploi. Cela peut ralentir et compliquer nos échanges.
-        </p>
-        <p className={styles.text}>
-          Avec cet outil, nous souhaitons permettre aux personnes qui ont accès à ces fichiers d'en extraire des statistiques générales sans avoir à mettre les mains dans le camboui elles-même.
-        </p>
-
+        <Footer
+          subject="Flux Pole Emploi"
+          pourquoi="Pourquoi un lecteur de fichier Pôle Emploi&nbsp;?"
+          text={<>
+            <p className={styles.text}>Tous les départements n'ont pas les outils pour analyser les fichiers envoyés par Pôle Emploi. Cela peut ralentir et compliquer nos échanges.</p>
+            <p className={styles.text}>Avec cet outil, nous souhaitons permettre aux personnes qui ont accès à ces fichiers d'en extraire des statistiques générales sans avoir à mettre les mains dans le camboui elles-même.</p>
+          </>}
+        />
       </main>
     </Layout>
   )

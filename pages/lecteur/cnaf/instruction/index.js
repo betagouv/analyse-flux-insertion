@@ -3,8 +3,8 @@ import Head from 'next/head'
 
 import Admin from '../../../../components/admin'
 import Layout from '../../../../components/layout'
-import Mailer from '../../../../components/mailer'
-import PendingMessage from '../../../../components/pending'
+import FileHandler from '../../../../components/file'
+import Footer from '../../../../components/footer'
 import styles from '../../../../styles/Home.module.css'
 
 import { frequencyNames, typeNames } from '../../../../lib/cnaf'
@@ -30,13 +30,6 @@ export default function Instruction() {
       type: 'reset',
       items: data
     })
-  })
-
-  const selectHandler = useCallback((event) => {
-    for (var i = 0; i<event.target.files.length; i++) {
-      fileHandler(event.target.files[i])
-    }
-    event.target.value = ''
   })
 
   const fileHandler = (file) => {
@@ -134,21 +127,7 @@ export default function Instruction() {
           Lecteur de fichier<br/>« Instruction » de la CNAF
         </h1>
 
-        <p className={styles.description}>
-          Glissez et déposez le fichier CNAF à analyser ou sélectionnez le.<br/>
-          <input type="file" onChange={selectHandler} multiple/>
-        </p>
-
-        {isPending && <PendingMessage fileSize={fileSize}/>}
-
-        <p className={styles.description}>
-          Les opérations sont toutes réalisées sur votre ordinateur.<br/>
-          Aucune donnée personnelle n'est transférée.
-        </p>
-
-        <p className={styles.description}>
-          <a href="#pourquoi">Pourquoi un tel lecteur&nbsp;?</a>
-        </p>
+        <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
 
         { runs && runs.length > 0 && (<>
           <h2 className={styles.subtitle}>
@@ -230,24 +209,15 @@ export default function Instruction() {
           <button onClick={() => dispatchRuns({type: 'reset'})}>Vider l'historique</button>
         </>)}
 
-        <p className={styles.description}>
-          Un problème, une question ? Contactez-nous à <Mailer subject="Flux instruction CNAF">data.insertion@beta.gouv.fr</Mailer>
-        </p>
-
-        <h2 id="pourquoi" className={styles.subtitle}>
-          Pourquoi un lecteur de fichier CNAF&nbsp;?
-        </h2>
-
-        <p className={styles.text}>
-          Tous les départements n'ont pas les outils pour analyser les fichiers envoyés par la CNAF. Cela peut ralentir et compliquer nos échanges.
-        </p>
-        <p className={styles.text}>
-          Avec cet outil, nous souhaitons permettre aux personnes qui ont accès à ces fichiers d'en extraire des statistiques générales sans avoir à mettre les mains dans le camboui elles-même.
-        </p>
-        <p className={styles.text}>
-          Aujourd'hui, nous cherchons à comprendre pourquoi pour la CNAF 90% des dossiers présents dans les fichiers quotidiens d'instructions contiennent des emails alors que ce taux est de 30% à 50% pour certains départements.
-        </p>
-
+        <Footer
+          subject="Flux instruction CNAF"
+          pourquoi="Pourquoi un lecteur de fichier CNAF&nbsp;?"
+          text={<>
+            <p className={styles.text}>Tous les départements n'ont pas les outils pour analyser les fichiers envoyés par la CNAF. Cela peut ralentir et compliquer nos échanges.</p>
+            <p className={styles.text}>Avec cet outil, nous souhaitons permettre aux personnes qui ont accès à ces fichiers d'en extraire des statistiques générales sans avoir à mettre les mains dans le camboui elles-même.</p>
+            <p className={styles.text}>Aujourd'hui, nous cherchons à comprendre pourquoi pour la CNAF 90% des dossiers présents dans les fichiers quotidiens d'instructions contiennent des emails alors que ce taux est de 30% à 50% pour certains départements.</p>
+          </>}
+        />
       </main>
     </Layout>
   )
