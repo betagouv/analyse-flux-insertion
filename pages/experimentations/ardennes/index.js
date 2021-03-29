@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import Layout from '../../../components/layout'
 import FileHandler from '../../../components/file'
 import Footer from '../../../components/footer'
+import LoginForm from '../../../components/login-form'
 import styles from '../../../styles/Home.module.css'
 
 import { getFormattedTime } from '../../../lib/cnaf'
@@ -18,6 +19,17 @@ export default function Ardennes() {
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
+  const [isLogged, setIsLogged] = useState(false);
+  const [token, setToken] = useState({
+          "tokenId": '',
+          uid: '',
+          client: ''
+        });
+
+  const onLogin = (tokenId, uid, client) => {
+    setToken({ ...token, tokenId: tokenId, uid: uid, client: client });
+    setIsLogged(true);
+  };
 
   useEffect(() => {
     if(devFile) {
@@ -93,51 +105,54 @@ export default function Ardennes() {
           Expérimentation Ardennes
         </h1>
 
-        {/* <div id="create-forms" className={styles.create}>
-          {!isLogged && <LoginForm onLogin={onLogin} />}
-          {isLogged && <CreateForm token={token} />}
-        </div> */}
+        {!isLogged &&
+          <div id="create-forms" className={styles.create}>
+            <LoginForm onLogin={onLogin} />
+          </div>
+        }
 
-        <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
+        { isLogged && <>
+          <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
 
-        { usersData && <>
-          <h2 className={styles.subtitle}>
-            Bénéficiaires RSA
-          </h2>
+          { usersData && <>
+            <h2 className={styles.subtitle}>
+              Bénéficiaires RSA
+            </h2>
 
-          { usersData.length == 0 &&
-            <p className={styles.description}>Aucun bénéficiaire dans le fichier</p>
-          }
-          { usersData.length > 0 &&
-            <table>
-              <thead>
-                <tr>
-                  <th rowSpan="2">Nom</th>
-                  <th rowSpan="2">Prénom</th>
-                  <th rowSpan="2">Mail</th>
-                  <th rowSpan="2">Téléphone</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersData.map((user, index) => (<tr key={index}>
-                  <td>{user["NOM"]}</td>
-                  <td>{user["PRENOM"]}</td>
-                  <td>{user["MAIL"]}</td>
-                  <td>{user["TELEPHONE"]}</td>
-                </tr>
-              ))}
-              </tbody>
-            </table>
-          }
-        </>}
-
-        <Footer
-          subject="Expérimentation Ardennes"
-          pourquoi="Quel est l'objectif de cette expérimentation&nbsp;?"
-          text={<>
-            <p className={styles.text}>Faciliter le travail des agents du département et tester l'utilisation de l'application RDV-Solidarités pour accélérer la prise du premier rendez-vous d'orientation.</p>
+            { usersData.length == 0 &&
+              <p className={styles.description}>Aucun bénéficiaire dans le fichier</p>
+            }
+            { usersData.length > 0 &&
+              <table>
+                <thead>
+                  <tr>
+                    <th rowSpan="2">Nom</th>
+                    <th rowSpan="2">Prénom</th>
+                    <th rowSpan="2">Mail</th>
+                    <th rowSpan="2">Téléphone</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usersData.map((user, index) => (<tr key={index}>
+                    <td>{user["NOM"]}</td>
+                    <td>{user["PRENOM"]}</td>
+                    <td>{user["MAIL"]}</td>
+                    <td>{user["TELEPHONE"]}</td>
+                  </tr>
+                ))}
+                </tbody>
+              </table>
+            }
           </>}
-        />
+
+          <Footer
+            subject="Expérimentation Ardennes"
+            pourquoi="Quel est l'objectif de cette expérimentation&nbsp;?"
+            text={<>
+              <p className={styles.text}>Faciliter le travail des agents du département et tester l'utilisation de l'application RDV-Solidarités pour accélérer la prise du premier rendez-vous d'orientation.</p>
+            </>}
+          />
+        </>}
       </main>
     </Layout>
   )
