@@ -1,11 +1,6 @@
-// Ca affiche la liste des personnes (avec des informations) et notamment "personne dans rdv-S ou pas", "est-ce qu’il y a rdv sur rdv-S"
-// Simplifier le travail d'Isabelle. More details to come...
-
 import {useCallback, useEffect, useState, useReducer} from 'react'
 import * as XLSX from 'xlsx';
 
-// import Admin from '../../../components/admin'
-// import ResponsiveCalendar from '../../../components/chart'
 import Layout from '../../../components/layout'
 import Mailer from '../../../components/mailer'
 import PendingMessage from '../../../components/pending'
