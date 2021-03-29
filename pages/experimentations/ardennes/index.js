@@ -52,37 +52,22 @@ export default function Ardennes() {
     const start_time = new Date();
 
     var reader = new FileReader()
-    reader.onload = function(event) {
-      const xls = XLSX.read(event.target.result, {type:'binary'})
-
+    reader.onload = function (event) {
+      const fileData = new Uint8Array(event.target.result);
+      const xls = XLSX.read(fileData, {type:'array'})
       /* Get first worksheet */
-      const ws = xls.Sheets[xls.SheetNames[0]];
-
-      // /* THEN = > Convert array of arrays to csv */
-      const data = XLSX.utils.sheet_to_csv(ws, {header:1});
-      // /* Update state */
-      console.log("Data>>>" + data);
-
-      /* ALTERNATIVE => Convert array to json*/
-      const dataParse = XLSX.utils.sheet_to_json(ws, {header:1});
+      const worksheet = xls.Sheets[xls.SheetNames[0]];
+      // Limiter la capture aux colonnes A-T
+      const range = XLSX.utils.decode_range(worksheet['!ref']);
+      range.s.c = 0; // 0 == XLSX.utils.decode_col("A")
+      range.e.c = 19; // 19 == XLSX.utils.decode_col("T")
+      const new_range = XLSX.utils.encode_range(range);
+      /* Convert array to json*/
+      const dataParse = XLSX.utils.sheet_to_json(worksheet, {blankrows: false, raw: false, range: new_range});
       console.log(dataParse);
 
-      // const desc = dom.getElementsByTagName('IdentificationFlux')[0]
-      // const frequency = desc.getElementsByTagName('TYPEFLUX')[0].innerHTML
-      // const type = desc.getElementsByTagName('NATFLUX')[0].innerHTML
-      // const dt = desc.getElementsByTagName('DTCREAFLUX')[0].innerHTML
-      // const time = desc.getElementsByTagName('HEUCREAFLUX')[0].innerHTML
-
-      // const items = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
 
       setIsPending(false);
-
-      // const dates = items
-      //   .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
-      //   .reduce((accum, value) => {
-      //     accum[value] = (accum[value] || 0 ) + 1
-      //     return accum
-      //   }, {})
 
       // dispatchRuns({
       //   type: 'append',
@@ -102,7 +87,7 @@ export default function Ardennes() {
       //   }
       // })
     }
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
   }
 
   const round = (value) => Math.round(value)
