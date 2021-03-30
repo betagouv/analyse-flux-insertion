@@ -1,4 +1,5 @@
-import {useEffect, useState, useReducer} from 'react'
+// Code avec orga fixe (Ardennes)
+import { useEffect, useState, useReducer } from 'react'
 import * as XLSX from 'xlsx';
 
 import Layout from '../../../components/layout'
@@ -15,8 +16,9 @@ const devMode = process.env.NODE_ENV == 'development'
 
 export default function Ardennes() {
   const [devFile, setDevFile] = useState(null)
-  const [usersData, setUsersData] = useState(null);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
+  const [usersData, setUsersData] = useState(null);
+  const [processedData, setProcessedData] = useState([]);
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [isLogged, setIsLogged] = useState(false);
@@ -24,18 +26,37 @@ export default function Ardennes() {
           "tokenId": '',
           uid: '',
           client: ''
-        });
+  });
+  const [promises, setPromises] = useState({
+    count: 0,
+    size: 0
+  });
+  const RDV_URL = process.env.NEXT_PUBLIC_RDV_DEMO_URL;
+  const path = '/users';
+  const url = `${RDV_URL}/api/v1${path}`;
+
 
   const onLogin = (tokenId, uid, client) => {
     setToken({ ...token, tokenId: tokenId, uid: uid, client: client });
     setIsLogged(true);
   };
 
+  // useEffect(() => {
+  //   if(devFile) {
+  //     fileHandler(devFile)
+  //   }
+  // }, [devFile])
   useEffect(() => {
-    if(devFile) {
-      fileHandler(devFile)
+    if (promises.size > 0 && promises.count == promises.size) {
+      setUsersData(processedData);
+      const outWorkbook = XLSX.utils.book_new();
+      const outWorksheet = XLSX.utils.json_to_sheet(processedData);
+      XLSX.utils.book_append_sheet(outWorkbook, outWorksheet, "DIVERGENCES");
+      // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[1]], "GRAPHIQUE");
+      // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[2]], "Selection COA");
+      XLSX.writeFile(outWorkbook, `ardennes_rsa_${getFormattedTime()}.xlsx`)
     }
-  }, [devFile])
+  }, [promises])
 
   const fileHandler = (file) => {
     if (devMode && file != devFile) {
@@ -58,30 +79,47 @@ export default function Ardennes() {
       const new_range = XLSX.utils.encode_range(range);
       /* Convert array to json*/
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { blankrows: false, raw: false, defval: null, range: new_range });
-      const processedData = jsonData.map((user, index) => {
-          if (user["Compte rdv"] != "O") {
-            // (pour plus tard) Appeller l'API pour vérifier la présence de l'utilisateur
-            // Créer l'utilisateur dans RDV Solidarités
-            // Vérifier succès, then
-            user["Compte rdv"] = "O";
-            user["RDV pris"] = "N";
-            return user;
-            // Récupérer le token d'invitation
-            // Envoyer le mail à la place d'Isabelle
-          } else if (user["RDV pris"] == "O") {
+      const test = jsonData.map(userData => {
+        if (userData["Compte rdv"] != "O") {
+          const user = { first_name: userData["PRENOM"].charAt(0).toUpperCase() + userData["PRENOM"].slice(1).toLowerCase(), last_name: userData["NOM"].charAt(0).toUpperCase() + userData["NOM"].slice(1).toLowerCase(), email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), organisation_ids: [1] };
+          fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              "access-token": token.tokenId,
+              uid: token.uid,
+              client: token.client
+            },
+            body: JSON.stringify(user)
+          })
+          // Compter le nombre de comptes créés et le nombre de fail ? Et logger pour les fails pour indiquer qui a fail ?
+
+          .then((response) => {
+            if (response.status === 200) {
+              userData["Compte rdv"] = "O";
+              userData["RDV pris"] = "N";
+            } else {
+              userData["Compte rdv"] = "N";
+              userData["RDV pris"] = "N";
+            }
+            setProcessedData([...processedData, userData]);
+            setPromises({ count: promises.count + 1, size: jsonData.length})
+            return userData;
+          })
+          // Récupérer le token d'invitation
+          // Envoyer le mail à la place d'Isabelle
+        } else {
+          if (userData["RDV pris"] != "O") {
             // Vérifier si l'utilisateur a pris un rdv
-            // si oui => user["RDV pris"] = "O";
-            // si non => user["RDV pris"] = "N";
-            return user;
+            // si oui => userData["RDV pris"] = "O";
+            // si non => userData["RDV pris"] = "N";
           }
-        })
-      setUsersData(processedData);
-      const outWorkbook = XLSX.utils.book_new();
-      const outWorksheet = XLSX.utils.json_to_sheet(processedData);
-      XLSX.utils.book_append_sheet(outWorkbook, outWorksheet, "DIVERGENCES");
-      XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[1]], "GRAPHIQUE");
-      XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[2]], "Selection COA");
-      XLSX.writeFile(outWorkbook, `ardennes_rsa_${getFormattedTime()}.xlsx`)
+          userData["RDV pris"] = "N";
+          setProcessedData([...processedData, userData]);
+          setPromises({ count: promises.count + 1, size: jsonData.length})
+          return userData;
+        }
+      })
 
       setIsPending(false);
 
@@ -131,6 +169,7 @@ export default function Ardennes() {
                     <th rowSpan="2">Mail</th>
                     <th rowSpan="2">Téléphone</th>
                   </tr>
+                  <tr></tr>
                 </thead>
                 <tbody>
                   {usersData.map((user, index) => (<tr key={index}>
