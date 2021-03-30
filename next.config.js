@@ -5,12 +5,11 @@ module.exports = {
   assetPrefix: isProduction ? '/analyse-flux-insertion' : '',
   exportPathMap: function(defaultPathMap) {
     return {
-      '/': { page: '/' },
-      '/cnaf': { page: '/cnaf' },
-      '/cnaf/instruction': { page: '/cnaf/instruction' },
-      '/cnaf/beneficiaire': { page: '/cnaf/beneficiaire' },
-      '/mentions-legales': { page: '/mentions-legales' },
-      '/pole-emploi': { page: '/pole-emploi' },
+      ...defaultPathMap,
+      '/cnaf': { page: '/lecteur/cnaf' },
+      '/cnaf/instruction': { page: '/lecteur/cnaf/instruction' },
+      '/cnaf/beneficiaire': { page: '/lecteur/cnaf/beneficiaire' },
+      '/pole-emploi': { page: '/lecteur/pole-emploi' },
     }
   }
 }

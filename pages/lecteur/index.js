@@ -1,7 +1,6 @@
-import Head from 'next/head'
-import Link from 'next/link'
 import Layout from '../../components/layout'
 import Mailer from '../../components/mailer'
+import Link from 'next/link'
 import styles from '../../styles/Home.module.css'
 
 export default function Home() {
@@ -9,35 +8,38 @@ export default function Home() {
     <Layout className={styles.container}>
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Analyser les flux CNAF
+          Lecteur de flux insertion
         </h1>
 
         <p className={styles.description}>
-          Quel flux souhaitez-vous analyser ?
+          Analyser les fichers échangés dans le secteur de l'insertion<br />
+          D'où proviennent les données&nbsp;?
         </p>
 
         <div className={styles.grid}>
-          <Link href="/cnaf/instruction">
+
+          <Link href="/cnaf">
             <a className={styles.card}>
-              <h3>Instructions & DSP &rarr;</h3>
-              <p>Envoyé quotidiennement</p>
+              <h3>CNAF &rarr;</h3>
+              <p>Flux instruction, bénéficiaire, données socio-professionnelles…</p>
             </a>
           </Link>
 
-          <Link href="/cnaf/beneficiaire">
+          <Link href="/pole-emploi">
             <a className={styles.card}>
-              <h3>Stock bénéficiaires &rarr;</h3>
-              <p>Envoyé quotidiennement & mensuellement</p>
+            <h3>Pole Emploi &rarr;</h3>
+            <p>Flux mensuel</p>
             </a>
           </Link>
 
-          <Mailer subject="Autre flux CNAF" className={styles.card}>
-            <h3>Autre chose &rarr;</h3>
+          <Mailer subject="Autre source de données" className={styles.card}>
+            <h3>Ailleurs &rarr;</h3>
             <p>Envoyez-nous un email.</p>
           </Mailer>
 
         </div>
       </main>
+
     </Layout>
   )
 }

@@ -8,32 +8,27 @@ export default function Home() {
     <Layout className={styles.container}>
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Analyser les fichers échangés dans le secteur de l'insertion
+          Bienvenue chez data.insertion
         </h1>
 
         <p className={styles.description}>
-          D'où proviennent les données&nbsp;?
+          Comment pouvons-nous vous aider&nbsp;?
         </p>
 
         <div className={styles.grid}>
-          <Link href="/cnaf">
+          <Link href="/lecteur">
             <a className={styles.card}>
-              <h3>CNAF &rarr;</h3>
-              <p>Flux instruction, bénéficiaire, données socio-professionnelles…</p>
+              <h3>Lecteur de flux &rarr;</h3>
+              <p>Analyse de flux CNAF ou Pole Emploi</p>
             </a>
           </Link>
 
-          <Link href="/pole-emploi">
+          <Link href="/experimentations">
             <a className={styles.card}>
-            <h3>Pole Emploi &rarr;</h3>
-            <p>Flux mensuel</p>
+              <h3>Expérimentations &rarr;</h3>
+              <p>Ardennes, RDV-Solidarités</p>
             </a>
           </Link>
-
-          <Mailer subject="Autre source de données" className={styles.card}>
-            <h3>Ailleurs &rarr;</h3>
-            <p>Envoyez-nous un email.</p>
-          </Mailer>
 
         </div>
       </main>

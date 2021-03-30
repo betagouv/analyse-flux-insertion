@@ -65,7 +65,8 @@
 .title,
 .subtitle,
 .description,
-.pending_warning {
+.pending_warning,
+.center {
   text-align: center;
 }
 
@@ -151,6 +152,35 @@
 
 .logo {
   height: 1em;
+}
+
+.create {
+  max-width: 800px;
+  margin: 50px auto;
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+}
+.create label {
+  text-align: left;
+  display: block;
+}
+.create input {
+  width: 100%;
+  padding: 6px 10px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  display: block;
+}
+.create button {
+  margin: 20px auto 0 auto;
+  background: #3571f1;
+  color: #fff;
+  border: 0;
+  padding: 12px;
+  border-radius: 3px;
+  cursor: pointer;
 }
 
 @media (max-width: 600px) {
