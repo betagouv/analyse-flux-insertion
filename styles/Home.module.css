@@ -65,7 +65,8 @@
 .title,
 .subtitle,
 .description,
-.pending_warning {
+.pending_warning,
+.center {
   text-align: center;
 }
 
