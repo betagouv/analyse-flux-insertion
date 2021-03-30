@@ -1,5 +1,4 @@
 import {useCallback, useEffect, useState, useReducer} from 'react'
-import Head from 'next/head'
 
 import Admin from '../../../../components/admin'
 import ResponsiveCalendar from '../../../../components/chart'
@@ -19,6 +18,7 @@ export default function Beneficiaire() {
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
+  const [rsaStats, setRsaStats] = useState(null);
   const [dateData, setDateData] = useState({
     index: undefined,
     data: [],
@@ -73,6 +73,19 @@ export default function Beneficiaire() {
     })
   })
 
+  const handleRsaStats = useCallback(event => showRsaStats(parseInt(event.target.dataset.index)))
+  const showRsaStats = useCallback(index => {
+    const source = runs[index]
+    console.log("check")
+    setRsaStats({
+      items: source.total,
+      itemsWithDroits: source.droits.total || 0,
+      itemsWithDevoirs: source.devoirs.total || 0,
+      itemsWithDroitsOk: source.droits[2] || 0,
+      itemsWithDevoirsOk: source.devoirs[1] || 0,
+    })
+  })
+
   const fileHandler = (file) => {
     if (devMode && file != devFile) {
       setDevFile(file)
@@ -92,6 +105,8 @@ export default function Beneficiaire() {
       const dt = desc.getElementsByTagName('DTCREAFLUX')[0].innerHTML
       const time = desc.getElementsByTagName('HEUCREAFLUX')[0].innerHTML
 
+// Afin d'accélérer la résolution des problèmes que vous rencontrez avec le flux CNAF (et notamment la chute du nombre de nouveaux brsa), nous proposons de faire évoluer le lecteur de flux : en premier lieu nous pouvons compter les dossiers pour lesquels la balise TOPPERSDRODEVORSA = 1 (soumis au droit et devoir) et la balise ETATDOSRSA = 2 (droit ouvert et versable).
+
       const items = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
 
       setIsPending(false);
@@ -100,6 +115,26 @@ export default function Beneficiaire() {
         .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
         .reduce((accum, value) => {
           accum[value] = (accum[value] || 0 ) + 1
+          return accum
+        }, {})
+
+      const devoirs = items
+        .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
+        .reduce((accum, value) => {
+          if (value[0]) {
+            accum[value[0].innerHTML] = (accum[value[0].innerHTML] || 0) + 1
+            accum["total"] = (accum["total"] || 0) + 1
+          }
+          return accum
+        }, {})
+
+      const droits = items
+        .map(i => i.getElementsByTagName('ETATDOSRSA'))
+        .reduce((accum, value) => {
+          if (value[0]) {
+            accum[value[0].innerHTML] = (accum[value[0].innerHTML] || 0) + 1
+            accum["total"] = (accum["total"] || 0) + 1
+          }
           return accum
         }, {})
 
@@ -118,6 +153,8 @@ export default function Beneficiaire() {
           total: items.length,
           fileSize: file.size,
           dates,
+          devoirs,
+          droits
         }
       })
     }
@@ -151,6 +188,7 @@ export default function Beneficiaire() {
                 <th rowSpan="2">Fréquence</th>
                 <th rowSpan="2">Nature</th>
                 <th rowSpan="2">Dossiers</th>
+                <th rowSpan="2">Droits & devoirs</th>
                 <th rowSpan="2">Détails</th>
                 <th rowSpan="2">Erreur</th>
               </tr>
@@ -167,6 +205,7 @@ export default function Beneficiaire() {
                 <td>{`${r.frequency} (${frequencyNames[r.frequency] || '?'})`}</td>
                 <td>{`${r.type} (${typeNames[r.type] || '?'})`}</td>
                 <td className={styles.numeric}>{r.total}</td>
+                <td className="shrink"><button onClick={handleRsaStats} data-index={i}>Afficher les stats</button></td>
                 <td className="shrink"><button onClick={handleDateHistogram} data-index={i}>Afficher par date</button></td>
                 <td>{r.error ? 'Oui' : 'Non'}</td>
               </tr>
@@ -174,8 +213,36 @@ export default function Beneficiaire() {
             </tbody>
           </table>
 
-          <button onClick={() => dispatchRuns({type: 'reset'})}>Vider l'historique</button>
+          <button onClick={() => dispatchRuns({type: 'reset'})} className={styles.margin_bottom}>Vider l'historique</button>
         </>)}
+
+
+        {rsaStats && <>
+          <h2 className={styles.subtitle}>
+            Statistiques droits & devoirs
+          </h2>
+
+          <table>
+            <thead>
+              <tr>
+                <th rowSpan="2">Dossiers</th>
+                <th rowSpan="2">Avec droits ouverts</th>
+                <th rowSpan="2">Avec devoirs ok</th>
+                <th rowSpan="2">Avec droits et devoirs ok</th>
+              </tr>
+              <tr>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className={styles.center}>{rsaStats.items}</td>
+                <td className={styles.center}>{rsaStats.itemsWithDroitsOk}</td>
+                <td className={styles.center}>{rsaStats.itemsWithDevoirsOk}</td>
+                <td className={styles.center}>{}</td>
+              </tr>
+            </tbody>
+          </table>
+        </>}
 
         {runs.length != 0 && (<p className={styles.text}>
         Vous pouvez accéder à une représentation graphique de la répartition dans les temps des demandes connues dans les fichiers analysés. Pour cela il faut cliquer sur le bouton « Afficher par date ».

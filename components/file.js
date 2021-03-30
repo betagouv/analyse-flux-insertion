@@ -17,7 +17,7 @@ export default function FileHandler({
 
   return (<>
     <p className={styles.description}>
-      Glissez et déposez le fichier CNAF à analyser ou sélectionnez le.<br/>
+      Glissez et déposez le fichier à analyser ou sélectionnez le.<br/>
       <input type="file" onChange={selectHandler} multiple/>
     </p>
 

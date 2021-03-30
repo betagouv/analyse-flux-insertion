@@ -62,6 +62,10 @@
   font-size: 3rem;
 }
 
+.margin_bottom {
+  margin-bottom: 20px !important;
+}
+
 .title,
 .subtitle,
 .description,
