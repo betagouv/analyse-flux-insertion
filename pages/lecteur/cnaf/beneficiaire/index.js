@@ -96,9 +96,7 @@ export default function Beneficiaire() {
       const items = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
 
       setIsPending(false);
-// Comme je ne sais pas si c'est clair pour toi je l'écris, il faut faire attention car TOPPERSDRODEVORSA est associé à des personnes et ETATDOSRSA aux dossiers. Il me semble important de séparer les décomptes pour éviter de sommer des choux et des carottes.
-
-// Comme dit par téléphone, j'aurais laisser ces stats dans le tableau initial ou bien dans un second tableau mais qui affiche les valeurs pour tous les fichiers testés.
+// Comme je ne sais pas si c'est clair pour toi je l'écris, il faut faire attention car TOPPERSDRODEVORSA est associé à des personnes et ETATDOSRSA aux dossiers
 
 // Note pour plus tard :
 
@@ -182,8 +180,8 @@ export default function Beneficiaire() {
                 <th rowSpan="2">Avec droits ouverts & versables</th>
                 <th rowSpan="2">Soumis droits & devoirs</th>
                 <th rowSpan="2">Droits versables + devoirs ok</th>
-                <th colSpan={keysDroits.length}>Valeurs balises Droits</th>
-                <th colSpan={keysDevoirs.length}>Valeurs balises Devoirs</th>
+                <th colSpan={keysDroits.length}>Valeurs balises ETATDOSRSA</th>
+                <th colSpan={keysDevoirs.length}>Valeurs balises TOPPERSDRODEVORSA</th>
               </tr>
               <tr>
                 {keysDroits.map(k => <th key={k} colSpan="1">{k}</th>)}
@@ -196,9 +194,9 @@ export default function Beneficiaire() {
                 <td className={styles.center}>{r.total}</td>
                 <td className={styles.center}>{r.droits[2] || 0}</td>
                 <td className={styles.center}>{r.devoirs[1] || 0}</td>
-                <td className={styles.center}>{}</td>
-                {Object.entries(r.droits).map(([k, v]) => <td key={`${r.timestamp}-${r.filename}-${r.seed}-0-${k}-droits`} className={styles.center}>{v}</td>)}
-                {Object.entries(r.devoirs).map(([k, v]) => <td key={`${r.timestamp}-${r.filename}-${r.seed}-0-${k}-devoirs`} className={styles.center}>{v}</td>)}
+                <td className={styles.center}>{ }</td>
+                {keysDroits.map(k => <td key={k} className={styles.center}>{r.droits[k] || 0}</td>)}
+                {keysDevoirs.map(k => <td key={k} className={styles.center}>{r.devoirs[k] || 0}</td>)}
               </tr>
             ))}
 
@@ -211,7 +209,8 @@ export default function Beneficiaire() {
           <div className={styles.legende}>
             <div className={styles.legende_box}>
               <p className={styles.bold}>Légende Droits</p>
-              <p>0=Nouvelle demande en attente de décision CG pour ouverture du droit<br/>
+              <p>Valeur balise ETATDOSRSA<br />
+              0=Nouvelle demande en attente de décision CG pour ouverture du droit<br/>
               1=Droit refusé<br/>
               2=Droit ouvert et versable<br/>
               3=Droit ouvert et suspendu (le montant du droit est calculable, mais l'existence du droit est remis en cause)<br/>
@@ -221,7 +220,8 @@ export default function Beneficiaire() {
             </div>
             <div className={styles.legende_box}>
               <p className={styles.bold}>Légende Devoirs</p>
-              <p>0=Personne pas soumise à droits et devoirs<br />
+              <p>Valeur balise TOPPERSDRODEVORSA<br />
+              0=Personne pas soumise à droits et devoirs<br />
               1=Personne soumise à droits et devoirs</p>
             </div>
           </div>
