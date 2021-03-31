@@ -76,7 +76,7 @@ export default function Beneficiaire() {
   const handleRsaStats = useCallback(event => showRsaStats(parseInt(event.target.dataset.index)))
   const showRsaStats = useCallback(index => {
     const source = runs[index]
-    console.log("check")
+
     setRsaStats({
       items: source.total,
       itemsWithDroits: source.droits.total || 0,
@@ -84,6 +84,7 @@ export default function Beneficiaire() {
       itemsWithDroitsOk: source.droits[2] || 0,
       itemsWithDevoirsOk: source.devoirs[1] || 0,
     })
+
   })
 
   const fileHandler = (file) => {
@@ -105,8 +106,6 @@ export default function Beneficiaire() {
       const dt = desc.getElementsByTagName('DTCREAFLUX')[0].innerHTML
       const time = desc.getElementsByTagName('HEUCREAFLUX')[0].innerHTML
 
-// Afin d'accélérer la résolution des problèmes que vous rencontrez avec le flux CNAF (et notamment la chute du nombre de nouveaux brsa), nous proposons de faire évoluer le lecteur de flux : en premier lieu nous pouvons compter les dossiers pour lesquels la balise TOPPERSDRODEVORSA = 1 (soumis au droit et devoir) et la balise ETATDOSRSA = 2 (droit ouvert et versable).
-
       const items = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
 
       setIsPending(false);
@@ -118,25 +117,21 @@ export default function Beneficiaire() {
           return accum
         }, {})
 
-      const devoirs = items
-        .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
-        .reduce((accum, value) => {
+      const processField = (accum, value) => {
           if (value[0]) {
             accum[value[0].innerHTML] = (accum[value[0].innerHTML] || 0) + 1
             accum["total"] = (accum["total"] || 0) + 1
           }
           return accum
-        }, {})
+        }
+
+      const devoirs = items
+        .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
+        .reduce(processField, {})
 
       const droits = items
         .map(i => i.getElementsByTagName('ETATDOSRSA'))
-        .reduce((accum, value) => {
-          if (value[0]) {
-            accum[value[0].innerHTML] = (accum[value[0].innerHTML] || 0) + 1
-            accum["total"] = (accum["total"] || 0) + 1
-          }
-          return accum
-        }, {})
+        .reduce(processField, {})
 
       dispatchRuns({
         type: 'append',
