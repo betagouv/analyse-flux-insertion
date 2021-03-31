@@ -87,7 +87,7 @@ export default function Beneficiaire() {
 
   const round = (value) => Math.round(value)
   return (
-    <Layout className={styles.container} fileHandler={FileHandler}>
+    <Layout className={styles.container} fileHandler={fileHandler}>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Analyser les fichiers Pôle Emploi

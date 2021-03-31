@@ -66,7 +66,7 @@ export default function Ardennes() {
   }
 
   return (
-    <Layout className={styles.container} fileHandler={FileHandler}>
+    <Layout className={styles.container} fileHandler={fileHandler}>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Expérimentation Ardennes
