@@ -220,9 +220,9 @@ export default function Beneficiaire() {
 
           <div className={styles.legende}>
             <div className={styles.legende_box}>
-              <p className={styles.bold}>Légende</p>
-              <p>Valeur balise ETATDOSRSA<br />
-              0=Nouvelle demande en attente de décision CG pour ouverture du droit<br/>
+              <p className={styles.legende_title}>Légende&nbsp;:</p>
+              <p className={styles.bold}>Valeur balise ETATDOSRSA</p>
+              <p>0=Nouvelle demande en attente de décision CG pour ouverture du droit<br/>
               1=Droit refusé<br/>
               2=Droit ouvert et versable<br/>
               3=Droit ouvert et suspendu (le montant du droit est calculable, mais l'existence du droit est remis en cause)<br/>
@@ -231,10 +231,12 @@ export default function Beneficiaire() {
               6=Droit clos sur mois antérieur ayant eu un contrôle dans le mois de référence pour une période antérieure.</p>
             </div>
             <div className={styles.legende_box}>
-              <p>&nbsp;</p>
-              <p>Valeur balise TOPPERSDRODEVORSA<br />
-              0=Personne pas soumise à droits et devoirs<br />
+              <p className={styles.bold}>Valeur balise TOPPERSDRODEVORSA</p>
+              <p>0=Personne pas soumise à droits et devoirs<br />
               1=Personne soumise à droits et devoirs</p>
+              <p>&nbsp;</p>
+              <p className={styles.bold}>Personnes soumises droits et devoirs dans foyer droit ouvert et versable</p>
+              <p>Nombre de personnes dont la balise TOPPERSDRODEVORSA=1 présents dans des foyers dont la balise ETATDOSRSA=2</p>
             </div>
           </div>
 

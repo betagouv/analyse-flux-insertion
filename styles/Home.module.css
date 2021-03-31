@@ -122,6 +122,11 @@
   margin: 0 3rem;
 }
 
+.legende_title {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
 .legende_box {
   width: 40%;
   /* margin: 0 1rem; */
