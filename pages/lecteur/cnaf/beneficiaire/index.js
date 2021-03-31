@@ -30,7 +30,7 @@ export default function Beneficiaire() {
   const handleNewRuns = useCallback(data => {
     dispatchRuns({
       type: 'reset',
-      items: data
+      folders: data
     })
   })
 
@@ -93,45 +93,57 @@ export default function Beneficiaire() {
       const dt = desc.getElementsByTagName('DTCREAFLUX')[0].innerHTML
       const time = desc.getElementsByTagName('HEUCREAFLUX')[0].innerHTML
 
-      const items = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
-
-      setIsPending(false);
-// Comme je ne sais pas si c'est clair pour toi je l'écris, il faut faire attention car TOPPERSDRODEVORSA est associé à des personnes et ETATDOSRSA aux dossiers
-
-// Note pour plus tard :
-
-// Il pourra être intéressant, dans une seconde itération de recouper TOPPERSDRODEVORSA avec ROLEPERS.
-
-// Il pourra être intéressant dans une troisième itération de faire le croisement entre ETATDOSRSA d'une part et ( TOPPERSDRODEVORSA / ROLEPERS ) d'autres part mais pour cela il faudra un tableau avec une ligne par valeur de ETATDOSRSA et une colonne par croisement ( TOPPERSDRODEVORSA / ROLEPERS ).
-      const dates = items
-        .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
-        .reduce((accum, value) => {
-          accum[value] = (accum[value] || 0 ) + 1
-          return accum
-        }, {})
-
       const processField = (accum, value) => {
           if (value[0]) {
             accum[value[0].innerHTML] = (accum[value[0].innerHTML] || 0) + 1
             accum["Total"] = (accum["Total"] || 0) + 1
           }
           return accum
-        }
+      }
 
-      const devoirs = items
-        .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
-        .reduce(processField, {})
-        console.log("Start")
-      let newKeysDevoirs = keysDevoirs.concat(Object.keys(devoirs));
-      newKeysDevoirs = Array.from(new Set(newKeysDevoirs))
-      setKeysDevoirs(newKeysDevoirs)
+      const folders = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
+      const people = new Array(...dom.getElementsByTagName('Personne'))
 
-      const droits = items
-      .map(i => i.getElementsByTagName('ETATDOSRSA'))
+      const dates = folders
+        .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
+        .reduce((accum, value) => {
+          accum[value] = (accum[value] || 0 ) + 1
+          return accum
+        }, {})
+
+      const droits = folders
+        .map(i => i.getElementsByTagName('ETATDOSRSA'))
         .reduce(processField, {})
       let newKeysDroits = keysDroits.concat(Object.keys(droits));
       newKeysDroits = Array.from(new Set(newKeysDroits))
       setKeysDroits(newKeysDroits)
+
+      const devoirs = people
+        .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
+        .reduce(processField, {})
+      let newKeysDevoirs = keysDevoirs.concat(Object.keys(devoirs));
+      newKeysDevoirs = Array.from(new Set(newKeysDevoirs))
+      setKeysDevoirs(newKeysDevoirs)
+
+      const foldersDroitsOuverts = folders
+        .filter(i => i.getElementsByTagName('ETATDOSRSA')[0].innerHTML == "2")
+        .map(i => {
+          let items = i.getElementsByTagName('Personne')
+          return [...items]
+        })
+        .flat()
+
+      const droitsEtDevoirs = foldersDroitsOuverts
+        .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
+        .reduce(processField, {})
+
+      setIsPending(false);
+
+// Note pour plus tard :
+
+// Il pourra être intéressant, dans une seconde itération de recouper TOPPERSDRODEVORSA avec ROLEPERS.
+
+// Il pourra être intéressant dans une troisième itération de faire le croisement entre ETATDOSRSA d'une part et ( TOPPERSDRODEVORSA / ROLEPERS ) d'autres part mais pour cela il faudra un tableau avec une ligne par valeur de ETATDOSRSA et une colonne par croisement ( TOPPERSDRODEVORSA / ROLEPERS ).
 
       dispatchRuns({
         type: 'append',
@@ -145,11 +157,13 @@ export default function Beneficiaire() {
           type,
           // WIP: OK sur Firefox KO sur Chrome
           error: dom.activeElement && dom.activeElement.nodeName == "parsererror",
-          total: items.length,
+          total: folders.length,
           fileSize: file.size,
+          people: people.length,
           dates,
           devoirs,
-          droits
+          droits,
+          droitsEtDevoirs
         }
       })
     }
@@ -175,26 +189,30 @@ export default function Beneficiaire() {
           <table className={styles.margin_side}>
             <thead>
               <tr>
-                <th rowSpan="2">Fichier</th>
-                <th rowSpan="2">Dossiers</th>
-                <th rowSpan="2">Avec droits ouverts & versables</th>
-                <th rowSpan="2">Soumis droits & devoirs</th>
-                <th rowSpan="2">Droits versables + devoirs ok</th>
+                <th rowSpan="2"></th>
+                <th colspan="2">Dossiers (Foyers)</th>
+                <th colspan="3">Personnes</th>
                 <th colSpan={keysDroits.length}>Valeurs balises ETATDOSRSA</th>
                 <th colSpan={keysDevoirs.length}>Valeurs balises TOPPERSDRODEVORSA</th>
               </tr>
               <tr>
+                <th colspan="1">Total</th>
+                <th colspan="1">Avec droits ouverts & versables</th>
+                <th colspan="1">Total</th>
+                <th colspan="1">Soumis droits & devoirs</th>
+                <th colspan="1">Droits & devoirs + droits ouverts</th>
                 {keysDroits.map(k => <th key={k} colSpan="1">{k}</th>)}
                 {keysDevoirs.map(k => <th key={k} colSpan="1">{k}</th>)}
               </tr>
             </thead>
             <tbody>
               {runs.map((r, i) => (<tr key={`${r.timestamp}-${r.filename}-${r.seed}-0` } style={ i == dateData.index ? {backgroundColor: 'lightgrey'}: {} }>
-                <td>{r.filename}</td>
+                <td>{runs.length - i}</td>
                 <td className={styles.center}>{r.total}</td>
                 <td className={styles.center}>{r.droits[2] || 0}</td>
+                <td className={styles.center}>{r.people}</td>
                 <td className={styles.center}>{r.devoirs[1] || 0}</td>
-                <td className={styles.center}>{ }</td>
+                <td className={styles.center}>{r.droitsEtDevoirs[1] || 0}</td>
                 {keysDroits.map(k => <td key={k} className={styles.center}>{r.droits[k] || 0}</td>)}
                 {keysDevoirs.map(k => <td key={k} className={styles.center}>{r.devoirs[k] || 0}</td>)}
               </tr>
@@ -233,8 +251,9 @@ export default function Beneficiaire() {
           <table className={styles.margin_side}>
             <thead>
               <tr>
-                <th rowSpan="2">Date</th>
+                <th rowSpan="2"></th>
                 <th rowSpan="2">Fichier</th>
+                <th rowSpan="2">Date</th>
                 { devMode && <th rowSpan="2">Taille</th>}
                 { devMode && <th rowSpan="2">Durée<br/>(en s)</th>}
                 <th rowSpan="2">Date du fichier</th>
@@ -249,8 +268,9 @@ export default function Beneficiaire() {
             </thead>
             <tbody>
               {runs.map((r, i) => (<tr key={`${r.timestamp}-${r.filename}-${r.seed}` } style={ i == dateData.index ? {backgroundColor: 'lightgrey'}: {} }>
-                <td>{r.timestamp}</td>
+                <td>{runs.length - i}</td>
                 <td>{r.filename}</td>
+                <td>{r.timestamp}</td>
                 { devMode && <td>{r.fileSize}</td>}
                 { devMode && <td>{!isNaN(r.duration) ? r.duration/1000 : "#N/A"}</td>}
                 <td>{r.fileDatetime}</td>
