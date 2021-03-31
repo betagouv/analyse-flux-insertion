@@ -112,6 +112,21 @@
     Bitstream Vera Sans Mono, Courier New, monospace;
 }
 
+.bold {
+  font-weight: bold;
+}
+
+.legende {
+  display: flex !important;
+  justify-content: space-around;
+  margin: 0 3rem;
+}
+
+.legende_box {
+  width: 40%;
+  /* margin: 0 1rem; */
+}
+
 .grid {
   display: flex;
   align-items: stretch;

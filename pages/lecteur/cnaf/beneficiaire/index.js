@@ -1,14 +1,14 @@
-import {useCallback, useEffect, useState, useReducer} from 'react'
-
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import Admin from '../../../../components/admin'
 import ResponsiveCalendar from '../../../../components/chart'
-import Layout from '../../../../components/layout'
 import FileHandler from '../../../../components/file'
 import Footer from '../../../../components/footer'
-import styles from '../../../../styles/Home.module.css'
-
+import Layout from '../../../../components/layout'
 import { frequencyNames, typeNames } from '../../../../lib/cnaf'
 import { initReducer, reducerFactory } from '../../../../lib/historique'
+import styles from '../../../../styles/Home.module.css'
+
+
 
 const reducer = reducerFactory('Test - CNAF - Bénéficiaire')
 const devMode = process.env.NODE_ENV == 'development'
@@ -18,7 +18,8 @@ export default function Beneficiaire() {
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
-  const [rsaStats, setRsaStats] = useState(null);
+  const [keysDroits, setKeysDroits] = useState([]);
+  const [keysDevoirs, setKeysDevoirs] = useState([]);
   const [dateData, setDateData] = useState({
     index: undefined,
     data: [],
@@ -73,20 +74,6 @@ export default function Beneficiaire() {
     })
   })
 
-  const handleRsaStats = useCallback(event => showRsaStats(parseInt(event.target.dataset.index)))
-  const showRsaStats = useCallback(index => {
-    const source = runs[index]
-
-    setRsaStats({
-      items: source.total,
-      itemsWithDroits: source.droits.total || 0,
-      itemsWithDevoirs: source.devoirs.total || 0,
-      itemsWithDroitsOk: source.droits[2] || 0,
-      itemsWithDevoirsOk: source.devoirs[1] || 0,
-    })
-
-  })
-
   const fileHandler = (file) => {
     if (devMode && file != devFile) {
       setDevFile(file)
@@ -109,7 +96,15 @@ export default function Beneficiaire() {
       const items = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
 
       setIsPending(false);
+// Comme je ne sais pas si c'est clair pour toi je l'écris, il faut faire attention car TOPPERSDRODEVORSA est associé à des personnes et ETATDOSRSA aux dossiers. Il me semble important de séparer les décomptes pour éviter de sommer des choux et des carottes.
 
+// Comme dit par téléphone, j'aurais laisser ces stats dans le tableau initial ou bien dans un second tableau mais qui affiche les valeurs pour tous les fichiers testés.
+
+// Note pour plus tard :
+
+// Il pourra être intéressant, dans une seconde itération de recouper TOPPERSDRODEVORSA avec ROLEPERS.
+
+// Il pourra être intéressant dans une troisième itération de faire le croisement entre ETATDOSRSA d'une part et ( TOPPERSDRODEVORSA / ROLEPERS ) d'autres part mais pour cela il faudra un tableau avec une ligne par valeur de ETATDOSRSA et une colonne par croisement ( TOPPERSDRODEVORSA / ROLEPERS ).
       const dates = items
         .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
         .reduce((accum, value) => {
@@ -120,7 +115,7 @@ export default function Beneficiaire() {
       const processField = (accum, value) => {
           if (value[0]) {
             accum[value[0].innerHTML] = (accum[value[0].innerHTML] || 0) + 1
-            accum["total"] = (accum["total"] || 0) + 1
+            accum["Total"] = (accum["Total"] || 0) + 1
           }
           return accum
         }
@@ -128,10 +123,17 @@ export default function Beneficiaire() {
       const devoirs = items
         .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
         .reduce(processField, {})
+        console.log("Start")
+      let newKeysDevoirs = keysDevoirs.concat(Object.keys(devoirs));
+      newKeysDevoirs = Array.from(new Set(newKeysDevoirs))
+      setKeysDevoirs(newKeysDevoirs)
 
       const droits = items
-        .map(i => i.getElementsByTagName('ETATDOSRSA'))
+      .map(i => i.getElementsByTagName('ETATDOSRSA'))
         .reduce(processField, {})
+      let newKeysDroits = keysDroits.concat(Object.keys(droits));
+      newKeysDroits = Array.from(new Set(newKeysDroits))
+      setKeysDroits(newKeysDroits)
 
       dispatchRuns({
         type: 'append',
@@ -169,10 +171,66 @@ export default function Beneficiaire() {
 
         { runs && runs.length > 0 && (<>
           <h2 className={styles.subtitle}>
+            Statistiques droits & devoirs
+          </h2>
+
+          <table className={styles.margin_side}>
+            <thead>
+              <tr>
+                <th rowSpan="2">Fichier</th>
+                <th rowSpan="2">Dossiers</th>
+                <th rowSpan="2">Avec droits ouverts & versables</th>
+                <th rowSpan="2">Soumis droits & devoirs</th>
+                <th rowSpan="2">Droits versables + devoirs ok</th>
+                <th colSpan={keysDroits.length}>Valeurs balises Droits</th>
+                <th colSpan={keysDevoirs.length}>Valeurs balises Devoirs</th>
+              </tr>
+              <tr>
+                {keysDroits.map(k => <th key={k} colSpan="1">{k}</th>)}
+                {keysDevoirs.map(k => <th key={k} colSpan="1">{k}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {runs.map((r, i) => (<tr key={`${r.timestamp}-${r.filename}-${r.seed}-0` } style={ i == dateData.index ? {backgroundColor: 'lightgrey'}: {} }>
+                <td>{r.filename}</td>
+                <td className={styles.center}>{r.total}</td>
+                <td className={styles.center}>{r.droits[2] || 0}</td>
+                <td className={styles.center}>{r.devoirs[1] || 0}</td>
+                <td className={styles.center}>{}</td>
+                {Object.entries(r.droits).map(([k, v]) => <td key={`${r.timestamp}-${r.filename}-${r.seed}-0-${k}-droits`} className={styles.center}>{v}</td>)}
+                {Object.entries(r.devoirs).map(([k, v]) => <td key={`${r.timestamp}-${r.filename}-${r.seed}-0-${k}-devoirs`} className={styles.center}>{v}</td>)}
+              </tr>
+            ))}
+
+              <tr>
+
+              </tr>
+            </tbody>
+          </table>
+
+          <div className={styles.legende}>
+            <div className={styles.legende_box}>
+              <p className={styles.bold}>Légende Droits</p>
+              <p>0=Nouvelle demande en attente de décision CG pour ouverture du droit<br/>
+              1=Droit refusé<br/>
+              2=Droit ouvert et versable<br/>
+              3=Droit ouvert et suspendu (le montant du droit est calculable, mais l'existence du droit est remis en cause)<br/>
+              4=Droit ouvert mais versement suspendu (le montant du droit n'est pas calculable)<br/>
+              5=Droit clos<br/>
+              6=Droit clos sur mois antérieur ayant eu un contrôle dans le mois de référence pour une période antérieure.</p>
+            </div>
+            <div className={styles.legende_box}>
+              <p className={styles.bold}>Légende Devoirs</p>
+              <p>0=Personne pas soumise à droits et devoirs<br />
+              1=Personne soumise à droits et devoirs</p>
+            </div>
+          </div>
+
+          <h2 className={styles.subtitle}>
             Historique
           </h2>
 
-          <table>
+          <table className={styles.margin_side}>
             <thead>
               <tr>
                 <th rowSpan="2">Date</th>
@@ -183,7 +241,6 @@ export default function Beneficiaire() {
                 <th rowSpan="2">Fréquence</th>
                 <th rowSpan="2">Nature</th>
                 <th rowSpan="2">Dossiers</th>
-                <th rowSpan="2">Droits & devoirs</th>
                 <th rowSpan="2">Détails</th>
                 <th rowSpan="2">Erreur</th>
               </tr>
@@ -200,7 +257,6 @@ export default function Beneficiaire() {
                 <td>{`${r.frequency} (${frequencyNames[r.frequency] || '?'})`}</td>
                 <td>{`${r.type} (${typeNames[r.type] || '?'})`}</td>
                 <td className={styles.numeric}>{r.total}</td>
-                <td className="shrink"><button onClick={handleRsaStats} data-index={i}>Afficher les stats</button></td>
                 <td className="shrink"><button onClick={handleDateHistogram} data-index={i}>Afficher par date</button></td>
                 <td>{r.error ? 'Oui' : 'Non'}</td>
               </tr>
@@ -210,34 +266,6 @@ export default function Beneficiaire() {
 
           <button onClick={() => dispatchRuns({type: 'reset'})} className={styles.margin_bottom}>Vider l'historique</button>
         </>)}
-
-
-        {rsaStats && <>
-          <h2 className={styles.subtitle}>
-            Statistiques droits & devoirs
-          </h2>
-
-          <table>
-            <thead>
-              <tr>
-                <th rowSpan="2">Dossiers</th>
-                <th rowSpan="2">Avec droits ouverts</th>
-                <th rowSpan="2">Avec devoirs ok</th>
-                <th rowSpan="2">Avec droits et devoirs ok</th>
-              </tr>
-              <tr>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className={styles.center}>{rsaStats.items}</td>
-                <td className={styles.center}>{rsaStats.itemsWithDroitsOk}</td>
-                <td className={styles.center}>{rsaStats.itemsWithDevoirsOk}</td>
-                <td className={styles.center}>{}</td>
-              </tr>
-            </tbody>
-          </table>
-        </>}
 
         {runs.length != 0 && (<p className={styles.text}>
         Vous pouvez accéder à une représentation graphique de la répartition dans les temps des demandes connues dans les fichiers analysés. Pour cela il faut cliquer sur le bouton « Afficher par date ».
