@@ -190,17 +190,13 @@ export default function Beneficiaire() {
             <thead>
               <tr>
                 <th rowSpan="2"></th>
-                <th colspan="2">Dossiers (Foyers)</th>
-                <th colspan="3">Personnes</th>
+                <th rowSpan="2">Dossiers (Foyers)</th>
+                <th rowSpan="2">Personnes</th>
                 <th colSpan={keysDroits.length}>Valeurs balises ETATDOSRSA</th>
                 <th colSpan={keysDevoirs.length}>Valeurs balises TOPPERSDRODEVORSA</th>
+                <th rowSpan="2">Personnes soumises droits et devoirs dans foyer droit ouvert et versable</th>
               </tr>
               <tr>
-                <th colspan="1">Total</th>
-                <th colspan="1">Avec droits ouverts & versables</th>
-                <th colspan="1">Total</th>
-                <th colspan="1">Soumis droits & devoirs</th>
-                <th colspan="1">Droits & devoirs + droits ouverts</th>
                 {keysDroits.map(k => <th key={k} colSpan="1">{k}</th>)}
                 {keysDevoirs.map(k => <th key={k} colSpan="1">{k}</th>)}
               </tr>
@@ -209,12 +205,10 @@ export default function Beneficiaire() {
               {runs.map((r, i) => (<tr key={`${r.timestamp}-${r.filename}-${r.seed}-0` } style={ i == dateData.index ? {backgroundColor: 'lightgrey'}: {} }>
                 <td>{runs.length - i}</td>
                 <td className={styles.center}>{r.total}</td>
-                <td className={styles.center}>{r.droits[2] || 0}</td>
                 <td className={styles.center}>{r.people}</td>
-                <td className={styles.center}>{r.devoirs[1] || 0}</td>
-                <td className={styles.center}>{r.droitsEtDevoirs[1] || 0}</td>
                 {keysDroits.map(k => <td key={k} className={styles.center}>{r.droits[k] || 0}</td>)}
                 {keysDevoirs.map(k => <td key={k} className={styles.center}>{r.devoirs[k] || 0}</td>)}
+                <td className={styles.center}>{r.droitsEtDevoirs[1] || 0}</td>
               </tr>
             ))}
 
@@ -226,7 +220,7 @@ export default function Beneficiaire() {
 
           <div className={styles.legende}>
             <div className={styles.legende_box}>
-              <p className={styles.bold}>Légende Droits</p>
+              <p className={styles.bold}>Légende</p>
               <p>Valeur balise ETATDOSRSA<br />
               0=Nouvelle demande en attente de décision CG pour ouverture du droit<br/>
               1=Droit refusé<br/>
@@ -237,7 +231,7 @@ export default function Beneficiaire() {
               6=Droit clos sur mois antérieur ayant eu un contrôle dans le mois de référence pour une période antérieure.</p>
             </div>
             <div className={styles.legende_box}>
-              <p className={styles.bold}>Légende Devoirs</p>
+              <p>&nbsp;</p>
               <p>Valeur balise TOPPERSDRODEVORSA<br />
               0=Personne pas soumise à droits et devoirs<br />
               1=Personne soumise à droits et devoirs</p>
