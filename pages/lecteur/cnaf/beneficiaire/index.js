@@ -126,7 +126,7 @@ export default function Beneficiaire() {
 
   const round = (value) => Math.round(value)
   return (
-    <Layout className={styles.container}>
+    <Layout className={styles.container} fileHandler={FileHandler}>
       <Admin category="Bénéficiaire" onRunRefresh={handleNewRuns}/>
       <main className={styles.main}>
         <h1 className={styles.title}>

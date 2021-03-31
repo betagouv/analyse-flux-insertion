@@ -119,8 +119,7 @@ export default function Instruction() {
 
   const round = (value) => Math.round(value)
   return (
-    <Layout className={styles.container}
-      fileHandler={fileHandler}>
+    <Layout className={styles.container} fileHandler={fileHandler}>
       <Admin category="Instruction" onRunRefresh={handleNewRuns}/>
       <main className={styles.main}>
         <h1 className={styles.title}>
