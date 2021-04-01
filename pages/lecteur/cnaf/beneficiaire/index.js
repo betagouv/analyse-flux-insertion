@@ -121,9 +121,8 @@ export default function Beneficiaire() {
       const devoirs = people
         .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
         .reduce(processField, {})
-      let newKeysDevoirs = keysDevoirs.concat(Object.keys(devoirs));
-      newKeysDevoirs = Array.from(new Set(newKeysDevoirs))
-      setKeysDevoirs(newKeysDevoirs)
+      const newKeysDevoirs = keysDevoirs.concat(Object.keys(devoirs));
+      setKeysDevoirs(Array.from(new Set(newKeysDevoirs)))
 
       const foldersDroitsOuverts = folders
         .filter(i => i.getElementsByTagName('ETATDOSRSA')[0].innerHTML == "2")
