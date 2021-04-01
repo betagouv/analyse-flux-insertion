@@ -138,12 +138,6 @@ export default function Beneficiaire() {
 
       setIsPending(false);
 
-// Note pour plus tard :
-
-// Il pourra être intéressant, dans une seconde itération de recouper TOPPERSDRODEVORSA avec ROLEPERS.
-
-// Il pourra être intéressant dans une troisième itération de faire le croisement entre ETATDOSRSA d'une part et ( TOPPERSDRODEVORSA / ROLEPERS ) d'autres part mais pour cela il faudra un tableau avec une ligne par valeur de ETATDOSRSA et une colonne par croisement ( TOPPERSDRODEVORSA / ROLEPERS ).
-
       dispatchRuns({
         type: 'append',
         item: {
@@ -169,7 +163,6 @@ export default function Beneficiaire() {
     reader.readAsText(file)
   }
 
-  const round = (value) => Math.round(value)
   return (
     <Layout className={styles.container}>
       <Admin category="Bénéficiaire" onRunRefresh={handleNewRuns}/>
