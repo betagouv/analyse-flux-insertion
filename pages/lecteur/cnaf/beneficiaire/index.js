@@ -115,14 +115,13 @@ export default function Beneficiaire() {
         .map(i => i.getElementsByTagName('ETATDOSRSA'))
         .reduce(processField, {})
       let newKeysDroits = keysDroits.concat(Object.keys(droits));
-      newKeysDroits = Array.from(new Set(newKeysDroits))
-      setKeysDroits(newKeysDroits)
+      setKeysDroits(Array.from(new Set(newKeysDroits)).sort())
 
       const devoirs = people
-        .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
-        .reduce(processField, {})
+      .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
+      .reduce(processField, {})
       const newKeysDevoirs = keysDevoirs.concat(Object.keys(devoirs));
-      setKeysDevoirs(Array.from(new Set(newKeysDevoirs)))
+      setKeysDevoirs(Array.from(new Set(newKeysDevoirs)).sort())
 
       const foldersDroitsOuverts = folders
         .filter(i => i.getElementsByTagName('ETATDOSRSA')[0].innerHTML == "2")
@@ -132,19 +131,19 @@ export default function Beneficiaire() {
         })
         .flat()
 
-      const droitsEtDevoirs = foldersDroitsOuverts
+        const droitsEtDevoirs = foldersDroitsOuverts
         .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
         .reduce(processField, {})
 
-      setIsPending(false);
+        setIsPending(false);
 
-      dispatchRuns({
-        type: 'append',
-        item: {
-          seed: Math.random(),
-          timestamp: (new Date()).toISOString().slice(0, 19),
-          duration: (new Date()) - start_time,
-          filename: file.name,
+        dispatchRuns({
+          type: 'append',
+          item: {
+            seed: Math.random(),
+            timestamp: (new Date()).toISOString().slice(0, 19),
+            duration: (new Date()) - start_time,
+            filename: file.name,
           fileDatetime: `${dt}-${time}`,
           frequency,
           type,
