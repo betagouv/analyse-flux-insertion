@@ -164,7 +164,7 @@ export default function Beneficiaire() {
   }
 
   return (
-    <Layout className={styles.container}>
+    <Layout className={styles.container} fileHandler={fileHandler}>
       <Admin category="Bénéficiaire" onRunRefresh={handleNewRuns}/>
       <main className={styles.main}>
         <h1 className={styles.title}>
