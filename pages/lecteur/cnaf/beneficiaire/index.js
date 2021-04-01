@@ -1,15 +1,14 @@
-import {useCallback, useEffect, useState, useReducer} from 'react'
-import Head from 'next/head'
-
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import Admin from '../../../../components/admin'
 import ResponsiveCalendar from '../../../../components/chart'
-import Layout from '../../../../components/layout'
 import FileHandler from '../../../../components/file'
 import Footer from '../../../../components/footer'
-import styles from '../../../../styles/Home.module.css'
-
+import Layout from '../../../../components/layout'
 import { frequencyNames, typeNames } from '../../../../lib/cnaf'
 import { initReducer, reducerFactory } from '../../../../lib/historique'
+import styles from '../../../../styles/Home.module.css'
+
+
 
 const reducer = reducerFactory('Test - CNAF - Bénéficiaire')
 const devMode = process.env.NODE_ENV == 'development'
@@ -19,6 +18,8 @@ export default function Beneficiaire() {
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
+  const [keysDroits, setKeysDroits] = useState([]);
+  const [keysDevoirs, setKeysDevoirs] = useState([]);
   const [dateData, setDateData] = useState({
     index: undefined,
     data: [],
@@ -29,7 +30,7 @@ export default function Beneficiaire() {
   const handleNewRuns = useCallback(data => {
     dispatchRuns({
       type: 'reset',
-      items: data
+      folders: data
     })
   })
 
@@ -92,16 +93,50 @@ export default function Beneficiaire() {
       const dt = desc.getElementsByTagName('DTCREAFLUX')[0].innerHTML
       const time = desc.getElementsByTagName('HEUCREAFLUX')[0].innerHTML
 
-      const items = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
+      const processField = (accum, value) => {
+          if (value[0]) {
+            accum[value[0].innerHTML] = (accum[value[0].innerHTML] || 0) + 1
+            accum["Total"] = (accum["Total"] || 0) + 1
+          }
+          return accum
+      }
 
-      setIsPending(false);
+      const folders = new Array(...dom.getElementsByTagName('InfosFoyerRSA'))
+      const people = new Array(...dom.getElementsByTagName('Personne'))
 
-      const dates = items
+      const dates = folders
         .map(i => i.getElementsByTagName('DTDEMRSA')[0].innerHTML)
         .reduce((accum, value) => {
           accum[value] = (accum[value] || 0 ) + 1
           return accum
         }, {})
+
+      const droits = folders
+        .map(i => i.getElementsByTagName('ETATDOSRSA'))
+        .reduce(processField, {})
+      let newKeysDroits = keysDroits.concat(Object.keys(droits));
+      newKeysDroits = Array.from(new Set(newKeysDroits))
+      setKeysDroits(newKeysDroits)
+
+      const devoirs = people
+        .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
+        .reduce(processField, {})
+      const newKeysDevoirs = keysDevoirs.concat(Object.keys(devoirs));
+      setKeysDevoirs(Array.from(new Set(newKeysDevoirs)))
+
+      const foldersDroitsOuverts = folders
+        .filter(i => i.getElementsByTagName('ETATDOSRSA')[0].innerHTML == "2")
+        .map(i => {
+          let items = i.getElementsByTagName('Personne')
+          return [...items]
+        })
+        .flat()
+
+      const droitsEtDevoirs = foldersDroitsOuverts
+        .map(i => i.getElementsByTagName('TOPPERSDRODEVORSA'))
+        .reduce(processField, {})
+
+      setIsPending(false);
 
       dispatchRuns({
         type: 'append',
@@ -115,16 +150,19 @@ export default function Beneficiaire() {
           type,
           // WIP: OK sur Firefox KO sur Chrome
           error: dom.activeElement && dom.activeElement.nodeName == "parsererror",
-          total: items.length,
+          total: folders.length,
           fileSize: file.size,
+          people: people.length,
           dates,
+          devoirs,
+          droits,
+          droitsEtDevoirs
         }
       })
     }
     reader.readAsText(file)
   }
 
-  const round = (value) => Math.round(value)
   return (
     <Layout className={styles.container} fileHandler={fileHandler}>
       <Admin category="Bénéficiaire" onRunRefresh={handleNewRuns}/>
@@ -137,14 +175,73 @@ export default function Beneficiaire() {
 
         { runs && runs.length > 0 && (<>
           <h2 className={styles.subtitle}>
+            Statistiques droits & devoirs
+          </h2>
+
+          <table className={styles.margin_side}>
+            <thead>
+              <tr>
+                <th rowSpan="2"></th>
+                <th rowSpan="2">Dossiers (Foyers)</th>
+                <th rowSpan="2">Personnes</th>
+                <th colSpan={keysDroits.length}>Valeurs balises ETATDOSRSA</th>
+                <th colSpan={keysDevoirs.length}>Valeurs balises TOPPERSDRODEVORSA</th>
+                <th rowSpan="2">Personnes soumises droits et devoirs dans foyer droit ouvert et versable</th>
+              </tr>
+              <tr>
+                {keysDroits.map(k => <th key={k} colSpan="1">{k}</th>)}
+                {keysDevoirs.map(k => <th key={k} colSpan="1">{k}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {runs.map((r, i) => (<tr key={`${r.timestamp}-${r.filename}-${r.seed}-0` } style={ i == dateData.index ? {backgroundColor: 'lightgrey'}: {} }>
+                <td>{runs.length - i}</td>
+                <td className={styles.center}>{r.total}</td>
+                <td className={styles.center}>{r.people}</td>
+                {keysDroits.map(k => <td key={k} className={styles.center}>{r.droits[k] || 0}</td>)}
+                {keysDevoirs.map(k => <td key={k} className={styles.center}>{r.devoirs[k] || 0}</td>)}
+                <td className={styles.center}>{r.droitsEtDevoirs[1] || 0}</td>
+              </tr>
+            ))}
+
+              <tr>
+
+              </tr>
+            </tbody>
+          </table>
+
+          <div className={styles.legende}>
+            <div className={styles.legende_box}>
+              <p className={styles.legende_title}>Légende&nbsp;:</p>
+              <p className={styles.bold}>Valeur balise ETATDOSRSA</p>
+              <p>0=Nouvelle demande en attente de décision CG pour ouverture du droit<br/>
+              1=Droit refusé<br/>
+              2=Droit ouvert et versable<br/>
+              3=Droit ouvert et suspendu (le montant du droit est calculable, mais l'existence du droit est remis en cause)<br/>
+              4=Droit ouvert mais versement suspendu (le montant du droit n'est pas calculable)<br/>
+              5=Droit clos<br/>
+              6=Droit clos sur mois antérieur ayant eu un contrôle dans le mois de référence pour une période antérieure.</p>
+            </div>
+            <div className={styles.legende_box}>
+              <p className={styles.bold}>Valeur balise TOPPERSDRODEVORSA</p>
+              <p>0=Personne pas soumise à droits et devoirs<br />
+              1=Personne soumise à droits et devoirs</p>
+              <p>&nbsp;</p>
+              <p className={styles.bold}>Personnes soumises droits et devoirs dans foyer droit ouvert et versable</p>
+              <p>Nombre de personnes dont la balise TOPPERSDRODEVORSA=1 présents dans des foyers dont la balise ETATDOSRSA=2</p>
+            </div>
+          </div>
+
+          <h2 className={styles.subtitle}>
             Historique
           </h2>
 
-          <table>
+          <table className={styles.margin_side}>
             <thead>
               <tr>
-                <th rowSpan="2">Date</th>
+                <th rowSpan="2"></th>
                 <th rowSpan="2">Fichier</th>
+                <th rowSpan="2">Date</th>
                 { devMode && <th rowSpan="2">Taille</th>}
                 { devMode && <th rowSpan="2">Durée<br/>(en s)</th>}
                 <th rowSpan="2">Date du fichier</th>
@@ -159,8 +256,9 @@ export default function Beneficiaire() {
             </thead>
             <tbody>
               {runs.map((r, i) => (<tr key={`${r.timestamp}-${r.filename}-${r.seed}` } style={ i == dateData.index ? {backgroundColor: 'lightgrey'}: {} }>
-                <td>{r.timestamp}</td>
+                <td>{runs.length - i}</td>
                 <td>{r.filename}</td>
+                <td>{r.timestamp}</td>
                 { devMode && <td>{r.fileSize}</td>}
                 { devMode && <td>{!isNaN(r.duration) ? r.duration/1000 : "#N/A"}</td>}
                 <td>{r.fileDatetime}</td>
@@ -174,7 +272,7 @@ export default function Beneficiaire() {
             </tbody>
           </table>
 
-          <button onClick={() => dispatchRuns({type: 'reset'})}>Vider l'historique</button>
+          <button onClick={() => dispatchRuns({type: 'reset'})} className={styles.margin_bottom}>Vider l'historique</button>
         </>)}
 
         {runs.length != 0 && (<p className={styles.text}>
