@@ -6,6 +6,7 @@ import FileHandler from '../../../components/file'
 import Footer from '../../../components/footer'
 import styles from '../../../styles/Home.module.css'
 
+import { getFormattedTime } from '../../../lib/cnaf'
 import { initReducer, reducerFactory } from '../../../lib/historique'
 
 const reducer = reducerFactory('Expérimentation Ardennes - CNAF - Bénéficiaire')
@@ -18,11 +19,20 @@ export default function Ardennes() {
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
 
-  // useEffect(() => {
-  //   if(devFile) {
-  //     fileHandler(devFile)
-  //   }
-  // }, [devFile])
+  useEffect(() => {
+    if(devFile) {
+      fileHandler(devFile)
+    }
+  }, [devFile])
+
+  const fileWriter = () => {
+    const outWorkbook = XLSX.utils.book_new();
+    const outWorksheet = XLSX.utils.json_to_sheet(usersData);
+    XLSX.utils.book_append_sheet(outWorkbook, outWorksheet, "DIVERGENCES");
+    // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[1]], "GRAPHIQUE");
+    // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[2]], "Selection COA");
+    XLSX.writeFile(outWorkbook, `ardennes_rsa_${getFormattedTime()}.xlsx`)
+  }
 
   const fileHandler = (file) => {
     if (devMode && file != devFile) {
@@ -44,11 +54,8 @@ export default function Ardennes() {
       range.e.c = 19; // 19 == XLSX.utils.decode_col("T")
       const new_range = XLSX.utils.encode_range(range);
       /* Convert array to json*/
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { blankrows: false, raw: false, defval: null, range: new_range });
-      const fileLength = jsonData.length;
-
-      const processedData = jsonData.map(userData => { return userData })
-      setUsersData(processedData);
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { blankrows: false, raw: false, defval: "", range: new_range });
+      setUsersData(jsonData);
       setIsPending(false);
 
       dispatchRuns({
@@ -58,7 +65,7 @@ export default function Ardennes() {
           duration: (new Date()) - start_time,
           filename: file.name,
           fileSize: file.size,
-          fileLines: fileLength
+          fileLines: jsonData.length
         }
       })
     }
@@ -82,7 +89,7 @@ export default function Ardennes() {
           { usersData.length == 0 &&
             <p className={styles.description}>Aucun bénéficiaire dans le fichier</p>
           }
-          { usersData.length > 0 &&
+          { usersData.length > 0 && <>
             <table>
               <thead>
                 <tr>
@@ -90,22 +97,29 @@ export default function Ardennes() {
                   <th rowSpan="2">Prénom</th>
                   <th rowSpan="2">Mail</th>
                   <th rowSpan="2">Téléphone</th>
-                  <th rowSpan="2">RDV-Solidarités</th>
+                  <th rowSpan="2">ID RDV-Solidarités</th>
                 </tr>
                 <tr></tr>
               </thead>
               <tbody>
                 {usersData.map((user, index) => (<tr key={index}>
-                  <td>{user["NOM"]}</td>
-                  <td>{user["PRENOM"]}</td>
-                  <td>{user["MAIL"]}</td>
-                  <td>{user["TELEPHONE"]}</td>
-                  <td className={styles.center}><button onClick={() => {alert("Fonctionnalité à venir !")}} >Créer un compte</button></td>
+                  <td className={styles.center}>{user["NOM"]}</td>
+                  <td className={styles.center}>{user["PRENOM"]}</td>
+                  <td className={styles.center}>{user["MAIL"]}</td>
+                  <td className={styles.center}>{user["TELEPHONE"]}</td>
+                  {user[Object.keys(user)[18]] != "" &&
+                    <td className={styles.center}>{user[Object.keys(user)[18]]}</td>
+                  }
+                  {user[Object.keys(user)[18]] === "" &&
+                    <td className={styles.center}><button onClick={() => {alert("Fonctionnalité à venir !")}} >Créer un compte</button></td>
+                  }
                 </tr>
               ))}
               </tbody>
             </table>
-          }
+
+            <button onClick={fileWriter}>Regénérer fichier</button>
+          </>}
         </>}
 
         <Footer
