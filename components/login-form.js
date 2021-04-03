@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import styles from '../styles/Home.module.css'
 
 export default function LoginForm({
   onLogin
@@ -60,9 +61,10 @@ export default function LoginForm({
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
+        className={styles.margin_bottom}
       />
-      {!isPending && <button>Se connecter</button>}
-      {isPending && <button>Connexion en cours</button>}
+      {!isPending && <button className={styles.button}>Se connecter</button>}
+      {isPending && <button className={styles.button}>Connexion en cours</button>}
     </form>
   )
 }

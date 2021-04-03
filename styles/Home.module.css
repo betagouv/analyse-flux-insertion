@@ -180,7 +180,7 @@
 
 .create {
   max-width: 800px;
-  margin: 50px auto;
+  margin: 50px auto 20px auto;
   text-align: center;
   display: flex;
   justify-content: space-between;
@@ -197,14 +197,20 @@
   box-sizing: border-box;
   display: block;
 }
-.create button {
-  margin: 20px auto 0 auto;
-  background: #3571f1;
-  color: #fff;
-  border: 0;
+.button {
+  margin: 0 auto 20px auto;
+  background: white;
+  color: black;
+  font-weight: bold;
+  border: 2px solid black;
   padding: 12px;
-  border-radius: 3px;
+  border-radius: 0px;
   cursor: pointer;
+}
+
+.button:hover {
+  background: black;
+  color: white;
 }
 
 @media (max-width: 600px) {

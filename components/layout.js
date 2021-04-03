@@ -33,11 +33,15 @@ export default function Layout({
       onDrop={dropHandler}>
       <Head>
         <title>{title}</title>
-        <link rel="icon" href="/favicon.ico" />
         <meta charSet="utf-8" />
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
       <header>
+        <Link href="/">
+          <a>
+            <h3>data.insertion</h3>
+          </a>
+        </Link>
         <nav>
           <Link href="/">
             <a>Accueil</a>
