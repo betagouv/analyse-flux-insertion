@@ -37,6 +37,11 @@ export default function Layout({
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
       <header>
+        <Link href="/">
+          <a>
+            <h3>data.insertion</h3>
+          </a>
+        </Link>
         <nav>
           <Link href="/">
             <a>Accueil</a>
