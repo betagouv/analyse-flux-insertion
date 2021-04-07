@@ -1,5 +1,4 @@
-// Pensez à vérifier l'ID de l'organisation
-// Rajouter toutes les infos sur l'utilisateur dispo dans le fichier d'Isabelle
+// Penser à vérifier l'ID de l'organisation
 // Récupérer le token d'invitation
 // Proposer d'envoyer le mail ?
 // Envoyer le mail à la place d'Isabelle ?
@@ -14,7 +13,7 @@ import Footer from '../../../components/footer'
 import LoginForm from '../../../components/login-form'
 import styles from '../../../styles/Home.module.css'
 
-import { getFormattedTime } from '../../../lib/cnaf'
+import { getFormattedTime, toDate } from '../../../lib/dates'
 import { initReducer, reducerFactory } from '../../../lib/historique'
 
 const reducer = reducerFactory('Expérimentation Ardennes - CNAF - Bénéficiaire')
@@ -52,7 +51,9 @@ export default function Ardennes() {
   }
 
   const createUser = (userData, i) => {
-    const user = { first_name: userData["PRENOM"].charAt(0).toUpperCase() + userData["PRENOM"].slice(1).toLowerCase(), last_name: userData["NOM"].charAt(0).toUpperCase() + userData["NOM"].slice(1).toLowerCase(), email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), organisation_ids: [1] };
+    const first_name = userData["PRENOM"].charAt(0).toUpperCase() + userData["PRENOM"].slice(1).toLowerCase()
+    const last_name = userData["NOM"].charAt(0).toUpperCase() + userData["NOM"].slice(1).toLowerCase()
+    const user = { first_name: first_name, last_name: last_name , email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), birth_date: toDate(userData["DATE DE\r\nNAISSANCE"]), address: userData["ADRESSE"],caisse_affiliation: "caf", affiliation_number: userData["N°CAF"], organisation_ids: [1] };
     fetch(url, {
       method: 'POST',
       headers: {
@@ -99,7 +100,7 @@ export default function Ardennes() {
     var reader = new FileReader()
     reader.onload = function (event) {
       const fileData = new Uint8Array(event.target.result);
-      const xls = XLSX.read(fileData, {type:'array'})
+      const xls = XLSX.read(fileData, {type:'array', cellDates: true, dateNF:'dd/mm/yyyy'})
       /* Get first worksheet */
       const worksheet = xls.Sheets[xls.SheetNames[0]];
       // Limiter la capture aux colonnes A-T
@@ -108,7 +109,7 @@ export default function Ardennes() {
       range.e.c = 19; // 19 == XLSX.utils.decode_col("T")
       const new_range = XLSX.utils.encode_range(range);
       /* Convert array to json*/
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { blankrows: false, raw: false, defval: "", range: new_range });
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, {blankrows: false, raw: false, defval: "", range: new_range });
       setUsersData(jsonData);
       setIsPending(false);
 
