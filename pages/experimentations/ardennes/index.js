@@ -1,9 +1,17 @@
+// Pensez à vérifier l'ID de l'organisation
+// Rajouter toutes les infos sur l'utilisateur dispo dans le fichier d'Isabelle
+// Récupérer le token d'invitation
+// Proposer d'envoyer le mail ?
+// Envoyer le mail à la place d'Isabelle ?
+// Mettre un cookie de session pour le login ?
+
 import { useEffect, useState, useReducer } from 'react'
 import * as XLSX from 'xlsx';
 
 import Layout from '../../../components/layout'
 import FileHandler from '../../../components/file'
 import Footer from '../../../components/footer'
+import LoginForm from '../../../components/login-form'
 import styles from '../../../styles/Home.module.css'
 
 import { getFormattedTime } from '../../../lib/cnaf'
@@ -18,6 +26,15 @@ export default function Ardennes() {
   const [usersData, setUsersData] = useState(null);
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
+  const [isLogged, setIsLogged] = useState(false);
+  const [token, setToken] = useState({
+          "tokenId": '',
+          uid: '',
+          client: ''
+  });
+  const RDV_URL = process.env.NEXT_PUBLIC_RDV_DEMO_URL;
+  const path = '/users';
+  const url = `${RDV_URL}/api/v1${path}`;
 
   useEffect(() => {
     if(devFile) {
@@ -33,6 +50,43 @@ export default function Ardennes() {
     // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[2]], "Selection COA");
     XLSX.writeFile(outWorkbook, `ardennes_rsa_${getFormattedTime()}.xlsx`)
   }
+
+  const createUser = (userData, i) => {
+    const user = { first_name: userData["PRENOM"].charAt(0).toUpperCase() + userData["PRENOM"].slice(1).toLowerCase(), last_name: userData["NOM"].charAt(0).toUpperCase() + userData["NOM"].slice(1).toLowerCase(), email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), organisation_ids: [1] };
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        "access-token": token.tokenId,
+        uid: token.uid,
+        client: token.client
+      },
+      body: JSON.stringify(user)
+    })
+
+    .then(response => response.json())
+    .then(result => {
+      let newUsersData = [...usersData];
+      if (result.success) {
+        newUsersData[i]["ID RDV"] = result.user.id
+        setUsersData(newUsersData);
+      } else if (result.errors.email && result.errors.email[0].error === "taken") {
+        newUsersData[i]["ID RDV"] = result.errors.email[0].id
+        setUsersData(newUsersData);
+        alert("Un compte associé à cet email existe déjà")
+      } else if (result.errors.email && result.errors.email[0].error === "invalid") {
+        alert("L'adresse mail n'est pas valide")
+      } else if (result.errors && result.errors[0]) {
+        alert(result.errors[0])
+      }
+    })
+    .catch(error => alert(error))
+  }
+
+  const onLogin = (tokenId, uid, client) => {
+    setToken({ ...token, tokenId: tokenId, uid: uid, client: client });
+    setIsLogged(true);
+  };
 
   const fileHandler = (file) => {
     if (devMode && file != devFile) {
@@ -79,46 +133,55 @@ export default function Ardennes() {
           Expérimentation Ardennes
         </h1>
 
-        <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
+        {!isLogged &&
+          <div id="create-forms" className={styles.create}>
+            <LoginForm onLogin={onLogin} />
+          </div>
+        }
 
-        { usersData && <>
-          <h2 className={styles.subtitle}>
-            Bénéficiaires RSA
-          </h2>
+        {isLogged && <>
+          <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
 
-          { usersData.length == 0 &&
-            <p className={styles.description}>Aucun bénéficiaire dans le fichier</p>
-          }
-          { usersData.length > 0 && <>
-            <table>
-              <thead>
-                <tr>
-                  <th rowSpan="2">Nom</th>
-                  <th rowSpan="2">Prénom</th>
-                  <th rowSpan="2">Mail</th>
-                  <th rowSpan="2">Téléphone</th>
-                  <th rowSpan="2">ID RDV-Solidarités</th>
-                </tr>
-                <tr></tr>
-              </thead>
-              <tbody>
-                {usersData.map((user, index) => (<tr key={index}>
-                  <td className={styles.center}>{user["NOM"]}</td>
-                  <td className={styles.center}>{user["PRENOM"]}</td>
-                  <td className={styles.center}>{user["MAIL"]}</td>
-                  <td className={styles.center}>{user["TELEPHONE"]}</td>
-                  {user[Object.keys(user)[18]] != "" &&
-                    <td className={styles.center}>{user[Object.keys(user)[18]]}</td>
-                  }
-                  {user[Object.keys(user)[18]] === "" &&
-                    <td className={styles.center}><button onClick={() => {alert("Fonctionnalité à venir !")}} >Créer un compte</button></td>
-                  }
-                </tr>
-              ))}
-              </tbody>
-            </table>
 
-            <button onClick={fileWriter}>Regénérer fichier</button>
+          { usersData && <>
+            <h2 className={styles.subtitle}>
+              Bénéficiaires RSA
+            </h2>
+
+            { usersData.length == 0 &&
+              <p className={styles.description}>Aucun bénéficiaire dans le fichier</p>
+            }
+            { usersData.length > 0 && <>
+              <table>
+                <thead>
+                  <tr>
+                    <th rowSpan="2">Nom</th>
+                    <th rowSpan="2">Prénom</th>
+                    <th rowSpan="2">Mail</th>
+                    <th rowSpan="2">Téléphone</th>
+                    <th rowSpan="2">ID RDV-Solidarités</th>
+                  </tr>
+                  <tr></tr>
+                </thead>
+                <tbody>
+                  {usersData.map((user, index) => (<tr key={index}>
+                    <td className={styles.center}>{user["NOM"]}</td>
+                    <td className={styles.center}>{user["PRENOM"]}</td>
+                    <td className={styles.center}>{user["MAIL"]}</td>
+                    <td className={styles.center}>{user["TELEPHONE"]}</td>
+                    {user["ID RDV"] != "" &&
+                      <td className={styles.center}>{user["ID RDV"]}</td>
+                    }
+                    {user["ID RDV"] == "" &&
+                      <td className={styles.center}><button onClick={() => createUser(user, index)} >Créer un compte</button></td>
+                    }
+                  </tr>
+                ))}
+                </tbody>
+              </table>
+
+              <button className={styles.button} onClick={fileWriter}>Regénérer fichier</button>
+            </>}
           </>}
         </>}
 
