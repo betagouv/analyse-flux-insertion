@@ -51,9 +51,9 @@ export default function Ardennes() {
   }
 
   const createUser = (userData, i) => {
-    const first_name = userData["PRENOM"].charAt(0).toUpperCase() + userData["PRENOM"].slice(1).toLowerCase()
-    const last_name = userData["NOM"].charAt(0).toUpperCase() + userData["NOM"].slice(1).toLowerCase()
-    const user = { first_name: first_name, last_name: last_name , email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), birth_date: toDate(userData["DATE DE\r\nNAISSANCE"]), address: userData["ADRESSE"],caisse_affiliation: "caf", affiliation_number: userData["N°CAF"], organisation_ids: [1] };
+    const address = userData["ADRESSE"] + " - " + userData["CODE\r\nPOSTAL"] + " " + userData["VILLE"]
+
+    const user = { first_name: userData["PRENOM"], last_name: userData["NOM"], email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), birth_date: toDate(userData["DATE DE\r\nNAISSANCE"]), address: address, caisse_affiliation: "caf", affiliation_number: userData["N°CAF"], organisation_ids: [1] };
     fetch(url, {
       method: 'POST',
       headers: {
@@ -68,7 +68,7 @@ export default function Ardennes() {
     .then(response => response.json())
     .then(result => {
       let newUsersData = [...usersData];
-      if (result.success) {
+      if (result.user) {
         newUsersData[i]["ID RDV"] = result.user.id
         setUsersData(newUsersData);
       } else if (result.errors.email && result.errors.email[0].error === "taken") {
