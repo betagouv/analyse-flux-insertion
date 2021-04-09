@@ -1,9 +1,3 @@
-// Penser à vérifier l'ID de l'organisation
-// Récupérer le token d'invitation
-// Proposer d'envoyer le mail ?
-// Envoyer le mail à la place d'Isabelle ?
-// Mettre un cookie de session pour le login ?
-
 import { useEffect, useState, useReducer } from 'react'
 import * as XLSX from 'xlsx';
 
@@ -13,7 +7,7 @@ import Footer from '../../../components/footer'
 import LoginForm from '../../../components/login-form'
 import styles from '../../../styles/Home.module.css'
 
-import { getFormattedTime, toDate } from '../../../lib/dates'
+import { getDateTimeString, stringToDate } from '../../../lib/dates'
 import { initReducer, reducerFactory } from '../../../lib/historique'
 
 const reducer = reducerFactory('Expérimentation Ardennes - CNAF - Bénéficiaire')
@@ -27,13 +21,12 @@ export default function Ardennes() {
   const [fileSize, setFileSize] = useState(0);
   const [isLogged, setIsLogged] = useState(false);
   const [token, setToken] = useState({
-          "tokenId": '',
-          uid: '',
-          client: ''
+    "tokenId": '',
+    uid: '',
+    client: ''
   });
-  const RDV_URL = process.env.NEXT_PUBLIC_RDV_DEMO_URL;
-  const path = '/users';
-  const url = `${RDV_URL}/api/v1${path}`;
+  const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_DEMO_URL;
+  const createUsersUrl = `${RDV_SOLIDARITES_URL}/api/v1/users`;
 
   useEffect(() => {
     if(devFile) {
@@ -47,14 +40,15 @@ export default function Ardennes() {
     XLSX.utils.book_append_sheet(outWorkbook, outWorksheet, "DIVERGENCES");
     // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[1]], "GRAPHIQUE");
     // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[2]], "Selection COA");
-    XLSX.writeFile(outWorkbook, `ardennes_rsa_${getFormattedTime()}.xlsx`)
+    XLSX.writeFile(outWorkbook, `ardennes_rsa_${getDateTimeString()}.xlsx`)
   }
 
-  const createUser = (userData, i) => {
+  const createUser = (userData, userIndex) => {
+    const organisation_ids = [1]
     const address = userData["ADRESSE"] + " - " + userData["CODE\r\nPOSTAL"] + " " + userData["VILLE"]
 
-    const user = { first_name: userData["PRENOM"], last_name: userData["NOM"], email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), birth_date: toDate(userData["DATE DE\r\nNAISSANCE"]), address: address, caisse_affiliation: "caf", affiliation_number: userData["N°CAF"], organisation_ids: [1] };
-    fetch(url, {
+    const user = { first_name: userData["PRENOM"], last_name: userData["NOM"], email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), birth_date: stringToDate(userData["DATE DE\r\nNAISSANCE"]), address: address, caisse_affiliation: "caf", affiliation_number: userData["N°CAF"], organisation_ids: organisation_ids };
+    fetch(createUsersUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -65,23 +59,23 @@ export default function Ardennes() {
       body: JSON.stringify(user)
     })
 
-    .then(response => response.json())
-    .then(result => {
-      let newUsersData = [...usersData];
-      if (result.user) {
-        newUsersData[i]["ID RDV"] = result.user.id
-        setUsersData(newUsersData);
-      } else if (result.errors.email && result.errors.email[0].error === "taken") {
-        newUsersData[i]["ID RDV"] = result.errors.email[0].id
-        setUsersData(newUsersData);
-        alert("Un compte associé à cet email existe déjà")
-      } else if (result.errors.email && result.errors.email[0].error === "invalid") {
-        alert("L'adresse mail n'est pas valide")
-      } else if (result.errors && result.errors[0]) {
-        alert(result.errors[0])
-      }
-    })
-    .catch(error => alert(error))
+      .then(response => response.json())
+      .then(result => {
+        let newUsersData = [...usersData];
+        if (result.user) {
+          newUsersData[userIndex]["ID RDV"] = result.user.id
+          setUsersData(newUsersData);
+        } else if (result.errors.email && result.errors.email[0].error === "taken") {
+          newUsersData[userIndex]["ID RDV"] = result.errors.email[0].id
+          setUsersData(newUsersData);
+          alert("Un compte associé à cet email existe déjà")
+        } else if (result.errors.email && result.errors.email[0].error === "invalid") {
+          alert("L'adresse mail n'est pas valide")
+        } else if (result.errors && result.errors[0]) {
+          alert(result.errors[0])
+        }
+      })
+      .catch(error => alert(error))
   }
 
   const onLogin = (tokenId, uid, client) => {
@@ -144,15 +138,15 @@ export default function Ardennes() {
           <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
 
 
-          { usersData && <>
+          {usersData && <>
             <h2 className={styles.subtitle}>
               Bénéficiaires RSA
             </h2>
 
-            { usersData.length == 0 &&
+            {usersData.length == 0 &&
               <p className={styles.description}>Aucun bénéficiaire dans le fichier</p>
             }
-            { usersData.length > 0 && <>
+            {usersData.length > 0 && <>
               <table>
                 <thead>
                   <tr>
