@@ -36,7 +36,7 @@ export default function Beneficiaire() {
 
   useEffect(() => {
     if(devFile) {
-      fileHandler(devFile)
+      handleFile(devFile)
     }
   }, [devFile])
 
@@ -74,7 +74,7 @@ export default function Beneficiaire() {
     })
   })
 
-  const fileHandler = (file) => {
+  const handleFile = (file) => {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
@@ -163,14 +163,14 @@ export default function Beneficiaire() {
   }
 
   return (
-    <Layout className={styles.container} fileHandler={fileHandler}>
+    <Layout className={styles.container} handleFile={handleFile}>
       <Admin category="Bénéficiaire" onRunRefresh={handleNewRuns}/>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Lecteur de fichier<br/>« Bénéficiaire » de la CNAF
         </h1>
 
-        <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
+        <FileHandler handleFile={handleFile} isPending={isPending} fileSize={fileSize} />
 
         { runs && runs.length > 0 && (<>
           <h2 className={styles.subtitle}>

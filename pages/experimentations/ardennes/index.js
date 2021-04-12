@@ -30,11 +30,11 @@ export default function Ardennes() {
 
   useEffect(() => {
     if(devFile) {
-      fileHandler(devFile)
+      handleFile(devFile)
     }
   }, [devFile])
 
-  const fileWriter = () => {
+  const writeFile = () => {
     const outWorkbook = XLSX.utils.book_new();
     const outWorksheet = XLSX.utils.json_to_sheet(usersData);
     XLSX.utils.book_append_sheet(outWorkbook, outWorksheet, "DIVERGENCES");
@@ -77,12 +77,12 @@ export default function Ardennes() {
       .catch(error => alert(error))
   }
 
-  const onLogin = (tokenId, uid, client) => {
+  const logIn = (tokenId, uid, client) => {
     setToken({ ...token, tokenId: tokenId, uid: uid, client: client });
     setIsLogged(true);
   };
 
-  const fileHandler = (file) => {
+  const handleFile = (file) => {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
@@ -121,7 +121,7 @@ export default function Ardennes() {
   }
 
   return (
-    <Layout className={styles.container} fileHandler={fileHandler}>
+    <Layout className={styles.container} handleFile={handleFile}>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Expérimentation Ardennes
@@ -129,12 +129,12 @@ export default function Ardennes() {
 
         {!isLogged &&
           <div className={styles.create}>
-            <LoginForm onLogin={onLogin} />
+            <LoginForm logIn={logIn} />
           </div>
         }
 
         {isLogged && <>
-          <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
+          <FileHandler handleFile={handleFile} isPending={isPending} fileSize={fileSize} />
 
 
           {usersData && <>
@@ -174,7 +174,7 @@ export default function Ardennes() {
                 </tbody>
               </table>
 
-              <button className={styles.button} onClick={fileWriter}>Regénérer fichier</button>
+              <button className={styles.button} onClick={writeFile}>Regénérer fichier</button>
             </>}
           </>}
         </>}

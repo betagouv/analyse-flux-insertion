@@ -29,11 +29,11 @@ export default function Beneficiaire() {
 
   useEffect(() => {
     if(devFile) {
-      fileHandler(devFile)
+      handleFile(devFile)
     }
   }, [devFile])
 
-  const fileHandler = (file) => {
+  const handleFile = (file) => {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
@@ -87,13 +87,13 @@ export default function Beneficiaire() {
 
   const round = (value) => Math.round(value)
   return (
-    <Layout className={styles.container} fileHandler={fileHandler}>
+    <Layout className={styles.container} handleFile={handleFile}>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Analyser les fichiers Pôle Emploi
         </h1>
 
-        <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
+        <FileHandler handleFile={handleFile} isPending={isPending} fileSize={fileSize} />
 
         { runs && runs.length > 0 && (<>
           <h2 className={styles.subtitle}>

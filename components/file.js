@@ -4,13 +4,13 @@ import styles from '../styles/Home.module.css'
 import PendingMessage from './pending'
 
 export default function FileHandler({
-  fileHandler,
+  handleFile,
   isPending,
   fileSize
 }) {
   const selectHandler = useCallback((event) => {
     for (var i = 0; i < event.target.files.length; i++) {
-      fileHandler(event.target.files[i])
+      handleFile(event.target.files[i])
     }
     event.target.value = ''
   })

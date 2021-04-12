@@ -8,7 +8,7 @@ import Mailer from './mailer'
 export default function Layout({
   children,
   title = 'Analyser les flux de données dans l\'insertion',
-  fileHandler,
+  handleFile,
 }) {
   const defaultColor = 'white'
   const [color, setColor] = useState(defaultColor)
@@ -22,7 +22,7 @@ export default function Layout({
     event.preventDefault()
     setColor(defaultColor)
     for (var i = 0; i<event.dataTransfer.files.length; i++) {
-      fileHandler(event.dataTransfer.files[i])
+      handleFile(event.dataTransfer.files[i])
     }
   })
 
