@@ -25,7 +25,7 @@ export default function Ardennes() {
     uid: '',
     client: ''
   });
-  const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_DEMO_URL;
+  const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
   const createUsersUrl = `${RDV_SOLIDARITES_URL}/api/v1/users`;
 
   useEffect(() => {
