@@ -21,7 +21,7 @@ export default function Instruction() {
 
   useEffect(() => {
     if(devFile) {
-      fileHandler(devFile)
+      handleFile(devFile)
     }
   }, [devFile])
 
@@ -32,7 +32,7 @@ export default function Instruction() {
     })
   })
 
-  const fileHandler = (file) => {
+  const handleFile = (file) => {
     if (devMode && file != devFile) {
       setDevFile(file)
     }
@@ -119,14 +119,14 @@ export default function Instruction() {
 
   const round = (value) => Math.round(value)
   return (
-    <Layout className={styles.container} fileHandler={fileHandler}>
+    <Layout className={styles.container} handleFile={handleFile}>
       <Admin category="Instruction" onRunRefresh={handleNewRuns}/>
       <main className={styles.main}>
         <h1 className={styles.title}>
           Lecteur de fichier<br/>« Instruction » de la CNAF
         </h1>
 
-        <FileHandler fileHandler={fileHandler} isPending={isPending} fileSize={fileSize} />
+        <FileHandler handleFile={handleFile} isPending={isPending} fileSize={fileSize} />
 
         { runs && runs.length > 0 && (<>
           <h2 className={styles.subtitle}>

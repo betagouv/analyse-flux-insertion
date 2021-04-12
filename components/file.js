@@ -4,13 +4,13 @@ import styles from '../styles/Home.module.css'
 import PendingMessage from './pending'
 
 export default function FileHandler({
-  fileHandler,
+  handleFile,
   isPending,
   fileSize
 }) {
-  const selectHandler = useCallback((event) => {
+  const handleSelect = useCallback((event) => {
     for (var i = 0; i < event.target.files.length; i++) {
-      fileHandler(event.target.files[i])
+      handleFile(event.target.files[i])
     }
     event.target.value = ''
   })
@@ -18,7 +18,7 @@ export default function FileHandler({
   return (<>
     <p className={styles.description}>
       Glissez et déposez le fichier à analyser ou sélectionnez le.<br/>
-      <input type="file" onChange={selectHandler} multiple/>
+      <input type="file" onChange={handleSelect} multiple/>
     </p>
 
     {isPending && <PendingMessage fileSize={fileSize}/>}

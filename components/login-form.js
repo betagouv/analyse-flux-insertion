@@ -2,7 +2,7 @@ import { useState } from 'react'
 import styles from '../styles/Home.module.css'
 
 export default function LoginForm({
-  onLogin
+  handleLogin
 }) {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +27,7 @@ export default function LoginForm({
     .then((response) => {
       setIsPending(false);
       if (response.ok) {
-        onLogin(response.headers.get("access-token"), response.headers.get("uid"), response.headers.get("client"));
+        handleLogin(response.headers.get("access-token"), response.headers.get("uid"), response.headers.get("client"));
         return response.json();
       } else {
         alert(`Aucun compte n'est rattaché à ce couple email/mot de passe. Merci de vérifier vos identifiants.`);
