@@ -129,7 +129,7 @@ export default function Ardennes() {
 
         {!isLogged &&
           <div className={styles.create}>
-            <LoginForm onLogin={handleLogin} />
+            <LoginForm handleLogin={handleLogin} />
           </div>
         }
 
