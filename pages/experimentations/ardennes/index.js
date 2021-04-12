@@ -44,10 +44,9 @@ export default function Ardennes() {
   }
 
   const createUser = (userData, userIndex) => {
-    const organisation_ids = [1]
     const address = userData["ADRESSE"] + " - " + userData["CODE\r\nPOSTAL"] + " " + userData["VILLE"]
 
-    const user = { first_name: userData["PRENOM"], last_name: userData["NOM"], email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), birth_date: stringToDate(userData["DATE DE\r\nNAISSANCE"]), address: address, caisse_affiliation: "caf", affiliation_number: userData["N°CAF"], organisation_ids: organisation_ids };
+    const user = { first_name: userData["PRENOM"], last_name: userData["NOM"], email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), birth_date: stringToDate(userData["DATE DE\r\nNAISSANCE"]), address: address, caisse_affiliation: "caf", affiliation_number: userData["N°CAF"], organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO] };
     fetch(createUsersUrl, {
       method: 'POST',
       headers: {
@@ -129,7 +128,7 @@ export default function Ardennes() {
         </h1>
 
         {!isLogged &&
-          <div id="create-forms" className={styles.create}>
+          <div className={styles.create}>
             <LoginForm onLogin={onLogin} />
           </div>
         }
