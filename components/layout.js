@@ -13,12 +13,12 @@ export default function Layout({
   const defaultColor = 'white'
   const [color, setColor] = useState(defaultColor)
 
-  const dragHandler = color => useCallback((event) => {
+  const handleDrag = color => useCallback((event) => {
     setColor(color)
     event.preventDefault() // Prevent file from being open on drop
   })
 
-  const dropHandler = useCallback((event) => {
+  const handleDrop = useCallback((event) => {
     event.preventDefault()
     setColor(defaultColor)
     for (var i = 0; i<event.dataTransfer.files.length; i++) {
@@ -28,9 +28,9 @@ export default function Layout({
 
   return (
     <div style={{backgroundColor:color}}
-      onDragOver={dragHandler('#0070f3')}
-      onDragLeave={dragHandler(defaultColor)}
-      onDrop={dropHandler}>
+      onDragOver={handleDrag('#0070f3')}
+      onDragLeave={handleDrag(defaultColor)}
+      onDrop={handleDrop}>
       <Head>
         <title>{title}</title>
         <meta charSet="utf-8" />

@@ -77,7 +77,7 @@ export default function Ardennes() {
       .catch(error => alert(error))
   }
 
-  const logIn = (tokenId, uid, client) => {
+  const handleLogin = (tokenId, uid, client) => {
     setToken({ ...token, tokenId: tokenId, uid: uid, client: client });
     setIsLogged(true);
   };
@@ -129,7 +129,7 @@ export default function Ardennes() {
 
         {!isLogged &&
           <div className={styles.create}>
-            <LoginForm logIn={logIn} />
+            <LoginForm onLogin={handleLogin} />
           </div>
         }
 
