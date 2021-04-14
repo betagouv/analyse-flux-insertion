@@ -1,15 +1,13 @@
-import Layout from '../components/layout'
-import Mailer from '../components/mailer'
-import Link from 'next/link'
-import styles from '../styles/Home.module.css'
+import Layout from "../components/layout";
+import Mailer from "../components/mailer";
+import Link from "next/link";
+import styles from "../styles/Home.module.css";
 
 export default function Home() {
   return (
     <Layout className={styles.container}>
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Bienvenue chez data.insertion
-        </h1>
+        <h1 className={styles.title}>Bienvenue chez data.insertion</h1>
 
         <p className={styles.description}>
           Comment pouvons-nous vous aider&nbsp;?
@@ -29,10 +27,8 @@ export default function Home() {
               <p>Ardennes, RDV-Solidarités</p>
             </a>
           </Link>
-
         </div>
       </main>
-
     </Layout>
-  )
+  );
 }
