@@ -22,6 +22,19 @@ You can start editing the page by modifying `pages/index.js`. The page auto-upda
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
+## Deploy changes
+
+To add a new feature you have to create a pull request against the `main` branch.
+Once it has been merged, pull the changes locally on the `main` branch and run:
+
+```bash
+npm run deploy
+# or
+yarn deploy
+```
+
+The added changes will then be visible on [https://betagouv.github.io/analyse-flux-insertion/](https://betagouv.github.io/analyse-flux-insertion/).
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
