@@ -1,39 +1,41 @@
-import { useEffect, useState, useReducer } from 'react'
-import * as XLSX from 'xlsx';
+import { useEffect, useState, useReducer } from "react";
+import * as XLSX from "xlsx";
 
-import Layout from '../../../components/layout'
-import FileHandler from '../../../components/file'
-import Footer from '../../../components/footer'
-import LoginForm from '../../../components/login-form'
-import styles from '../../../styles/Home.module.css'
+import Layout from "../../../components/layout";
+import FileHandler from "../../../components/file";
+import Footer from "../../../components/footer";
+import LoginForm from "../../../components/login-form";
+import styles from "../../../styles/Home.module.css";
 
 import { getFrenchDateString, getDateTimeString, stringToDate } from '../../../lib/dates'
 import { initReducer, reducerFactory } from '../../../lib/historique'
 
-const reducer = reducerFactory('Expérimentation Ardennes - CNAF - Bénéficiaire')
-const devMode = process.env.NODE_ENV == 'development'
+const reducer = reducerFactory(
+  "Expérimentation Ardennes - CNAF - Bénéficiaire"
+);
+const devMode = process.env.NODE_ENV == "development";
 
 export default function Ardennes() {
-  const [devFile, setDevFile] = useState(null)
-  const [runs, dispatchRuns] = useReducer(reducer, [], initReducer)
+  const [devFile, setDevFile] = useState(null);
+  const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [usersData, setUsersData] = useState(null);
   const [isPending, setIsPending] = useState(false);
   const [firstCheck, setFirstCheck] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [isLogged, setIsLogged] = useState(false);
   const [token, setToken] = useState({
-    "tokenId": '',
-    uid: '',
-    client: ''
+    tokenId: "",
+    uid: "",
+    client: "",
   });
   const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
   const usersUrl = `${RDV_SOLIDARITES_URL}/api/v1/users`;
 
   useEffect(() => {
-    if(devFile) {
-      handleFile(devFile)
+    if (devFile) {
+      handleFile(devFile);
     }
-  }, [devFile])
+  }, [devFile]);
 
   useEffect(() => {
     if(usersData && firstCheck === false) {
@@ -112,18 +114,27 @@ export default function Ardennes() {
   const createUser = (userData, userIndex) => {
     const address = userData["ADRESSE"] + " - " + userData["CODE\r\nPOSTAL"] + " " + userData["VILLE"]
 
-    const user = { first_name: userData["PRENOM"], last_name: userData["NOM"], email: userData["MAIL"], phone_number: userData["TELEPHONE"].replace(/\s+/g, ''), birth_date: stringToDate(userData["DATE DE\r\nNAISSANCE"]), address: address, caisse_affiliation: "caf", affiliation_number: userData["N°CAF"], organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO] };
+    const user = {
+      first_name: userData["PRENOM"],
+      last_name: userData["NOM"],
+      email: userData["MAIL"],
+      phone_number: userData["TELEPHONE"].replace(/\s+/g, ""),
+      birth_date: stringToDate(userData["DATE DE\r\nNAISSANCE"]),
+      address: address,
+      caisse_affiliation: "caf",
+      affiliation_number: userData["N°CAF"],
+      organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO],
+    };
     fetch(usersUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         "access-token": token.tokenId,
         uid: token.uid,
-        client: token.client
+        client: token.client,
       },
-      body: JSON.stringify(user)
+      body: JSON.stringify(user),
     })
-
       .then(response => response.json())
       .then(result => {
         let newUsersData = [...usersData];
@@ -144,23 +155,23 @@ export default function Ardennes() {
           alert(result.errors[0]);
         }
       })
-      .catch(error => alert(error))
-  }
+      .catch(error => alert(error));
+  };
 
   const handleLogin = (tokenId, uid, client) => {
     setToken({ ...token, tokenId: tokenId, uid: uid, client: client });
     setIsLogged(true);
   };
 
-  const handleFile = (file) => {
+  const handleFile = file => {
     if (devMode && file != devFile) {
-      setDevFile(file)
+      setDevFile(file);
     }
     setFileSize(file.size);
     setIsPending(true);
     const start_time = new Date();
 
-    var reader = new FileReader()
+    var reader = new FileReader();
     reader.onload = function (event) {
       const fileData = new Uint8Array(event.target.result);
       const xls = XLSX.read(fileData, {type:'array', cellDates: true, dateNF:'dd/mm/yyyy'})
@@ -175,18 +186,18 @@ export default function Ardennes() {
       setUsersData(jsonData);
       setIsPending(false);
       dispatchRuns({
-        type: 'append',
+        type: "append",
         item: {
-          timestamp: (new Date()).toISOString().slice(0, 19),
-          duration: (new Date()) - start_time,
+          timestamp: new Date().toISOString().slice(0, 19),
+          duration: new Date() - start_time,
           filename: file.name,
           fileSize: file.size,
-          fileLines: jsonData.length
-        }
-      })
-    }
+          fileLines: jsonData.length,
+        },
+      });
+    };
     reader.readAsArrayBuffer(file);
-  }
+  };
 
   return (
     <Layout className={styles.container} handleFile={handleFile}>

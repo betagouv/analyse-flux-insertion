@@ -1,36 +1,38 @@
-import {useCallback, useState} from 'react'
-import Link from 'next/link'
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
-import Mailer from './mailer'
-
+import { useCallback, useState } from "react";
+import Link from "next/link";
+import Head from "next/head";
+import styles from "../styles/Home.module.css";
+import Mailer from "./mailer";
 
 export default function Layout({
   children,
-  title = 'Analyser les flux de données dans l\'insertion',
+  title = "Analyser les flux de données dans l'insertion",
   handleFile,
 }) {
-  const defaultColor = 'white'
-  const [color, setColor] = useState(defaultColor)
+  const defaultColor = "white";
+  const [color, setColor] = useState(defaultColor);
 
-  const handleDrag = color => useCallback((event) => {
-    setColor(color)
-    event.preventDefault() // Prevent file from being open on drop
-  })
+  const handleDrag = color =>
+    useCallback(event => {
+      setColor(color);
+      event.preventDefault(); // Prevent file from being open on drop
+    });
 
-  const handleDrop = useCallback((event) => {
-    event.preventDefault()
-    setColor(defaultColor)
-    for (var i = 0; i<event.dataTransfer.files.length; i++) {
-      handleFile(event.dataTransfer.files[i])
+  const handleDrop = useCallback(event => {
+    event.preventDefault();
+    setColor(defaultColor);
+    for (var i = 0; i < event.dataTransfer.files.length; i++) {
+      handleFile(event.dataTransfer.files[i]);
     }
-  })
+  });
 
   return (
-    <div style={{backgroundColor:color}}
-      onDragOver={handleDrag('#0070f3')}
+    <div
+      style={{ backgroundColor: color }}
+      onDragOver={handleDrag("#0070f3")}
       onDragLeave={handleDrag(defaultColor)}
-      onDrop={handleDrop}>
+      onDrop={handleDrop}
+    >
       <Head>
         <title>{title}</title>
         <meta charSet="utf-8" />
@@ -45,13 +47,12 @@ export default function Layout({
         <nav>
           <Link href="/">
             <a>Accueil</a>
-          </Link>{' '}|{' '}
+          </Link>{" "}
+          |{" "}
           <Link href="/mentions-legales">
             <a>Mentions légales</a>
-          </Link>{' '}|{' '}
-          <Mailer>
-            Contact
-          </Mailer>
+          </Link>{" "}
+          | <Mailer>Contact</Mailer>
         </nav>
       </header>
 
@@ -61,5 +62,5 @@ export default function Layout({
         <Mailer>Propulsé par data.insertion</Mailer>
       </footer>
     </div>
-  )
+  );
 }

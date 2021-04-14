@@ -1,56 +1,60 @@
-import {useCallback, useEffect, useState} from 'react'
-import { fetchLog } from '../lib/admin'
+import { useCallback, useEffect, useState } from "react";
+import { fetchLog } from "../lib/admin";
 
-export default function Admin({
-  children,
-  onRunRefresh,
-  category
-}) {
-  const [admin, setAdmin] = useState(false)
-  const [token, setToken] = useState(typeof(window) !== "undefined" && window.localStorage.getItem('token') || '')
+export default function Admin({ children, onRunRefresh, category }) {
+  const [admin, setAdmin] = useState(false);
+  const [token, setToken] = useState(
+    (typeof window !== "undefined" && window.localStorage.getItem("token")) ||
+      ""
+  );
 
   useEffect(() => {
     if (admin && token && category && onRunRefresh && fetchLog) {
-      fetchLog(token, category)
-      .then(data => {
-        onRunRefresh(data)
-      })
+      fetchLog(token, category).then(data => {
+        onRunRefresh(data);
+      });
     }
-  }, [admin, token])
+  }, [admin, token]);
 
   const handleAdminChange = useCallback(event => {
-    setAdmin(event.target.checked)
+    setAdmin(event.target.checked);
     if (!event.target.checked) {
-      onRunRefresh([])
+      onRunRefresh([]);
     }
-  })
+  });
 
   const handleTokenChange = useCallback(event => {
-    setToken(event.target.value)
-    window.localStorage.setItem('token', event.target.value)
-  })
+    setToken(event.target.value);
+    window.localStorage.setItem("token", event.target.value);
+  });
 
   const handleRemoveTokenClick = useCallback(event => {
-    setToken("")
-    setAdmin(false)
-    window.localStorage.removeItem('token')
+    setToken("");
+    setAdmin(false);
+    window.localStorage.removeItem("token");
     if (onRunRefresh) {
-      onRunRefresh([])
+      onRunRefresh([]);
     }
-  })
+  });
   return (
-    <div style={{display: "flex", flexDirection: "row-reverse"}}>
+    <div style={{ display: "flex", flexDirection: "row-reverse" }}>
       <label>
-        <input onChange={handleAdminChange} type="checkbox" checked={admin}/>
+        <input onChange={handleAdminChange} type="checkbox" checked={admin} />
         Admin
       </label>
-      { admin && (<>
-        <a target="_blank" rel="noopener" href="https://stats.data.gouv.fr/index.php?module=UsersManager&action=userSettings">Récupérer mon API Authentication Token</a>
-        <input onChange={handleTokenChange} type="password" value={token}/>
-        <button onClick={handleRemoveTokenClick}>Supprimer le token</button>
+      {admin && (
+        <>
+          <a
+            target="_blank"
+            rel="noopener"
+            href="https://stats.data.gouv.fr/index.php?module=UsersManager&action=userSettings"
+          >
+            Récupérer mon API Authentication Token
+          </a>
+          <input onChange={handleTokenChange} type="password" value={token} />
+          <button onClick={handleRemoveTokenClick}>Supprimer le token</button>
         </>
-        )
-      }
+      )}
     </div>
-  )
+  );
 }
