@@ -9,21 +9,16 @@ import styles from "../../../../styles/Home.module.css";
 
 import { frequencyNames, typeNames } from "../../../../lib/cnaf";
 import { initReducer, reducerFactory } from "../../../../lib/historique";
+import { retrieveDataFromFluxInstruction } from "../../../../lib/fluxInstructionReader";
+import { csvExport } from "../../../../lib/csvExport";
 
 const reducer = reducerFactory("Test - CNAF - Instruction");
 const devMode = process.env.NODE_ENV == "development";
 
 export default function Instruction() {
-  const [devFile, setDevFile] = useState(null);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
-
-  useEffect(() => {
-    if (devFile) {
-      handleFile(devFile);
-    }
-  }, [devFile]);
 
   const handleNewRuns = useCallback(data => {
     dispatchRuns({
@@ -33,74 +28,14 @@ export default function Instruction() {
   });
 
   const handleFile = file => {
-    if (devMode && file != devFile) {
-      setDevFile(file);
-    }
     setFileSize(file.size);
     setIsPending(true);
     const start_time = new Date();
 
     var reader = new FileReader();
     reader.onload = function (event) {
-      const parser = new DOMParser();
-      const dom = parser.parseFromString(
-        event.target.result,
-        "application/xml"
-      );
-
-      const desc = dom.getElementsByTagName("IdentificationFlux")[0];
-      const frequency = desc.getElementsByTagName("TYPEFLUX")[0].innerHTML;
-      const type = desc.getElementsByTagName("NATFLUX")[0].innerHTML;
-      const dt = desc.getElementsByTagName("DTCREAFLUX")[0].innerHTML;
-      const time = desc.getElementsByTagName("HEUCREAFLUX")[0].innerHTML;
-
-      const items = new Array(...dom.getElementsByTagName("InfoDemandeRSA"));
-      const withEmail = items.filter(
-        i => i.getElementsByTagName("ADRELEC").length
-      );
-      const withUsableEmail = items.filter(i => {
-        const ok = i.getElementsByTagName("AUTORUTIADRELEC")[0];
-        return (
-          i.getElementsByTagName("ADRELEC").length && ok && ok.innerHTML == "A"
-        );
-      });
-      const withForbiddenEmailUsage = items.filter(i => {
-        const ok = i.getElementsByTagName("AUTORUTIADRELEC")[0];
-        return (
-          i.getElementsByTagName("ADRELEC").length && ok && ok.innerHTML == "R"
-        );
-      });
-      const withoutEmailUsage = items.filter(i => {
-        const ok = i.getElementsByTagName("AUTORUTIADRELEC")[0];
-        return (
-          i.getElementsByTagName("ADRELEC").length && ok && ok.innerHTML == "I"
-        );
-      });
-
-      const withPhone = items.filter(
-        i => i.getElementsByTagName("NUMTEL").length
-      );
-      const withUsablePhone = items.filter(i => {
-        const ok = i.getElementsByTagName("AUTORUTITEL")[0];
-        return (
-          i.getElementsByTagName("NUMTEL").length && ok && ok.innerHTML == "A"
-        );
-      });
-      const withForbiddenPhoneUsage = items.filter(i => {
-        const ok = i.getElementsByTagName("AUTORUTITEL")[0];
-        return (
-          i.getElementsByTagName("NUMTEL").length && ok && ok.innerHTML == "R"
-        );
-      });
-      const withoutPhoneUsage = items.filter(i => {
-        const ok = i.getElementsByTagName("AUTORUTITEL")[0];
-        return (
-          i.getElementsByTagName("NUMTEL").length && ok && ok.innerHTML == "I"
-        );
-      });
-
-      const withDSP = items.filter(
-        i => i.getElementsByTagName("DonneesSocioProfessionnelles").length
+      const dataFromFluxInstruction = retrieveDataFromFluxInstruction(
+        event.target.result
       );
 
       setIsPending(false);
@@ -112,34 +47,38 @@ export default function Instruction() {
           timestamp: new Date().toISOString().slice(0, 19),
           duration: new Date() - start_time,
           filename: file.name,
-          fileDatetime: `${dt}-${time}`,
-          frequency,
-          type,
-          // WIP: OK sur Firefox KO sur Chrome
-          error:
-            dom.activeElement && dom.activeElement.nodeName == "parsererror",
-          total: items.length,
-          email: {
-            total: withEmail.length,
-            withAutorisation: withUsableEmail.length,
-            withExplicitRefusal: withForbiddenEmailUsage.length,
-            withoutAutorisationDetails: withoutEmailUsage.length,
-          },
-          phone: {
-            total: withPhone.length,
-            withAutorisation: withUsableEmail.length,
-            withExplicitRefusal: withForbiddenEmailUsage.length,
-            withoutAutorisationDetails: withoutEmailUsage.length,
-          },
-          withDSP: withDSP.length,
           fileSize: file.size,
+          ...dataFromFluxInstruction,
         },
       });
     };
     reader.readAsText(file);
   };
 
+  const handleCsvExport = () => {
+    const dataToExport = [];
+    runs.forEach(run => {
+      run.peoplePersonalData.forEach(personData => {
+        dataToExport.push(Object.values(personData));
+      });
+    });
+
+    const csvHeader = [
+      "MATRICULE",
+      "NOM",
+      "PRENOM",
+      "EMAIL",
+      "TELEPHONE",
+      "NIR",
+    ];
+
+    const csvName =
+      "flux_insertion_donnees_personnelles_" + Date.now() + ".csv";
+    csvExport(csvName, dataToExport, csvHeader);
+  };
+
   const round = value => Math.round(value);
+
   return (
     <Layout className={styles.container} handleFile={handleFile}>
       <Admin category="Instruction" onRunRefresh={handleNewRuns} />
@@ -285,9 +224,14 @@ export default function Instruction() {
                 ))}
               </tbody>
             </table>
-
-            <button onClick={() => dispatchRuns({ type: "reset" })}>
+            <button
+              className={styles.button}
+              onClick={() => dispatchRuns({ type: "reset" })}
+            >
               Vider l'historique
+            </button>
+            <button className={styles.button} onClick={handleCsvExport}>
+              Exporter les données de contacts
             </button>
           </>
         )}
