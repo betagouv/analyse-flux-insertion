@@ -4,15 +4,16 @@ import * as XLSX from "xlsx";
 import Layout from "../../../components/layout";
 import FileHandler from "../../../components/file";
 import Footer from "../../../components/footer";
-import LoginForm from "../../../components/login-form";
+import LoginForm from "../../../components/loginForm";
+import CreateUserButton from "../../../components/createUserButton"
 import styles from "../../../styles/Home.module.css";
 
-import { getFrenchFromatDateString, getDateTimeString, stringToDate } from '../../../lib/dates'
 import { initReducer, reducerFactory } from '../../../lib/historique'
+import { getDateTimeString } from '../../../lib/dates'
+import { checkUserInvitationStatus } from '../../../lib/checkUserInvitationStatus'
+import { generateInvitation } from '../../../lib/generateInvitation'
 
-const reducer = reducerFactory(
-  "Expérimentation Ardennes - CNAF - Bénéficiaire"
-);
+const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
 const devMode = process.env.NODE_ENV == "development";
 
 export default function Ardennes() {
@@ -29,7 +30,7 @@ export default function Ardennes() {
     client: "",
   });
   const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
-  const userUrl = `${RDV_SOLIDARITES_URL}/api/v1/users`;
+  const userUrl = RDV_SOLIDARITES_URL + process.env.NEXT_PUBLIC_RDV_SOLIDARITES_USER_PATH;
 
   useEffect(() => {
     if (devFile) {
@@ -41,7 +42,7 @@ export default function Ardennes() {
     if(usersData && userStatusChecked === false) {
       usersData.forEach((user, userIndex) => {
         if (user["ID RDV"] != "") {
-          checkUserInvitationStatus(user["ID RDV"], userIndex);
+          checkUserInvitationStatus(user, userIndex, token, usersData, updateUsersData);
         }
       });
       setUserStatusChecked(true);
@@ -57,105 +58,8 @@ export default function Ardennes() {
     XLSX.writeFile(outWorkbook, `ardennes_rsa_${getDateTimeString(new Date())}.xlsx`)
   }
 
-  const checkUserInvitationStatus = (userId, userIndex) => {
-    const getUserUrl = userUrl + `/${userId}`;
-    fetch(getUserUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "access-token": token.tokenId,
-        uid: token.uid,
-        client: token.client,
-      }
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        let updatedUsersData = [...usersData];
-        if (result.user.invitation_created_at) {
-          let invitation_date = result.user.invitation_created_at // Date au format : 2021-04-15 14:53:56 +0200
-            .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
-          invitation_date = new Date(invitation_date) // Créer une date JS
-          updatedUsersData[userIndex]["Date d'invitation"] = getFrenchFromatDateString(invitation_date);
-        }
-        if (result.user.invitation_accepted_at) {
-          let inscription_date = result.user.invitation_accepted_at // Date au format : 2021-04-15 14:53:56 +0200
-            .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
-          inscription_date = new Date(inscription_date) // Créer une date JS
-          updatedUsersData[userIndex]["Date d'inscription"] = getFrenchFromatDateString(inscription_date);
-        }
-        setUsersData(updatedUsersData)
-      })
-  };
-
-  const generateInvitation = (userId, userIndex) => {
-    const invitationUrl = userUrl + `/${userId}/invite`;
-    let invitationData = [...usersData];
-    fetch(invitationUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "access-token": token.tokenId,
-        uid: token.uid,
-        client: token.client,
-      },
-    })
-      .then(response => response.json())
-      .then(result => {
-        if (result.invitation_url) {
-          invitationData[userIndex]["Invitation"] = result.invitation_url;
-          invitationData[userIndex]["Date d'invitation"] = getFrenchFromatDateString(new Date());
-          setUsersData(invitationData);
-        }
-      })
-      .catch(error => alert(error))
-
-  }
-
-  const createUser = (userData, userIndex) => {
-    const address = userData["ADRESSE"] + " - " + userData["CODE\r\nPOSTAL"] + " " + userData["VILLE"]
-
-    const user = {
-      first_name: userData["PRENOM"],
-      last_name: userData["NOM"],
-      email: userData["MAIL"],
-      phone_number: userData["TELEPHONE"].replace(/\s+/g, ""),
-      birth_date: stringToDate(userData["DATE DE\r\nNAISSANCE"]),
-      address: address,
-      caisse_affiliation: "caf",
-      affiliation_number: userData["N°CAF"],
-      organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO],
-    };
-    fetch(userUrl, {
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/json",
-        "access-token": token.tokenId,
-        uid: token.uid,
-        client: token.client,
-      },
-      body: JSON.stringify(user),
-    })
-      .then(response => response.json())
-      .then(result => {
-        let newUsersData = [...usersData];
-        if (result.user) {
-          newUsersData[userIndex]["ID RDV"] = result.user.id;
-          setUsersData(newUsersData);
-          generateInvitation(result.user.id, userIndex);
-        } else if (result.errors && result.errors.email && result.errors.email[0].error === "taken") {
-          newUsersData[userIndex]["ID RDV"] = result.errors.email[0].id;
-          setUsersData(newUsersData);
-          checkUserInvitationStatus(result.errors.email[0].id, userIndex);
-          alert("Un compte associé à cet email existe déjà");
-        } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
-          alert("La création de ce compte a échoué. L'utilisateur semble déjà exister mais n'a pas pu être récupéré.");
-        } else if (result.errors.email && result.errors.email[0].error === "invalid") {
-          alert("L'adresse mail n'est pas valide");
-        } else if (result.errors && result.errors[0]) {
-          alert(result.errors[0]);
-        }
-      })
-      .catch(error => alert(error));
+  const updateUsersData = (data) => {
+    setUsersData(data);
   };
 
   const handleLogin = (tokenId, uid, client) => {
@@ -258,9 +162,13 @@ export default function Ardennes() {
 
                             {user["ID RDV"] == "" && (
                               <td className={styles.center}>
-                                <button onClick={() => createUser(user, index)}>
-                                  Créer un compte
-                                </button>
+                                <CreateUserButton
+                                  user={user}
+                                  index={index}
+                                  token={token}
+                                  usersData={usersData}
+                                  updateUsersData={updateUsersData}
+                                />
                               </td>
                             )}
                             {user["ID RDV"] != "" && (
@@ -272,7 +180,7 @@ export default function Ardennes() {
                             <td className={styles.center}>{user["Date d'inscription"]}</td>
                             {user["ID RDV"] != "" && (
                               <td className={styles.center}>
-                                <button onClick={() => generateInvitation(user["ID RDV"], index)}>
+                                <button onClick={() => generateInvitation(user["ID RDV"], index, token, usersData, updateUsersData)}>
                                   {user["Date d'invitation"] != "" &&
                                   "Regénérer invitation"
                                   }
