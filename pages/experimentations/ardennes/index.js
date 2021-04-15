@@ -7,7 +7,7 @@ import Footer from "../../../components/footer";
 import LoginForm from "../../../components/login-form";
 import styles from "../../../styles/Home.module.css";
 
-import { getFrenchDateString, getDateTimeString, stringToDate } from '../../../lib/dates'
+import { getFrenchFromatDateString, getDateTimeString, stringToDate } from '../../../lib/dates'
 import { initReducer, reducerFactory } from '../../../lib/historique'
 
 const reducer = reducerFactory(
@@ -20,7 +20,7 @@ export default function Ardennes() {
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [usersData, setUsersData] = useState(null);
   const [isPending, setIsPending] = useState(false);
-  const [firstCheck, setFirstCheck] = useState(false);
+  const [userStatusChecked, setUserStatusChecked] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [isLogged, setIsLogged] = useState(false);
   const [token, setToken] = useState({
@@ -29,7 +29,7 @@ export default function Ardennes() {
     client: "",
   });
   const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
-  const usersUrl = `${RDV_SOLIDARITES_URL}/api/v1/users`;
+  const userUrl = `${RDV_SOLIDARITES_URL}/api/v1/users`;
 
   useEffect(() => {
     if (devFile) {
@@ -38,13 +38,13 @@ export default function Ardennes() {
   }, [devFile]);
 
   useEffect(() => {
-    if(usersData && firstCheck === false) {
+    if(usersData && userStatusChecked === false) {
       usersData.forEach((user, userIndex) => {
         if (user["ID RDV"] != "") {
-          checkUser(user["ID RDV"], userIndex);
+          checkUserInvitationStatus(user["ID RDV"], userIndex);
         }
       });
-      setFirstCheck(true);
+      setUserStatusChecked(true);
     }
   }, [usersData])
 
@@ -57,8 +57,8 @@ export default function Ardennes() {
     XLSX.writeFile(outWorkbook, `ardennes_rsa_${getDateTimeString(new Date())}.xlsx`)
   }
 
-  const checkUser = (userId, userIndex) => {
-    const getUserUrl = usersUrl + `/${userId}`;
+  const checkUserInvitationStatus = (userId, userIndex) => {
+    const getUserUrl = userUrl + `/${userId}`;
     fetch(getUserUrl, {
       method: "GET",
       headers: {
@@ -72,23 +72,23 @@ export default function Ardennes() {
       .then((result) => {
         let updatedUsersData = [...usersData];
         if (result.user.invitation_created_at) {
-          let invitation_date = result.user.invitation_created_at
-            .substring(0, 10)
-            .split("-");
-          updatedUsersData[userIndex]["Date d'invitation"] = getFrenchDateString(new Date(invitation_date));
+          let invitation_date = result.user.invitation_created_at // Date au format : 2021-04-15 14:53:56 +0200
+            .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
+          invitation_date = new Date(invitation_date) // Créer une date JS
+          updatedUsersData[userIndex]["Date d'invitation"] = getFrenchFromatDateString(invitation_date);
         }
         if (result.user.invitation_accepted_at) {
-          let inscription_date = result.user.invitation_accepted_at
-            .substring(0, 10)
-            .split("-");
-          updatedUsersData[userIndex]["Date d'inscription"] = getFrenchDateString(new Date(inscription_date));
+          let inscription_date = result.user.invitation_accepted_at // Date au format : 2021-04-15 14:53:56 +0200
+            .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
+          inscription_date = new Date(inscription_date) // Créer une date JS
+          updatedUsersData[userIndex]["Date d'inscription"] = getFrenchFromatDateString(inscription_date);
         }
         setUsersData(updatedUsersData)
       })
   };
 
   const generateInvitation = (userId, userIndex) => {
-    const invitationUrl = usersUrl + `/${userId}/invite`;
+    const invitationUrl = userUrl + `/${userId}/invite`;
     let invitationData = [...usersData];
     fetch(invitationUrl, {
       method: "GET",
@@ -103,7 +103,7 @@ export default function Ardennes() {
       .then(result => {
         if (result.invitation_url) {
           invitationData[userIndex]["Invitation"] = result.invitation_url;
-          invitationData[userIndex]["Date d'invitation"] = getFrenchDateString(new Date());
+          invitationData[userIndex]["Date d'invitation"] = getFrenchFromatDateString(new Date());
           setUsersData(invitationData);
         }
       })
@@ -125,7 +125,7 @@ export default function Ardennes() {
       affiliation_number: userData["N°CAF"],
       organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO],
     };
-    fetch(usersUrl, {
+    fetch(userUrl, {
       method: 'POST',
       headers: {
         "Content-Type": "application/json",
@@ -145,7 +145,7 @@ export default function Ardennes() {
         } else if (result.errors && result.errors.email && result.errors.email[0].error === "taken") {
           newUsersData[userIndex]["ID RDV"] = result.errors.email[0].id;
           setUsersData(newUsersData);
-          checkUser(result.errors.email[0].id, userIndex);
+          checkUserInvitationStatus(result.errors.email[0].id, userIndex);
           alert("Un compte associé à cet email existe déjà");
         } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
           alert("La création de ce compte a échoué. L'utilisateur semble déjà exister mais n'a pas pu être récupéré.");
