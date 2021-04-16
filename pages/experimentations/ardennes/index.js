@@ -2,7 +2,7 @@ import { useEffect, useState, useReducer } from "react";
 import * as XLSX from "xlsx";
 
 import Layout from "../../../components/layout";
-import FileHandler from "../../../components/file";
+import FileHandler from "../../../components/fileHandler";
 import Footer from "../../../components/footer";
 import LoginForm from "../../../components/loginForm";
 import CreateUserButton from "../../../components/createUserButton"
@@ -29,8 +29,6 @@ export default function Ardennes() {
     uid: "",
     client: "",
   });
-  const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
-  const userUrl = RDV_SOLIDARITES_URL + process.env.NEXT_PUBLIC_RDV_SOLIDARITES_USER_PATH;
 
   useEffect(() => {
     if (devFile) {
@@ -46,6 +44,7 @@ export default function Ardennes() {
         }
       });
       setUserStatusChecked(true);
+      setIsPending(false);
     }
   }, [usersData])
 
@@ -87,8 +86,9 @@ export default function Ardennes() {
       const new_range = XLSX.utils.encode_range(range);
 
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { blankrows: false, raw: false, defval: "", range: new_range });
+      jsonData == null && setIsPending(false);
+      setUserStatusChecked(false);
       setUsersData(jsonData);
-      setIsPending(false);
       dispatchRuns({
         type: "append",
         item: {
@@ -120,6 +120,7 @@ export default function Ardennes() {
               handleFile={handleFile}
               isPending={isPending}
               fileSize={fileSize}
+              message={"Récupération des informations, merci de patienter"}
             />
 
             {usersData && (

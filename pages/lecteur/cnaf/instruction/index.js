@@ -3,7 +3,7 @@ import Head from "next/head";
 
 import Admin from "../../../../components/admin";
 import Layout from "../../../../components/layout";
-import FileHandler from "../../../../components/file";
+import FileHandler from "../../../../components/fileHandler";
 import Footer from "../../../../components/footer";
 import styles from "../../../../styles/Home.module.css";
 
@@ -153,6 +153,7 @@ export default function Instruction() {
           handleFile={handleFile}
           isPending={isPending}
           fileSize={fileSize}
+          message={"Calcul des statistiques en cours, merci de patienter"}
         />
 
         {runs && runs.length > 0 && (
