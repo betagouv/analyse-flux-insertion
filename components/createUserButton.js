@@ -1,17 +1,17 @@
-import { fetchUrl } from "../lib/fetchUrl"
+import { appFetch } from "../lib/appFetch"
 import { stringToDate } from "../lib/dates"
 import { generateInvitation } from '../lib/generateInvitation'
 import { checkUserInvitationStatus } from '../lib/checkUserInvitationStatus'
 
 export default function CreateUserButton({
-  token,
+    token,
   updateUsersData,
   usersData,
   user,
   index
 }) {
   const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
-  const userUrl = RDV_SOLIDARITES_URL + process.env.NEXT_PUBLIC_RDV_SOLIDARITES_USER_PATH;
+  const userUrl = RDV_SOLIDARITES_URL + "api/v1/users";
 
   const createUser = async function(userData, userIndex) {
 
@@ -28,7 +28,7 @@ export default function CreateUserButton({
       organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO],
     };
 
-    const result = await fetchUrl(userUrl, token, "POST", JSON.stringify(user));
+    const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
 
     let newUsersData = [...usersData];
     if (result.user) {
