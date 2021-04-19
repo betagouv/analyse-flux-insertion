@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import Admin from "../../../../components/admin";
 import ResponsiveCalendar from "../../../../components/chart";
-import FileHandler from "../../../../components/file";
+import FileHandler from "../../../../components/fileHandler";
 import Footer from "../../../../components/footer";
 import Layout from "../../../../components/layout";
 import { frequencyNames, typeNames } from "../../../../lib/cnaf";
@@ -179,6 +179,7 @@ export default function Beneficiaire() {
           handleFile={handleFile}
           isPending={isPending}
           fileSize={fileSize}
+          message={"Calcul des statistiques en cours, merci de patienter"}
         />
 
         {runs && runs.length > 0 && (

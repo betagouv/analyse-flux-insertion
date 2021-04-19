@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import styles from "../styles/Home.module.css";
 import PendingMessage from "./pending";
 
-export default function FileHandler({ handleFile, isPending, fileSize }) {
+export default function FileHandler({ handleFile, isPending, fileSize, message }) {
   const handleSelect = useCallback(event => {
     for (var i = 0; i < event.target.files.length; i++) {
       handleFile(event.target.files[i]);
@@ -19,7 +19,10 @@ export default function FileHandler({ handleFile, isPending, fileSize }) {
         <input type="file" onChange={handleSelect} multiple />
       </p>
 
-      {isPending && <PendingMessage fileSize={fileSize} />}
+      {isPending && <PendingMessage
+        message={message}
+        fileSize={fileSize}
+      />}
 
       <p className={styles.description}>
         Les opérations sont toutes réalisées sur votre ordinateur.

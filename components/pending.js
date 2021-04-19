@@ -1,9 +1,9 @@
 import styles from "../styles/Home.module.css";
 
-export default function PendingMessage({ fileSize }) {
+export default function PendingMessage({ message, fileSize }) {
   return (
     <p className={styles.pending_warning}>
-      Calcul des statistiques en cours, merci de patienter
+      {message}
       {fileSize > 100000000 && (
         <>
           <br />

@@ -2,24 +2,26 @@ import { useEffect, useState, useReducer } from "react";
 import * as XLSX from "xlsx";
 
 import Layout from "../../../components/layout";
-import FileHandler from "../../../components/file";
+import FileHandler from "../../../components/fileHandler";
 import Footer from "../../../components/footer";
-import LoginForm from "../../../components/login-form";
+import LoginForm from "../../../components/loginForm";
 import styles from "../../../styles/Home.module.css";
 
-import { getDateTimeString, stringToDate } from "../../../lib/dates";
-import { initReducer, reducerFactory } from "../../../lib/historique";
+import { appFetch } from "../../../lib/appFetch"
+import { initReducer, reducerFactory } from '../../../lib/historique'
+import { getDateTimeString, getFrenchFormatDateString, stringToDate } from '../../../lib/dates'
 
-const reducer = reducerFactory(
-  "Expérimentation Ardennes - CNAF - Bénéficiaire"
-);
+const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
 const devMode = process.env.NODE_ENV == "development";
+const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
+const userUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
 
 export default function Ardennes() {
   const [devFile, setDevFile] = useState(null);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [usersData, setUsersData] = useState(null);
   const [isPending, setIsPending] = useState(false);
+  const [userStatusChecked, setUserStatusChecked] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [isLogged, setIsLogged] = useState(false);
   const [token, setToken] = useState({
@@ -27,8 +29,6 @@ export default function Ardennes() {
     uid: "",
     client: "",
   });
-  const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
-  const createUsersUrl = `${RDV_SOLIDARITES_URL}/api/v1/users`;
 
   useEffect(() => {
     if (devFile) {
@@ -36,23 +36,62 @@ export default function Ardennes() {
     }
   }, [devFile]);
 
+  useEffect(() => {
+    if(usersData && userStatusChecked === false) {
+      usersData.forEach((user, userIndex) => {
+        if (user["ID RDV"] != "") {
+          checkUserInvitationStatus(user["ID RDV"], userIndex);
+        }
+      });
+      setUserStatusChecked(true);
+      setIsPending(false);
+    }
+  }, [usersData])
+
   const writeFile = () => {
     const outWorkbook = XLSX.utils.book_new();
     const outWorksheet = XLSX.utils.json_to_sheet(usersData);
     XLSX.utils.book_append_sheet(outWorkbook, outWorksheet, "DIVERGENCES");
     // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[1]], "GRAPHIQUE");
     // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[2]], "Selection COA");
-    XLSX.writeFile(outWorkbook, `ardennes_rsa_${getDateTimeString()}.xlsx`);
-  };
+    XLSX.writeFile(outWorkbook, `ardennes_rsa_${getDateTimeString(new Date())}.xlsx`)
+  }
 
-  const createUser = (userData, userIndex) => {
-    const address =
-      userData["ADRESSE"] +
-      " - " +
-      userData["CODE\r\nPOSTAL"] +
-      " " +
-      userData["VILLE"];
+  async function generateInvitationUrl(userId, userIndex) {
+    const invitationUrl = userUrl + `/${userId}/invite`;
+    const result = await appFetch(invitationUrl, token);
 
+    if (result.invitation_url) {
+      let newUsersData = [...usersData];
+      newUsersData[userIndex]["Invitation"] = result.invitation_url;
+      newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
+      setUsersData(newUsersData);
+    }
+  }
+
+  async function checkUserInvitationStatus(userId, userIndex) {
+    const getUserUrl = userUrl + `/${userId}`;
+    const result = await appFetch(getUserUrl, token);
+
+    let newUsersData = [...usersData];
+    if (result.user.invitation_created_at) {
+      let invitation_date = result.user.invitation_created_at // Date au format : 2021-04-15 14:53:56 +0200
+        .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
+      invitation_date = new Date(invitation_date) // Créer une date JS
+      newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(invitation_date);
+    }
+    if (result.user.invitation_accepted_at) {
+      let inscription_date = result.user.invitation_accepted_at // Date au format : 2021-04-15 14:53:56 +0200
+        .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
+      inscription_date = new Date(inscription_date) // Créer une date JS
+      newUsersData[userIndex]["Date d'inscription"] = getFrenchFormatDateString(inscription_date);
+    }
+    setUsersData(newUsersData);
+  }
+
+  async function createUser(userData, userIndex) {
+
+    const address = userData["ADRESSE"] + " - " + userData["CODE\r\nPOSTAL"] + " " + userData["VILLE"]
     const user = {
       first_name: userData["PRENOM"],
       last_name: userData["NOM"],
@@ -64,39 +103,26 @@ export default function Ardennes() {
       affiliation_number: userData["N°CAF"],
       organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO],
     };
-    fetch(createUsersUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "access-token": token.tokenId,
-        uid: token.uid,
-        client: token.client,
-      },
-      body: JSON.stringify(user),
-    })
-      .then(response => response.json())
-      .then(result => {
-        let newUsersData = [...usersData];
-        if (result.user) {
-          newUsersData[userIndex]["ID RDV"] = result.user.id;
-          setUsersData(newUsersData);
-        } else if (
-          result.errors.email &&
-          result.errors.email[0].error === "taken"
-        ) {
-          newUsersData[userIndex]["ID RDV"] = result.errors.email[0].id;
-          setUsersData(newUsersData);
-          alert("Un compte associé à cet email existe déjà");
-        } else if (
-          result.errors.email &&
-          result.errors.email[0].error === "invalid"
-        ) {
-          alert("L'adresse mail n'est pas valide");
-        } else if (result.errors && result.errors[0]) {
-          alert(result.errors[0]);
-        }
-      })
-      .catch(error => alert(error));
+
+    const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
+
+    let newUsersData = [...usersData];
+    if (result.user) {
+      newUsersData[userIndex]["ID RDV"] = result.user.id;
+      setUsersData(newUsersData);
+      generateInvitationUrl(result.user.id, userIndex);
+    } else if (result.errors && result.errors.email && result.errors.email[0].error === "taken") {
+      newUsersData[userIndex]["ID RDV"] = result.errors.email[0].id;
+      setUsersData(newUsersData);
+      checkUserInvitationStatus(result.errors.email[0].id, userIndex);
+      alert("Un compte associé à cet email existe déjà");
+    } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
+      alert("La création de ce compte a échoué. L'utilisateur semble déjà exister mais n'a pas pu être récupéré.");
+    } else if (result.errors.email && result.errors.email[0].error === "invalid") {
+      alert("L'adresse mail n'est pas valide");
+    } else if (result.errors && result.errors[0]) {
+      alert(result.errors[0]);
+    }
   };
 
   const handleLogin = (tokenId, uid, client) => {
@@ -115,28 +141,18 @@ export default function Ardennes() {
     var reader = new FileReader();
     reader.onload = function (event) {
       const fileData = new Uint8Array(event.target.result);
-      const xls = XLSX.read(fileData, {
-        type: "array",
-        cellDates: true,
-        dateNF: "dd/mm/yyyy",
-      });
-      /* Get first worksheet */
+      const xls = XLSX.read(fileData, {type:'array', cellDates: true, dateNF:'dd/mm/yyyy'})
       const worksheet = xls.Sheets[xls.SheetNames[0]];
-      // Limiter la capture aux colonnes A-T
-      const range = XLSX.utils.decode_range(worksheet["!ref"]);
+      // Limiter la capture aux colonnes A-V
+      const range = XLSX.utils.decode_range(worksheet['!ref']);
       range.s.c = 0; // 0 == XLSX.utils.decode_col("A")
-      range.e.c = 19; // 19 == XLSX.utils.decode_col("T")
+      range.e.c = 21; // 19 == XLSX.utils.decode_col("V")
       const new_range = XLSX.utils.encode_range(range);
-      /* Convert array to json*/
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-        blankrows: false,
-        raw: false,
-        defval: "",
-        range: new_range,
-      });
-      setUsersData(jsonData);
-      setIsPending(false);
 
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { blankrows: false, raw: false, defval: "", range: new_range });
+      jsonData == null && setIsPending(false);
+      setUserStatusChecked(false);
+      setUsersData(jsonData);
       dispatchRuns({
         type: "append",
         item: {
@@ -168,6 +184,7 @@ export default function Ardennes() {
               handleFile={handleFile}
               isPending={isPending}
               fileSize={fileSize}
+              message={"Récupération des informations, merci de patienter"}
             />
 
             {usersData && (
@@ -179,6 +196,7 @@ export default function Ardennes() {
                     Aucun bénéficiaire dans le fichier
                   </p>
                 )}
+
                 {usersData.length > 0 && (
                   <>
                     <table>
@@ -189,8 +207,13 @@ export default function Ardennes() {
                           <th rowSpan="2">Mail</th>
                           <th rowSpan="2">Téléphone</th>
                           <th rowSpan="2">ID RDV-Solidarités</th>
+                          <th colSpan="3">Invitation</th>
                         </tr>
-                        <tr></tr>
+                        <tr>
+                          <th colSpan="1">Dernier envoi le</th>
+                          <th colSpan="1">Date d'inscription</th>
+                          <th colSpan="1"></th>
+                        </tr>
                       </thead>
                       <tbody>
                         {usersData.map((user, index) => (
@@ -201,15 +224,30 @@ export default function Ardennes() {
                             <td className={styles.center}>
                               {user["TELEPHONE"]}
                             </td>
+
+                            {user["ID RDV"] == "" && (
+                              <td className={styles.center}>
+                                <button onClick={() => createUser(user, index)}>
+                                  Créer un compte
+                                </button>
+                              </td>
+                            )}
                             {user["ID RDV"] != "" && (
                               <td className={styles.center}>
                                 {user["ID RDV"]}
                               </td>
                             )}
-                            {user["ID RDV"] == "" && (
+                            <td className={styles.center}>{user["Date d'invitation"]}</td>
+                            <td className={styles.center}>{user["Date d'inscription"]}</td>
+                            {user["ID RDV"] != "" && (
                               <td className={styles.center}>
-                                <button onClick={() => createUser(user, index)}>
-                                  Créer un compte
+                                <button onClick={() => generateInvitationUrl(user["ID RDV"], index)}>
+                                  {user["Date d'invitation"] != "" &&
+                                  "Regénérer invitation"
+                                  }
+                                  {user["Date d'invitation"] == "" &&
+                                  "Générer invitation"
+                                  }
                                 </button>
                               </td>
                             )}
