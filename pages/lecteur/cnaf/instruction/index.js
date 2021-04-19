@@ -58,8 +58,12 @@ export default function Instruction() {
   const handleCsvExport = () => {
     const dataToExport = [];
     runs.forEach(run => {
-      run.peoplePersonalData.forEach(personData => {
-        dataToExport.push(Object.values(personData));
+      run.applicantsPersonalData.forEach(applicantPersonalData => {
+        // We want to export the applicants data along with the file name
+        dataToExport.push([
+          ...Object.values(applicantPersonalData),
+          run.filename,
+        ]);
       });
     });
 
@@ -70,6 +74,7 @@ export default function Instruction() {
       "EMAIL",
       "TELEPHONE",
       "NIR",
+      "FICHIER SOURCE",
     ];
 
     const csvName =
