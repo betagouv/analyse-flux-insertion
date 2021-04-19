@@ -11,6 +11,7 @@ import { frequencyNames, typeNames } from "../../../../lib/cnaf";
 import { initReducer, reducerFactory } from "../../../../lib/historique";
 import { retrieveDataFromFluxInstruction } from "../../../../lib/fluxInstructionReader";
 import { csvExport } from "../../../../lib/csvExport";
+import { getDateTimeString } from "../../../../lib/dates";
 
 const reducer = reducerFactory("Test - CNAF - Instruction");
 const devMode = process.env.NODE_ENV == "development";
@@ -67,12 +68,13 @@ export default function Instruction() {
       "NIR",
       "NOM",
       "PRENOM",
+      "ROLE",
       "EMAIL",
       "TELEPHONE",
       "FICHIER SOURCE",
     ];
 
-    const csvName = "flux_insertion_donnees_personnelles_" + Date.now() + ".csv";
+    const csvName = "flux_insertion_donnees_personnelles_" + getDateTimeString() + ".csv";
     csvExport(csvName, dataToExport, csvHeader);
   };
 
