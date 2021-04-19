@@ -34,9 +34,7 @@ export default function Instruction() {
 
     var reader = new FileReader();
     reader.onload = function (event) {
-      const dataFromFluxInstruction = retrieveDataFromFluxInstruction(
-        event.target.result
-      );
+      const dataFromFluxInstruction = retrieveDataFromFluxInstruction(event.target.result);
 
       setIsPending(false);
 
@@ -60,25 +58,21 @@ export default function Instruction() {
     runs.forEach(run => {
       run.applicantsPersonalData.forEach(applicantPersonalData => {
         // We want to export the applicants data along with the file name
-        dataToExport.push([
-          ...Object.values(applicantPersonalData),
-          run.filename,
-        ]);
+        dataToExport.push([...Object.values(applicantPersonalData), run.filename]);
       });
     });
 
     const csvHeader = [
-      "MATRICULE",
+      "NUMERO DEMANDE RSA",
+      "NIR",
       "NOM",
       "PRENOM",
       "EMAIL",
       "TELEPHONE",
-      "NIR",
       "FICHIER SOURCE",
     ];
 
-    const csvName =
-      "flux_insertion_donnees_personnelles_" + Date.now() + ".csv";
+    const csvName = "flux_insertion_donnees_personnelles_" + Date.now() + ".csv";
     csvExport(csvName, dataToExport, csvHeader);
   };
 
@@ -154,85 +148,52 @@ export default function Instruction() {
                     <td>{r.timestamp}</td>
                     <td>{r.filename}</td>
                     {devMode && <td>{r.fileSize}</td>}
-                    {devMode && (
-                      <td>{!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}</td>
-                    )}
+                    {devMode && <td>{!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}</td>}
                     <td>{r.fileDatetime}</td>
-                    <td>{`${r.frequency} (${
-                      frequencyNames[r.frequency] || "?"
-                    })`}</td>
+                    <td>{`${r.frequency} (${frequencyNames[r.frequency] || "?"})`}</td>
                     <td>{`${r.type} (${typeNames[r.type] || "?"})`}</td>
                     <td className={styles.numeric}>{r.total}</td>
 
                     <td className={styles.numeric}>{r.email.total}</td>
-                    <td className="shrink">
-                      {round((r.email.total / r.total) * 100)}
-                    </td>
+                    <td className="shrink">{round((r.email.total / r.total) * 100)}</td>
 
-                    <td className={styles.numeric}>
-                      {r.email.withAutorisation}
-                    </td>
-                    <td className="shrink">
-                      {round((r.email.withAutorisation / r.total) * 100)}
-                    </td>
+                    <td className={styles.numeric}>{r.email.withAutorisation}</td>
+                    <td className="shrink">{round((r.email.withAutorisation / r.total) * 100)}</td>
 
-                    <td className={styles.numeric}>
-                      {r.email.withExplicitRefusal}
-                    </td>
+                    <td className={styles.numeric}>{r.email.withExplicitRefusal}</td>
                     <td className="shrink">
                       {round((r.email.withExplicitRefusal / r.total) * 100)}
                     </td>
 
-                    <td className={styles.numeric}>
-                      {r.email.withoutAutorisationDetails}
-                    </td>
+                    <td className={styles.numeric}>{r.email.withoutAutorisationDetails}</td>
                     <td className="shrink">
-                      {round(
-                        (r.email.withoutAutorisationDetails / r.total) * 100
-                      )}
+                      {round((r.email.withoutAutorisationDetails / r.total) * 100)}
                     </td>
 
                     <td className={styles.numeric}>{r.phone.total}</td>
-                    <td className="shrink">
-                      {round((r.phone.total / r.total) * 100)}
-                    </td>
+                    <td className="shrink">{round((r.phone.total / r.total) * 100)}</td>
 
-                    <td className={styles.numeric}>
-                      {r.phone.withAutorisation}
-                    </td>
-                    <td className="shrink">
-                      {round((r.phone.withAutorisation / r.total) * 100)}
-                    </td>
+                    <td className={styles.numeric}>{r.phone.withAutorisation}</td>
+                    <td className="shrink">{round((r.phone.withAutorisation / r.total) * 100)}</td>
 
-                    <td className={styles.numeric}>
-                      {r.phone.withExplicitRefusal}
-                    </td>
+                    <td className={styles.numeric}>{r.phone.withExplicitRefusal}</td>
                     <td className="shrink">
                       {round((r.phone.withExplicitRefusal / r.total) * 100)}
                     </td>
 
-                    <td className={styles.numeric}>
-                      {r.phone.withoutAutorisationDetails}
-                    </td>
+                    <td className={styles.numeric}>{r.phone.withoutAutorisationDetails}</td>
                     <td className="shrink">
-                      {round(
-                        (r.phone.withoutAutorisationDetails / r.total) * 100
-                      )}
+                      {round((r.phone.withoutAutorisationDetails / r.total) * 100)}
                     </td>
 
                     <td className={styles.numeric}>{r.withDSP}</td>
-                    <td className="shrink">
-                      {round((r.withDSP / r.total) * 100)}
-                    </td>
+                    <td className="shrink">{round((r.withDSP / r.total) * 100)}</td>
                     <td>{r.error ? "Oui" : "Non"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <button
-              className={styles.button}
-              onClick={() => dispatchRuns({ type: "reset" })}
-            >
+            <button className={styles.button} onClick={() => dispatchRuns({ type: "reset" })}>
               Vider l'historique
             </button>
             <button className={styles.button} onClick={handleCsvExport}>
@@ -247,20 +208,18 @@ export default function Instruction() {
           text={
             <>
               <p className={styles.text}>
-                Tous les départements n'ont pas les outils pour analyser les
-                fichiers envoyés par la CNAF. Cela peut ralentir et compliquer
-                nos échanges.
+                Tous les départements n'ont pas les outils pour analyser les fichiers envoyés par la
+                CNAF. Cela peut ralentir et compliquer nos échanges.
               </p>
               <p className={styles.text}>
-                Avec cet outil, nous souhaitons permettre aux personnes qui ont
-                accès à ces fichiers d'en extraire des statistiques générales
-                sans avoir à mettre les mains dans le camboui elles-même.
+                Avec cet outil, nous souhaitons permettre aux personnes qui ont accès à ces fichiers
+                d'en extraire des statistiques générales sans avoir à mettre les mains dans le
+                camboui elles-même.
               </p>
               <p className={styles.text}>
-                Aujourd'hui, nous cherchons à comprendre pourquoi pour la CNAF
-                90% des dossiers présents dans les fichiers quotidiens
-                d'instructions contiennent des emails alors que ce taux est de
-                30% à 50% pour certains départements.
+                Aujourd'hui, nous cherchons à comprendre pourquoi pour la CNAF 90% des dossiers
+                présents dans les fichiers quotidiens d'instructions contiennent des emails alors
+                que ce taux est de 30% à 50% pour certains départements.
               </p>
             </>
           }
