@@ -5,16 +5,16 @@ import Layout from "../../../components/layout";
 import FileHandler from "../../../components/fileHandler";
 import Footer from "../../../components/footer";
 import LoginForm from "../../../components/loginForm";
-import CreateUserButton from "../../../components/createUserButton"
 import styles from "../../../styles/Home.module.css";
 
+import { appFetch } from "../../../lib/appFetch"
 import { initReducer, reducerFactory } from '../../../lib/historique'
-import { getDateTimeString } from '../../../lib/dates'
-import { checkUserInvitationStatus } from '../../../lib/checkUserInvitationStatus'
-import { generateInvitation } from '../../../lib/generateInvitation'
+import { getDateTimeString, getFrenchFormatDateString, stringToDate } from '../../../lib/dates'
 
 const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
 const devMode = process.env.NODE_ENV == "development";
+const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
+const userUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
 
 export default function Ardennes() {
   const [devFile, setDevFile] = useState(null);
@@ -40,7 +40,7 @@ export default function Ardennes() {
     if(usersData && userStatusChecked === false) {
       usersData.forEach((user, userIndex) => {
         if (user["ID RDV"] != "") {
-          checkUserInvitationStatus(user, userIndex, token, usersData, updateUsersData);
+          checkUserInvitationStatus(user["ID RDV"], userIndex);
         }
       });
       setUserStatusChecked(true);
@@ -57,8 +57,72 @@ export default function Ardennes() {
     XLSX.writeFile(outWorkbook, `ardennes_rsa_${getDateTimeString(new Date())}.xlsx`)
   }
 
-  const updateUsersData = (data) => {
-    setUsersData(data);
+  async function generateInvitationUrl(userId, userIndex) {
+    const invitationUrl = userUrl + `/${userId}/invite`;
+    const result = await appFetch(invitationUrl, token);
+
+    if (result.invitation_url) {
+      let newUsersData = [...usersData];
+      newUsersData[userIndex]["Invitation"] = result.invitation_url;
+      newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
+      setUsersData(newUsersData);
+    }
+  }
+
+  async function checkUserInvitationStatus(userId, userIndex) {
+    const getUserUrl = userUrl + `/${userId}`;
+    const result = await appFetch(getUserUrl, token);
+
+    let newUsersData = [...usersData];
+    if (result.user.invitation_created_at) {
+      let invitation_date = result.user.invitation_created_at // Date au format : 2021-04-15 14:53:56 +0200
+        .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
+      invitation_date = new Date(invitation_date) // Créer une date JS
+      newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(invitation_date);
+    }
+    if (result.user.invitation_accepted_at) {
+      let inscription_date = result.user.invitation_accepted_at // Date au format : 2021-04-15 14:53:56 +0200
+        .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
+      inscription_date = new Date(inscription_date) // Créer une date JS
+      newUsersData[userIndex]["Date d'inscription"] = getFrenchFormatDateString(inscription_date);
+    }
+    setUsersData(newUsersData);
+  }
+
+  async function createUser(userData, userIndex) {
+
+    const address = userData["ADRESSE"] + " - " + userData["CODE\r\nPOSTAL"] + " " + userData["VILLE"]
+    const user = {
+      first_name: userData["PRENOM"],
+      last_name: userData["NOM"],
+      email: userData["MAIL"],
+      phone_number: userData["TELEPHONE"].replace(/\s+/g, ""),
+      birth_date: stringToDate(userData["DATE DE\r\nNAISSANCE"]),
+      address: address,
+      caisse_affiliation: "caf",
+      affiliation_number: userData["N°CAF"],
+      organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO],
+    };
+
+    const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
+
+    let newUsersData = [...usersData];
+    if (result.user) {
+      newUsersData[userIndex]["ID RDV"] = result.user.id;
+      setUsersData(newUsersData);
+      generateInvitationUrl(result.user.id, userIndex);
+    } else if (result.errors && result.errors.email && result.errors.email[0].error === "taken") {
+      newUsersData[userIndex]["ID RDV"] = result.errors.email[0].id;
+      setUsersData(newUsersData);
+      checkUserInvitationStatus(result.errors.email[0].id, userIndex);
+      alert("Un compte associé à cet email existe déjà");
+    } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
+      alert("La création de ce compte a échoué. L'utilisateur semble déjà exister mais n'a pas pu être récupéré.");
+    } else if (result.errors.email && result.errors.email[0].error === "invalid") {
+      alert("L'adresse mail n'est pas valide");
+    } else if (result.errors && result.errors[0]) {
+      alert(result.errors[0]);
+    }
   };
 
   const handleLogin = (tokenId, uid, client) => {
@@ -163,13 +227,9 @@ export default function Ardennes() {
 
                             {user["ID RDV"] == "" && (
                               <td className={styles.center}>
-                                <CreateUserButton
-                                  user={user}
-                                  index={index}
-                                  token={token}
-                                  usersData={usersData}
-                                  updateUsersData={updateUsersData}
-                                />
+                                <button onClick={() => createUser(user, index)}>
+                                  Créer un compte
+                                </button>
                               </td>
                             )}
                             {user["ID RDV"] != "" && (
@@ -181,7 +241,7 @@ export default function Ardennes() {
                             <td className={styles.center}>{user["Date d'inscription"]}</td>
                             {user["ID RDV"] != "" && (
                               <td className={styles.center}>
-                                <button onClick={() => generateInvitation(user["ID RDV"], index, token, usersData, updateUsersData)}>
+                                <button onClick={() => generateInvitationUrl(user["ID RDV"], index)}>
                                   {user["Date d'invitation"] != "" &&
                                   "Regénérer invitation"
                                   }
