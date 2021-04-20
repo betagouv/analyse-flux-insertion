@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
+
 import Admin from "../../../../components/admin";
 import ResponsiveCalendar from "../../../../components/chart";
 import FileHandler from "../../../../components/fileHandler";
 import Footer from "../../../../components/footer";
 import Layout from "../../../../components/layout";
+
 import { frequencyNames, typeNames } from "../../../../lib/cnaf";
 import { initReducer, reducerFactory } from "../../../../lib/historique";
 import styles from "../../../../styles/Home.module.css";
@@ -95,48 +97,43 @@ export default function Beneficiaire() {
       const type = desc.getElementsByTagName("NATFLUX")[0].innerHTML;
       const dt = desc.getElementsByTagName("DTCREAFLUX")[0].innerHTML;
       const time = desc.getElementsByTagName("HEUCREAFLUX")[0].innerHTML;
+      const foldersCount = dom.getElementsByTagName("InfosFoyerRSA").length;
+      const peopleCount = dom.getElementsByTagName("Personne").length;
 
-      const processField = (accum, value) => {
-        if (value[0]) {
-          accum[value[0].innerHTML] = (accum[value[0].innerHTML] || 0) + 1;
-          accum["Total"] = (accum["Total"] || 0) + 1;
-        }
-        return accum;
+      const [dates, droits, devoirs, droitsEtDevoirs] = [{}, {}, {}, {}]
+      const accumData = (accum, value) => {
+        accum[value] = (accum[value] || 0) + 1;
+        accum["Total"] = (accum["Total"] || 0) + 1;
       };
 
-      const folders = new Array(...dom.getElementsByTagName("InfosFoyerRSA"));
-      const people = new Array(...dom.getElementsByTagName("Personne"));
+      for (let i = 0; i < foldersCount; i++) {
+        const folder = dom.getElementsByTagName("InfosFoyerRSA")[i];
+        // compte les infos relatives au dossier
+        const folder_date = folder.getElementsByTagName("DTDEMRSA")[0].innerHTML
+        dates[folder_date] = (dates[folder_date] || 0) + 1;
+        if (folder.getElementsByTagName("ETATDOSRSA")[0]) {
+          accumData(droits, folder.getElementsByTagName("ETATDOSRSA")[0].innerHTML)
+        }
 
-      const dates = folders
-        .map(i => i.getElementsByTagName("DTDEMRSA")[0].innerHTML)
-        .reduce((accum, value) => {
-          accum[value] = (accum[value] || 0) + 1;
-          return accum;
-        }, {});
+        // compte les infos relatives aux personnes présentes dans le dossier
+        const people = folder.getElementsByTagName("Personne");
+        [...people].forEach(p => {
+          if (p.getElementsByTagName("TOPPERSDRODEVORSA")[0]) {
+            accumData(devoirs, p.getElementsByTagName("TOPPERSDRODEVORSA")[0].innerHTML)
+            if (folder.getElementsByTagName("ETATDOSRSA")[0].innerHTML == "2") {
+              // Compte les infos relatives aux personnes présentes dans le dossier lorsque les droits sont ouverts
+              accumData(droitsEtDevoirs, p.getElementsByTagName("TOPPERSDRODEVORSA")[0].innerHTML)
+            }
+          }
+        });
 
-      const droits = folders
-        .map(i => i.getElementsByTagName("ETATDOSRSA"))
-        .reduce(processField, {});
+      }
+
+      // store les clés dans un state pour n'afficher dans le tableau que les données présentes
       const newKeysDroits = keysDroits.concat(Object.keys(droits));
       setKeysDroits(Array.from(new Set(newKeysDroits)).sort());
-
-      const devoirs = people
-        .map(i => i.getElementsByTagName("TOPPERSDRODEVORSA"))
-        .reduce(processField, {});
       const newKeysDevoirs = keysDevoirs.concat(Object.keys(devoirs));
       setKeysDevoirs(Array.from(new Set(newKeysDevoirs)).sort());
-
-      const foldersDroitsOuverts = folders
-        .filter(i => i.getElementsByTagName("ETATDOSRSA")[0].innerHTML == "2")
-        .map(i => {
-          let items = i.getElementsByTagName("Personne");
-          return [...items];
-        })
-        .flat();
-
-      const droitsEtDevoirs = foldersDroitsOuverts
-        .map(i => i.getElementsByTagName("TOPPERSDRODEVORSA"))
-        .reduce(processField, {});
 
       setIsPending(false);
 
@@ -153,9 +150,9 @@ export default function Beneficiaire() {
           // WIP: OK sur Firefox KO sur Chrome
           error:
             dom.activeElement && dom.activeElement.nodeName == "parsererror",
-          total: folders.length,
+          total: foldersCount,
           fileSize: file.size,
-          people: people.length,
+          people: peopleCount,
           dates,
           devoirs,
           droits,

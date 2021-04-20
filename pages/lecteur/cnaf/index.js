@@ -24,7 +24,7 @@ export default function Home() {
 
           <Link href="/cnaf/beneficiaire">
             <a className={styles.card}>
-              <h3>Stock bénéficiaires &rarr;</h3>
+              <h3>Bénéficiaires &rarr;</h3>
               <p>Envoyé quotidiennement & mensuellement</p>
             </a>
           </Link>
