@@ -30,6 +30,7 @@ export default function identificationBeneficiaire() {
         type: "append",
         item: {
           newApplicantsPersonalData: fluxBeneficaire.newApplicantsPersonalData,
+          fileName: file.name,
         },
       });
     };
@@ -71,12 +72,18 @@ export default function identificationBeneficiaire() {
                   <th>Nom</th>
                   <th>Prénom</th>
                   <th>Rôle</th>
+                  <th>Ficher source </th>
                 </tr>
               </thead>
               <tbody>
                 {runs
-                  .flatMap(({ newApplicantsPersonalData }) => newApplicantsPersonalData)
-                  .map(applicantPersonalData => {
+                  .flatMap(({ newApplicantsPersonalData, fileName }) => {
+                    // { newApplicantsPersonalData: [...], fileName: ... } => [{ applicantData, fileName }, ...]
+                    return newApplicantsPersonalData.map(applicantPersonalData => {
+                      return { ...applicantPersonalData, fileName };
+                    });
+                  })
+                  .map(({ fileName, ...applicantPersonalData }) => {
                     return (
                       <tr key={applicantPersonalData.socialSecurityNumber}>
                         <td>{applicantPersonalData.rsaApplicationNumber}</td>
@@ -84,6 +91,7 @@ export default function identificationBeneficiaire() {
                         <td>{applicantPersonalData.lastName}</td>
                         <td>{applicantPersonalData.firstName}</td>
                         <td>{applicantPersonalData.role}</td>
+                        <td>{fileName}</td>
                       </tr>
                     );
                   })}
