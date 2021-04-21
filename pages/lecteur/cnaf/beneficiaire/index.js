@@ -15,6 +15,7 @@ const reducer = reducerFactory("Test - CNAF - Bénéficiaire");
 const devMode = process.env.NODE_ENV == "development";
 
 export default function Beneficiaire() {
+  const [devFile, setDevFile] = useState(null);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
@@ -33,6 +34,12 @@ export default function Beneficiaire() {
       folders: data,
     });
   });
+
+  useEffect(() => {
+    if (devFile) {
+      handleFile(devFile);
+    }
+  }, [devFile]);
 
   const handleDateHistogram = useCallback(event =>
     showDateHistogram(parseInt(event.target.dataset.index))
@@ -71,6 +78,9 @@ export default function Beneficiaire() {
   });
 
   const handleFile = file => {
+    if (devMode && file != devFile) {
+      setDevFile(file);
+    }
     setFileSize(file.size);
     setIsPending(true);
     const start_time = new Date();

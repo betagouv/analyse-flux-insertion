@@ -2,7 +2,7 @@ import Layout from "../../components/layout";
 import FileHandler from "../../components/fileHandler";
 
 import styles from "../../styles/Home.module.css";
-import { useCallback, useEffect, useState, useReducer } from "react";
+import { useState, useReducer } from "react";
 import { initReducer, reducerFactory } from "../../lib/historique";
 import FluxBeneficiaireReader from "../../lib/readers/FluxBeneficiaireReader";
 
