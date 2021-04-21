@@ -11,12 +11,12 @@ const reducer = reducerFactory("Test - Pole Emploi");
 const devMode = process.env.NODE_ENV == "development";
 
 // periodicite
-const frequencyNames = {
+const FLUX_FREQUENCIES = {
   M: "Mensuel",
 };
 
 // fichier
-const typeNames = {
+const FLUX_ORIGINS = {
   PECG: "PE vers CD",
 };
 
@@ -43,19 +43,14 @@ export default function Beneficiaire() {
     var reader = new FileReader();
     reader.onload = function (event) {
       const parser = new DOMParser();
-      const dom = parser.parseFromString(
-        event.target.result,
-        "application/xml"
-      );
+      const dom = parser.parseFromString(event.target.result, "application/xml");
 
       const desc = dom.getElementsByTagName("entete")[0];
       const frequency = desc.getElementsByTagName("periodicite")[0].innerHTML;
       const type = desc.getElementsByTagName("fichier")[0].innerHTML;
       const departement = desc.getElementsByTagName("departement")[0].innerHTML;
-      const referenceDate = desc.getElementsByTagName("date-reference")[0]
-        .innerHTML;
-      const generationDate = desc.getElementsByTagName("date-fabrication")[0]
-        .innerHTML;
+      const referenceDate = desc.getElementsByTagName("date-reference")[0].innerHTML;
+      const generationDate = desc.getElementsByTagName("date-fabrication")[0].innerHTML;
       const items = new Array(...dom.getElementsByTagName("dossier"));
 
       const withLastMeetingDate = items.filter(
@@ -80,8 +75,7 @@ export default function Beneficiaire() {
           departement,
           type,
           // WIP: OK sur Firefox KO sur Chrome
-          error:
-            dom.activeElement && dom.activeElement.nodeName == "parsererror",
+          error: dom.activeElement && dom.activeElement.nodeName == "parsererror",
           total: items.length,
           withLastMeetingDate: withLastMeetingDate.length,
           withUsableLastMeetingDate: withUsableLastMeetingDate.length,
@@ -146,21 +140,15 @@ export default function Beneficiaire() {
                     <td>{r.timestamp}</td>
                     <td>{r.filename}</td>
                     {devMode && <td>{r.fileSize}</td>}
-                    {devMode && (
-                      <td>{!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}</td>
-                    )}
+                    {devMode && <td>{!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}</td>}
                     <td>{r.referenceDate}</td>
                     <td>{r.generationDate}</td>
-                    <td>{`${r.frequency} (${
-                      frequencyNames[r.frequency] || "?"
-                    })`}</td>
-                    <td>{`${r.type} (${typeNames[r.type] || "?"})`}</td>
+                    <td>{`${r.frequency} (${FLUX_FREQUENCIES[r.frequency] || "?"})`}</td>
+                    <td>{`${r.type} (${FLUX_ORIGINS[r.type] || "?"})`}</td>
                     <td className="shrink">{r.departement}</td>
                     <td className={styles.numeric}>{r.total}</td>
                     <td>{r.withLastMeetingDate}</td>
-                    <td className="shrink">
-                      {round((r.withLastMeetingDate / r.total) * 100)}
-                    </td>
+                    <td className="shrink">{round((r.withLastMeetingDate / r.total) * 100)}</td>
                     <td>{r.withUsableLastMeetingDate}</td>
                     <td className="shrink">
                       {round((r.withUsableLastMeetingDate / r.total) * 100)}
@@ -172,9 +160,7 @@ export default function Beneficiaire() {
               </tbody>
             </table>
 
-            <button onClick={() => dispatchRuns({ type: "reset" })}>
-              Vider l'historique
-            </button>
+            <button onClick={() => dispatchRuns({ type: "reset" })}>Vider l'historique</button>
           </>
         )}
 
@@ -184,14 +170,13 @@ export default function Beneficiaire() {
           text={
             <>
               <p className={styles.text}>
-                Tous les départements n'ont pas les outils pour analyser les
-                fichiers envoyés par Pôle Emploi. Cela peut ralentir et
-                compliquer nos échanges.
+                Tous les départements n'ont pas les outils pour analyser les fichiers envoyés par
+                Pôle Emploi. Cela peut ralentir et compliquer nos échanges.
               </p>
               <p className={styles.text}>
-                Avec cet outil, nous souhaitons permettre aux personnes qui ont
-                accès à ces fichiers d'en extraire des statistiques générales
-                sans avoir à mettre les mains dans le camboui elles-même.
+                Avec cet outil, nous souhaitons permettre aux personnes qui ont accès à ces fichiers
+                d'en extraire des statistiques générales sans avoir à mettre les mains dans le
+                camboui elles-même.
               </p>
             </>
           }

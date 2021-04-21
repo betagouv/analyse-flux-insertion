@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import styles from "../styles/Home.module.css";
 import PendingMessage from "./pending";
 
-export default function FileHandler({ handleFile, isPending, fileSize, message }) {
+export default function FileHandler({ handleFile, isPending, fileSize, fileType, message }) {
   const handleSelect = useCallback(event => {
     for (var i = 0; i < event.target.files.length; i++) {
       handleFile(event.target.files[i]);
@@ -14,15 +14,13 @@ export default function FileHandler({ handleFile, isPending, fileSize, message }
   return (
     <>
       <p className={styles.description}>
-        Glissez et déposez le fichier à analyser ou sélectionnez le.
+        Glissez et déposez les fichiers {fileType && `"${fileType}"`} à analyser ou
+        sélectionnez-les.
         <br />
         <input type="file" onChange={handleSelect} multiple />
       </p>
 
-      {isPending && <PendingMessage
-        message={message}
-        fileSize={fileSize}
-      />}
+      {isPending && <PendingMessage message={message} fileSize={fileSize} />}
 
       <p className={styles.description}>
         Les opérations sont toutes réalisées sur votre ordinateur.
