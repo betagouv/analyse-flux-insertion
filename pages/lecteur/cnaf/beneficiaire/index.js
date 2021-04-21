@@ -120,12 +120,7 @@ export default function Beneficiaire() {
           <br />« Bénéficiaire » de la CNAF
         </h1>
 
-        <FileHandler
-          handleFile={handleFile}
-          isPending={isPending}
-          fileSize={fileSize}
-          message={"Calcul des statistiques en cours, merci de patienter"}
-        />
+        <FileHandler handleFile={handleFile} isPending={isPending} fileSize={fileSize} />
 
         {runs && runs.length > 0 && (
           <>

@@ -12,6 +12,9 @@ export default function identificationBeneficiaire() {
   const [fileSize, setFileSize] = useState(0);
   const [isPending, setIsPending] = useState(false);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
+  const [uploadMessage, setUploadMessage] = useState(
+    "Glissez et déposez les flux bénéficiaires à analyser ou sélectionnez-les."
+  );
 
   const handleFile = file => {
     setIsPending(true);
@@ -34,7 +37,7 @@ export default function identificationBeneficiaire() {
   };
 
   return (
-    <Layout className={styles.container}>
+    <Layout className={styles.container} handleFile={handleFile}>
       <main className={styles.main}>
         <h1>Identifiez les nouveaux demandeurs à l'aide des flux CNAF</h1>
         <ol>
@@ -52,8 +55,8 @@ export default function identificationBeneficiaire() {
           handleFile={handleFile}
           isPending={isPending}
           fileSize={fileSize}
-          fileType={"bénéficiaires"}
-          message={"Analyse en cours, merci de patienter"}
+          uploadMessage={uploadMessage}
+          pendingMessage={"Traitement en cours, merci de patienter."}
         />
 
         {runs && runs.length > 0 && (

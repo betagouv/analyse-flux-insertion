@@ -3,7 +3,16 @@ import { useCallback } from "react";
 import styles from "../styles/Home.module.css";
 import PendingMessage from "./pending";
 
-export default function FileHandler({ handleFile, isPending, fileSize, fileType, message }) {
+const DEFAULT_UPLOAD_MESSAGE = "Glissez et déposez le fichier à analyser ou sélectionnez le.";
+const DEFAULT_PENDING_MESSAGE = "Calcul des statistiques en cours, merci de patienter";
+
+export default function FileHandler({
+  handleFile,
+  isPending,
+  fileSize,
+  pendingMessage = DEFAULT_PENDING_MESSAGE,
+  uploadMessage = DEFAULT_UPLOAD_MESSAGE,
+}) {
   const handleSelect = useCallback(event => {
     for (var i = 0; i < event.target.files.length; i++) {
       handleFile(event.target.files[i]);
@@ -14,13 +23,12 @@ export default function FileHandler({ handleFile, isPending, fileSize, fileType,
   return (
     <>
       <p className={styles.description}>
-        Glissez et déposez les fichiers {fileType && `"${fileType}"`} à analyser ou
-        sélectionnez-les.
+        {uploadMessage}
         <br />
         <input type="file" onChange={handleSelect} multiple />
       </p>
 
-      {isPending && <PendingMessage message={message} fileSize={fileSize} />}
+      {isPending && <PendingMessage message={pendingMessage} fileSize={fileSize} />}
 
       <p className={styles.description}>
         Les opérations sont toutes réalisées sur votre ordinateur.

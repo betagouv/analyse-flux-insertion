@@ -184,7 +184,7 @@ export default function Ardennes() {
               handleFile={handleFile}
               isPending={isPending}
               fileSize={fileSize}
-              message={"Récupération des informations, merci de patienter"}
+              pendingMessage={"Récupération des informations, merci de patienter"}
             />
 
             {usersData && (

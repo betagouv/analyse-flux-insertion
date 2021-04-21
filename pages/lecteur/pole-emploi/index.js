@@ -92,12 +92,7 @@ export default function Beneficiaire() {
       <main className={styles.main}>
         <h1 className={styles.title}>Analyser les fichiers Pôle Emploi</h1>
 
-        <FileHandler
-          handleFile={handleFile}
-          isPending={isPending}
-          fileSize={fileSize}
-          message={"Calcul des statistiques en cours, merci de patienter"}
-        />
+        <FileHandler handleFile={handleFile} isPending={isPending} fileSize={fileSize} />
 
         {runs && runs.length > 0 && (
           <>
