@@ -9,9 +9,7 @@ export default function Home() {
       <main className={styles.main}>
         <h1 className={styles.title}>Bienvenue chez data.insertion</h1>
 
-        <p className={styles.description}>
-          Comment pouvons-nous vous aider&nbsp;?
-        </p>
+        <p className={styles.description}>Comment pouvons-nous vous aider&nbsp;?</p>
 
         <div className={styles.grid}>
           <Link href="/lecteur">
@@ -25,6 +23,13 @@ export default function Home() {
             <a className={styles.card}>
               <h3>Expérimentations &rarr;</h3>
               <p>Ardennes, RDV-Solidarités</p>
+            </a>
+          </Link>
+
+          <Link href="/identification-beneficiaires">
+            <a className={styles.card}>
+              <h3>Identifier demandeurs &rarr;</h3>
+              <p>Identifiez les nouveaux demandeurs RSA à partir de vos flux CNAF</p>
             </a>
           </Link>
         </div>

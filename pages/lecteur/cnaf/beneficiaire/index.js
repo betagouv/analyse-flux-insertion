@@ -5,10 +5,11 @@ import ResponsiveCalendar from "../../../../components/chart";
 import FileHandler from "../../../../components/fileHandler";
 import Footer from "../../../../components/footer";
 import Layout from "../../../../components/layout";
-
-import { frequencyNames, typeNames } from "../../../../lib/cnaf";
+import { FLUX_FREQUENCIES, FLUX_ORIGINS } from "../../../../lib/cnafGlossary";
 import { initReducer, reducerFactory } from "../../../../lib/historique";
 import styles from "../../../../styles/Home.module.css";
+
+import FluxBeneficiaireReader from "../../../../lib/readers/FluxBeneficiaireReader";
 
 const reducer = reducerFactory("Test - CNAF - Bénéficiaire");
 const devMode = process.env.NODE_ENV == "development";
@@ -46,7 +47,7 @@ export default function Beneficiaire() {
   const showDateHistogram = useCallback(index => {
     const source = runs[index];
 
-    const dates = Object.keys(source.dates);
+    const dates = Object.keys(source.applicationDatesPartition);
     let minDate = null;
     let maxDate = null;
 
@@ -62,7 +63,7 @@ export default function Beneficiaire() {
       }
       return {
         day: date.toISOString().slice(0, 10),
-        value: source.dates[d],
+        value: source.applicationDatesPartition[d],
       };
     });
 
@@ -93,53 +94,15 @@ export default function Beneficiaire() {
 
     var reader = new FileReader();
     reader.onload = function (event) {
-      const parser = new DOMParser();
-      const dom = parser.parseFromString(
-        event.target.result,
-        "application/xml"
-      );
+      const fluxBeneficiaire = new FluxBeneficiaireReader(event.target.result);
 
-      const desc = dom.getElementsByTagName("IdentificationFlux")[0];
-      const frequency = desc.getElementsByTagName("TYPEFLUX")[0].innerHTML;
-      const type = desc.getElementsByTagName("NATFLUX")[0].innerHTML;
-      const dt = desc.getElementsByTagName("DTCREAFLUX")[0].innerHTML;
-      const time = desc.getElementsByTagName("HEUCREAFLUX")[0].innerHTML;
-      const foldersCount = dom.getElementsByTagName("InfosFoyerRSA").length;
-      const peopleCount = dom.getElementsByTagName("Personne").length;
+      // => { applicationDatesPartition, droitsPartition, devoirsPartition, droitsEtDevoirsPartitionPartition }
+      const stats = fluxBeneficiaire.retrievePartitions();
 
-      const [dates, droits, devoirs, droitsEtDevoirs] = [{}, {}, {}, {}]
-      const accumData = (accum, value) => {
-        accum[value] = (accum[value] || 0) + 1;
-        accum["Total"] = (accum["Total"] || 0) + 1;
-      };
-
-      for (let i = 0; i < foldersCount; i++) {
-        const folder = dom.getElementsByTagName("InfosFoyerRSA")[i];
-        // compte les infos relatives au dossier
-        const folder_date = folder.getElementsByTagName("DTDEMRSA")[0].innerHTML
-        dates[folder_date] = (dates[folder_date] || 0) + 1;
-        if (folder.getElementsByTagName("ETATDOSRSA")[0]) {
-          accumData(droits, folder.getElementsByTagName("ETATDOSRSA")[0].innerHTML)
-        }
-
-        // compte les infos relatives aux personnes présentes dans le dossier
-        const people = folder.getElementsByTagName("Personne");
-        [...people].forEach(p => {
-          if (p.getElementsByTagName("TOPPERSDRODEVORSA")[0]) {
-            accumData(devoirs, p.getElementsByTagName("TOPPERSDRODEVORSA")[0].innerHTML)
-            if (folder.getElementsByTagName("ETATDOSRSA")[0].innerHTML == "2") {
-              // Compte les infos relatives aux personnes présentes dans le dossier lorsque les droits sont ouverts
-              accumData(droitsEtDevoirs, p.getElementsByTagName("TOPPERSDRODEVORSA")[0].innerHTML)
-            }
-          }
-        });
-
-      }
-
-      // store les clés dans un state pour n'afficher dans le tableau que les données présentes
-      const newKeysDroits = keysDroits.concat(Object.keys(droits));
+      const newKeysDroits = keysDroits.concat(Object.keys(stats.droitsPartition));
       setKeysDroits(Array.from(new Set(newKeysDroits)).sort());
-      const newKeysDevoirs = keysDevoirs.concat(Object.keys(devoirs));
+
+      const newKeysDevoirs = keysDevoirs.concat(Object.keys(stats.devoirsPartition));
       setKeysDevoirs(Array.from(new Set(newKeysDevoirs)).sort());
 
       setIsPending(false);
@@ -151,19 +114,14 @@ export default function Beneficiaire() {
           timestamp: new Date().toISOString().slice(0, 19),
           duration: new Date() - start_time,
           filename: file.name,
-          fileDatetime: `${dt}-${time}`,
-          frequency,
-          type,
-          // WIP: OK sur Firefox KO sur Chrome
-          error:
-            dom.activeElement && dom.activeElement.nodeName == "parsererror",
-          total: foldersCount,
+          fileDatetime: fluxBeneficiaire.fileDatetime,
+          frequency: fluxBeneficiaire.frequency,
+          origin: fluxBeneficiaire.origin,
+          parseError: fluxBeneficiaire.parseError,
+          total: fluxBeneficiaire.applicationsCount,
           fileSize: file.size,
-          people: peopleCount,
-          dates,
-          devoirs,
-          droits,
-          droitsEtDevoirs,
+          applicantsCount: fluxBeneficiaire.applicantsCount,
+          ...stats,
         },
       });
     };
@@ -179,12 +137,7 @@ export default function Beneficiaire() {
           <br />« Bénéficiaire » de la CNAF
         </h1>
 
-        <FileHandler
-          handleFile={handleFile}
-          isPending={isPending}
-          fileSize={fileSize}
-          message={"Calcul des statistiques en cours, merci de patienter"}
-        />
+        <FileHandler handleFile={handleFile} isPending={isPending} fileSize={fileSize} />
 
         {runs && runs.length > 0 && (
           <>
@@ -196,12 +149,8 @@ export default function Beneficiaire() {
                   <th rowSpan="2"></th>
                   <th rowSpan="2">Dossiers (Foyers)</th>
                   <th rowSpan="2">Personnes</th>
-                  <th colSpan={keysDroits.length}>
-                    Valeurs balises ETATDOSRSA
-                  </th>
-                  <th colSpan={keysDevoirs.length}>
-                    Valeurs balises TOPPERSDRODEVORSA
-                  </th>
+                  <th colSpan={keysDroits.length}>Valeurs balises ETATDOSRSA</th>
+                  <th colSpan={keysDevoirs.length}>Valeurs balises TOPPERSDRODEVORSA</th>
                   <th colSpan="3">Nombre de personnes dans foyer droit ouvert et versable</th>
                 </tr>
                 <tr>
@@ -225,30 +174,24 @@ export default function Beneficiaire() {
                 {runs.reverse().map((r, i) => (
                   <tr
                     key={`${r.timestamp}-${r.filename}-${r.seed}-0`}
-                    style={i == dateData.index ? { backgroundColor: "lightgrey" } : {} }
+                    style={i == dateData.index ? { backgroundColor: "lightgrey" } : {}}
                   >
                     <td>{i + 1}</td>
                     <td className={styles.center}>{r.total}</td>
-                    <td className={styles.center}>{r.people}</td>
+                    <td className={styles.center}>{r.applicantsCount}</td>
                     {keysDroits.map(k => (
                       <td key={k} className={styles.center}>
-                        {r.droits[k] || 0}
+                        {r.droitsPartition[k] || 0}
                       </td>
                     ))}
                     {keysDevoirs.map(k => (
                       <td key={k} className={styles.center}>
-                        {r.devoirs[k] || 0}
+                        {r.devoirsPartition[k] || 0}
                       </td>
                     ))}
-                    <td className={styles.center}>
-                      {r.droitsEtDevoirs[1] || 0}
-                    </td>
-                    <td className={styles.center}>
-                      {r.droitsEtDevoirs[0] || 0}
-                    </td>
-                    <td className={styles.center}>
-                      {r.droitsEtDevoirs["Total"] || 0}
-                    </td>
+                    <td className={styles.center}>{r.droitsEtDevoirsPartition[1] || 0}</td>
+                    <td className={styles.center}>{r.droitsEtDevoirsPartition[0] || 0}</td>
+                    <td className={styles.center}>{r.droitsEtDevoirsPartition["Total"] || 0}</td>
                   </tr>
                 ))}
                 <tr>
@@ -257,22 +200,22 @@ export default function Beneficiaire() {
                   <td className={styles.center}>{calculateTotal("people")}</td>
                   {keysDroits.map(k => (
                     <td key={k} className={styles.center}>
-                      {calculateTotal("droits", k) || 0}
+                      {calculateTotal("droitsPartition", k) || 0}
                     </td>
                   ))}
                   {keysDevoirs.map(k => (
                     <td key={k} className={styles.center}>
-                      {calculateTotal("devoirs", k) || 0}
+                      {calculateTotal("devoirsPartition", k) || 0}
                     </td>
                   ))}
                   <td className={styles.center}>
-                    {calculateTotal("droitsEtDevoirs", 1) || 0}
+                    {calculateTotal("droitsEtDevoirsPartition", 1) || 0}
                   </td>
                   <td className={styles.center}>
-                    {calculateTotal("droitsEtDevoirs", 0) || 0}
+                    {calculateTotal("droitsEtDevoirsPartition", 0) || 0}
                   </td>
                   <td className={styles.center}>
-                    {calculateTotal("droitsEtDevoirs", "Total") || 0}
+                    {calculateTotal("droitsEtDevoirsPartition", "Total") || 0}
                   </td>
                 </tr>
 
@@ -285,23 +228,21 @@ export default function Beneficiaire() {
                 <p className={styles.legende_title}>Légende&nbsp;:</p>
                 <p className={styles.bold}>Valeur balise ETATDOSRSA</p>
                 <p>
-                  0=Nouvelle demande en attente de décision CG pour ouverture du
-                  droit
+                  0=Nouvelle demande en attente de décision CG pour ouverture du droit
                   <br />
                   1=Droit refusé
                   <br />
                   2=Droit ouvert et versable
                   <br />
-                  3=Droit ouvert et suspendu (le montant du droit est
-                  calculable, mais l'existence du droit est remis en cause)
+                  3=Droit ouvert et suspendu (le montant du droit est calculable, mais l'existence
+                  du droit est remis en cause)
                   <br />
-                  4=Droit ouvert mais versement suspendu (le montant du droit
-                  n'est pas calculable)
+                  4=Droit ouvert mais versement suspendu (le montant du droit n'est pas calculable)
                   <br />
                   5=Droit clos
                   <br />
-                  6=Droit clos sur mois antérieur ayant eu un contrôle dans le
-                  mois de référence pour une période antérieure.
+                  6=Droit clos sur mois antérieur ayant eu un contrôle dans le mois de référence
+                  pour une période antérieure.
                 </p>
               </div>
               <div className={styles.legende_box}>
@@ -312,14 +253,14 @@ export default function Beneficiaire() {
                   1=Personne soumise à droits et devoirs
                 </p>
                 <p>&nbsp;</p>
-                <p className={styles.bold}>
-                  Personnes dans foyer droit ouvert et versable
+                <p className={styles.bold}>Personnes dans foyer droit ouvert et versable</p>
+                <p>
+                  Soumises droits & devoirs : Nombre de personnes dont la balise TOPPERSDRODEVORSA=1
+                  présents dans des foyers dont la balise ETATDOSRSA=2
                 </p>
                 <p>
-                  Soumises droits & devoirs : Nombre de personnes dont la balise TOPPERSDRODEVORSA=1 présents dans des foyers dont la balise ETATDOSRSA=2
-                </p>
-                <p>
-                  Non soumises droits & devoirs : Nombre de personnes dont la balise TOPPERSDRODEVORSA=0 présents dans des foyers dont la balise ETATDOSRSA=2
+                  Non soumises droits & devoirs : Nombre de personnes dont la balise
+                  TOPPERSDRODEVORSA=0 présents dans des foyers dont la balise ETATDOSRSA=2
                 </p>
               </div>
             </div>
@@ -354,31 +295,23 @@ export default function Beneficiaire() {
                 {runs.reverse().map((r, i) => (
                   <tr
                     key={`${r.timestamp}-${r.filename}-${r.seed}`}
-                    style={
-                      i == dateData.index
-                        ? { backgroundColor: "lightgrey" }
-                        : {}
-                    }
+                    style={i == dateData.index ? { backgroundColor: "lightgrey" } : {}}
                   >
                     <td>{i + 1}</td>
                     <td>{r.filename}</td>
                     <td>{r.timestamp}</td>
                     {devMode && <td>{r.fileSize}</td>}
-                    {devMode && (
-                      <td>{!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}</td>
-                    )}
+                    {devMode && <td>{!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}</td>}
                     <td>{r.fileDatetime}</td>
-                    <td>{`${r.frequency} (${
-                      frequencyNames[r.frequency] || "?"
-                    })`}</td>
-                    <td>{`${r.type} (${typeNames[r.type] || "?"})`}</td>
+                    <td>{`${r.frequency} (${FLUX_FREQUENCIES[r.frequency] || "?"})`}</td>
+                    <td>{`${r.origin} (${FLUX_ORIGINS[r.origin] || "?"})`}</td>
                     <td className={styles.numeric}>{r.total}</td>
                     <td className="shrink">
                       <button onClick={handleDateHistogram} data-index={i}>
                         Afficher par date
                       </button>
                     </td>
-                    <td>{r.error ? "Oui" : "Non"}</td>
+                    <td>{r.parseError ? "Oui" : "Non"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -395,9 +328,9 @@ export default function Beneficiaire() {
 
         {runs.length != 0 && (
           <p className={styles.text}>
-            Vous pouvez accéder à une représentation graphique de la répartition
-            dans les temps des demandes connues dans les fichiers analysés. Pour
-            cela il faut cliquer sur le bouton « Afficher par date ».
+            Vous pouvez accéder à une représentation graphique de la répartition dans les temps des
+            demandes connues dans les fichiers analysés. Pour cela il faut cliquer sur le bouton «
+            Afficher par date ».
           </p>
         )}
 
@@ -406,9 +339,7 @@ export default function Beneficiaire() {
             <h2 className={styles.subtitle}>
               Nombre de dossiers associés à des demandes réalisés à chaque date
             </h2>
-            <div
-              style={{ height: 250 * dateData.yearCount + "px", width: "100%" }}
-            >
+            <div style={{ height: 250 * dateData.yearCount + "px", width: "100%" }}>
               {ResponsiveCalendar(dateData)}
             </div>
           </>
@@ -420,14 +351,13 @@ export default function Beneficiaire() {
           text={
             <>
               <p className={styles.text}>
-                Tous les départements n'ont pas les outils pour analyser les
-                fichiers envoyés par la CNAF. Cela peut ralentir et compliquer
-                nos échanges.
+                Tous les départements n'ont pas les outils pour analyser les fichiers envoyés par la
+                CNAF. Cela peut ralentir et compliquer nos échanges.
               </p>
               <p className={styles.text}>
-                Avec cet outil, nous souhaitons permettre aux personnes qui ont
-                accès à ces fichiers d'en extraire des statistiques générales
-                sans avoir à mettre les mains dans le camboui elles-même.
+                Avec cet outil, nous souhaitons permettre aux personnes qui ont accès à ces fichiers
+                d'en extraire des statistiques générales sans avoir à mettre les mains dans le
+                camboui elles-même.
               </p>
             </>
           }

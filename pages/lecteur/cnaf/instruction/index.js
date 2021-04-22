@@ -7,9 +7,9 @@ import FileHandler from "../../../../components/fileHandler";
 import Footer from "../../../../components/footer";
 import styles from "../../../../styles/Home.module.css";
 
-import { frequencyNames, typeNames } from "../../../../lib/cnaf";
+import { FLUX_FREQUENCIES, FLUX_ORIGINS } from "../../../../lib/cnafGlossary";
 import { initReducer, reducerFactory } from "../../../../lib/historique";
-import { retrieveDataFromFluxInstruction } from "../../../../lib/fluxInstructionReader";
+import FluxInstructionReader from "../../../../lib/readers/FluxInstructionReader";
 import { csvExport } from "../../../../lib/csvExport";
 import { getDateTimeString } from "../../../../lib/dates";
 
@@ -35,7 +35,7 @@ export default function Instruction() {
 
     var reader = new FileReader();
     reader.onload = function (event) {
-      const dataFromFluxInstruction = retrieveDataFromFluxInstruction(event.target.result);
+      const fluxInstruction = new FluxInstructionReader(event.target.result);
 
       setIsPending(false);
 
@@ -47,7 +47,26 @@ export default function Instruction() {
           duration: new Date() - start_time,
           filename: file.name,
           fileSize: file.size,
-          ...dataFromFluxInstruction,
+          fileDatetime: fluxInstruction.fileDatetime,
+          frequency: fluxInstruction.frequency,
+          origin: fluxInstruction.origin,
+          // WIP: OK sur Firefox KO sur Chrome
+          parseError: fluxInstruction.parseError,
+          total: fluxInstruction.applicationsCount,
+          email: {
+            total: fluxInstruction.withEmail.length,
+            withAutorisation: fluxInstruction.withUsableEmail.length,
+            withExplicitRefusal: fluxInstruction.withForbiddenEmailUsage.length,
+            withoutAutorisationDetails: fluxInstruction.withoutEmailUsage.length,
+          },
+          phone: {
+            total: fluxInstruction.withPhone.length,
+            withAutorisation: fluxInstruction.withUsableEmail.length,
+            withExplicitRefusal: fluxInstruction.withForbiddenEmailUsage.length,
+            withoutAutorisationDetails: fluxInstruction.withoutEmailUsage.length,
+          },
+          withDSP: fluxInstruction.withDSP.length,
+          applicantsPersonalData: fluxInstruction.applicantsPersonalData,
         },
       });
     };
@@ -89,12 +108,7 @@ export default function Instruction() {
           <br />« Instruction » de la CNAF
         </h1>
 
-        <FileHandler
-          handleFile={handleFile}
-          isPending={isPending}
-          fileSize={fileSize}
-          message={"Calcul des statistiques en cours, merci de patienter"}
-        />
+        <FileHandler handleFile={handleFile} isPending={isPending} fileSize={fileSize} />
 
         {runs && runs.length > 0 && (
           <>
@@ -152,8 +166,8 @@ export default function Instruction() {
                     {devMode && <td>{r.fileSize}</td>}
                     {devMode && <td>{!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}</td>}
                     <td>{r.fileDatetime}</td>
-                    <td>{`${r.frequency} (${frequencyNames[r.frequency] || "?"})`}</td>
-                    <td>{`${r.type} (${typeNames[r.type] || "?"})`}</td>
+                    <td>{`${r.frequency} (${FLUX_FREQUENCIES[r.frequency] || "?"})`}</td>
+                    <td>{`${r.origin} (${FLUX_ORIGINS[r.origin] || "?"})`}</td>
                     <td className={styles.numeric}>{r.total}</td>
 
                     <td className={styles.numeric}>{r.email.total}</td>
@@ -190,7 +204,7 @@ export default function Instruction() {
 
                     <td className={styles.numeric}>{r.withDSP}</td>
                     <td className="shrink">{round((r.withDSP / r.total) * 100)}</td>
-                    <td>{r.error ? "Oui" : "Non"}</td>
+                    <td>{r.parseError ? "Oui" : "Non"}</td>
                   </tr>
                 ))}
               </tbody>
