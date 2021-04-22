@@ -76,9 +76,9 @@ export default function Beneficiaire() {
     });
   });
 
-  const calculateTotal = (category, index = null) => {
+  const calculateTotal = (category, key = null) => {
     return runs.reduce((accum, run) => {
-      const toAdd = index === null ? run[category] : run[category][index];
+      const toAdd = key === null ? run[category] : run[category][key];
       return accum + (toAdd || 0);
     }, 0);
   };
