@@ -76,17 +76,12 @@ export default function Beneficiaire() {
     });
   });
 
-  const accumRuns = (category, index) => {
-    let accum = 0;
-    runs.forEach(r => {
-      if (typeof index === 'undefined') {
-        accum = accum + r[category]
-      } else {
-        accum = accum + (r[category][index] || 0)
-      }
-    });
-    return accum
-  }
+  const calculateTotal = (category, index = null) => {
+    return runs.reduce((accum, run) => {
+      const toAdd = index === null ? run[category] : run[category][index];
+      return accum + (toAdd || 0);
+    }, 0);
+  };
 
   const handleFile = file => {
     if (devMode && file != devFile) {
@@ -226,6 +221,7 @@ export default function Beneficiaire() {
                 </tr>
               </thead>
               <tbody>
+                {/* reverse est utilisé pour que les fichiers apparaissent dans leur ordre d'upload */}
                 {runs.reverse().map((r, i) => (
                   <tr
                     key={`${r.timestamp}-${r.filename}-${r.seed}-0`}
@@ -257,26 +253,26 @@ export default function Beneficiaire() {
                 ))}
                 <tr>
                   <td>Total</td>
-                  <td className={styles.center}>{accumRuns("total")}</td>
-                  <td className={styles.center}>{accumRuns("people")}</td>
+                  <td className={styles.center}>{calculateTotal("total")}</td>
+                  <td className={styles.center}>{calculateTotal("people")}</td>
                   {keysDroits.map(k => (
                     <td key={k} className={styles.center}>
-                      {accumRuns("droits", k) || 0}
+                      {calculateTotal("droits", k) || 0}
                     </td>
                   ))}
                   {keysDevoirs.map(k => (
                     <td key={k} className={styles.center}>
-                      {accumRuns("devoirs", k) || 0}
+                      {calculateTotal("devoirs", k) || 0}
                     </td>
                   ))}
                   <td className={styles.center}>
-                    {accumRuns("droitsEtDevoirs", 1) || 0}
+                    {calculateTotal("droitsEtDevoirs", 1) || 0}
                   </td>
                   <td className={styles.center}>
-                    {accumRuns("droitsEtDevoirs", 0) || 0}
+                    {calculateTotal("droitsEtDevoirs", 0) || 0}
                   </td>
                   <td className={styles.center}>
-                    {accumRuns("droitsEtDevoirs", "Total") || 0}
+                    {calculateTotal("droitsEtDevoirs", "Total") || 0}
                   </td>
                 </tr>
 
@@ -354,6 +350,7 @@ export default function Beneficiaire() {
                 <tr></tr>
               </thead>
               <tbody>
+                {/* reverse est utilisé pour que les fichiers apparaissent dans leur ordre d'upload */}
                 {runs.reverse().map((r, i) => (
                   <tr
                     key={`${r.timestamp}-${r.filename}-${r.seed}`}
