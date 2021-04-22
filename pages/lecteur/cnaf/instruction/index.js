@@ -8,7 +8,7 @@ import Footer from "../../../../components/footer";
 import styles from "../../../../styles/Home.module.css";
 
 import { FLUX_FREQUENCIES, FLUX_ORIGINS } from "../../../../lib/cnafGlossary";
-import { initReducer, reducerFactory } from "../../../../lib/historique";
+import { initReducer, reducerFactory } from "../../../../lib/reducerFactory";
 import FluxInstructionReader from "../../../../lib/readers/FluxInstructionReader";
 import { csvExport } from "../../../../lib/csvExport";
 import { getDateTimeString } from "../../../../lib/dates";

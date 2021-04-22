@@ -5,7 +5,7 @@ import FileHandler from "../../../components/fileHandler";
 import Footer from "../../../components/footer";
 import styles from "../../../styles/Home.module.css";
 
-import { initReducer, reducerFactory } from "../../../lib/historique";
+import { initReducer, reducerFactory } from "../../../lib/reducerFactory";
 
 const reducer = reducerFactory("Test - Pole Emploi");
 const devMode = process.env.NODE_ENV == "development";
