@@ -76,6 +76,13 @@ export default function Beneficiaire() {
     });
   });
 
+  const calculateTotal = (category, key = null) => {
+    return runs.reduce((accum, run) => {
+      const toAdd = key === null ? run[category] : run[category][key];
+      return accum + (toAdd || 0);
+    }, 0);
+  };
+
   const handleFile = file => {
     if (devMode && file != devFile) {
       setDevFile(file);
@@ -195,10 +202,7 @@ export default function Beneficiaire() {
                   <th colSpan={keysDevoirs.length}>
                     Valeurs balises TOPPERSDRODEVORSA
                   </th>
-                  <th rowSpan="2">
-                    Personnes soumises droits et devoirs dans foyer droit ouvert
-                    et versable
-                  </th>
+                  <th colSpan="3">Nombre de personnes dans foyer droit ouvert et versable</th>
                 </tr>
                 <tr>
                   {keysDroits.map(k => (
@@ -211,19 +215,19 @@ export default function Beneficiaire() {
                       {k}
                     </th>
                   ))}
+                  <th colSpan="1">Soumises droits & devoirs</th>
+                  <th colSpan="1">Non soumises droits & devoirs</th>
+                  <th colSpan="1">Total</th>
                 </tr>
               </thead>
               <tbody>
-                {runs.map((r, i) => (
+                {/* reverse est utilisé pour que les fichiers apparaissent dans leur ordre d'upload */}
+                {runs.reverse().map((r, i) => (
                   <tr
                     key={`${r.timestamp}-${r.filename}-${r.seed}-0`}
-                    style={
-                      i == dateData.index
-                        ? { backgroundColor: "lightgrey" }
-                        : {}
-                    }
+                    style={i == dateData.index ? { backgroundColor: "lightgrey" } : {} }
                   >
-                    <td>{runs.length - i}</td>
+                    <td>{i + 1}</td>
                     <td className={styles.center}>{r.total}</td>
                     <td className={styles.center}>{r.people}</td>
                     {keysDroits.map(k => (
@@ -239,8 +243,38 @@ export default function Beneficiaire() {
                     <td className={styles.center}>
                       {r.droitsEtDevoirs[1] || 0}
                     </td>
+                    <td className={styles.center}>
+                      {r.droitsEtDevoirs[0] || 0}
+                    </td>
+                    <td className={styles.center}>
+                      {r.droitsEtDevoirs["Total"] || 0}
+                    </td>
                   </tr>
                 ))}
+                <tr>
+                  <td>Total</td>
+                  <td className={styles.center}>{calculateTotal("total")}</td>
+                  <td className={styles.center}>{calculateTotal("people")}</td>
+                  {keysDroits.map(k => (
+                    <td key={k} className={styles.center}>
+                      {calculateTotal("droits", k) || 0}
+                    </td>
+                  ))}
+                  {keysDevoirs.map(k => (
+                    <td key={k} className={styles.center}>
+                      {calculateTotal("devoirs", k) || 0}
+                    </td>
+                  ))}
+                  <td className={styles.center}>
+                    {calculateTotal("droitsEtDevoirs", 1) || 0}
+                  </td>
+                  <td className={styles.center}>
+                    {calculateTotal("droitsEtDevoirs", 0) || 0}
+                  </td>
+                  <td className={styles.center}>
+                    {calculateTotal("droitsEtDevoirs", "Total") || 0}
+                  </td>
+                </tr>
 
                 <tr></tr>
               </tbody>
@@ -279,12 +313,13 @@ export default function Beneficiaire() {
                 </p>
                 <p>&nbsp;</p>
                 <p className={styles.bold}>
-                  Personnes soumises droits et devoirs dans foyer droit ouvert
-                  et versable
+                  Personnes dans foyer droit ouvert et versable
                 </p>
                 <p>
-                  Nombre de personnes dont la balise TOPPERSDRODEVORSA=1
-                  présents dans des foyers dont la balise ETATDOSRSA=2
+                  Soumises droits & devoirs : Nombre de personnes dont la balise TOPPERSDRODEVORSA=1 présents dans des foyers dont la balise ETATDOSRSA=2
+                </p>
+                <p>
+                  Non soumises droits & devoirs : Nombre de personnes dont la balise TOPPERSDRODEVORSA=0 présents dans des foyers dont la balise ETATDOSRSA=2
                 </p>
               </div>
             </div>
@@ -315,7 +350,8 @@ export default function Beneficiaire() {
                 <tr></tr>
               </thead>
               <tbody>
-                {runs.map((r, i) => (
+                {/* reverse est utilisé pour que les fichiers apparaissent dans leur ordre d'upload */}
+                {runs.reverse().map((r, i) => (
                   <tr
                     key={`${r.timestamp}-${r.filename}-${r.seed}`}
                     style={
@@ -324,7 +360,7 @@ export default function Beneficiaire() {
                         : {}
                     }
                   >
-                    <td>{runs.length - i}</td>
+                    <td>{i + 1}</td>
                     <td>{r.filename}</td>
                     <td>{r.timestamp}</td>
                     {devMode && <td>{r.fileSize}</td>}
