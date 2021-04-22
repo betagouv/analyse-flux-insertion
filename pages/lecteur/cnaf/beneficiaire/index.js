@@ -96,7 +96,7 @@ export default function Beneficiaire() {
     reader.onload = function (event) {
       const fluxBeneficiaire = new FluxBeneficiaireReader(event.target.result);
 
-      // => { applicationDatesPartition, droitsPartition, devoirsPartition, droitsEtDevoirsPartitionPartition }
+      // => { applicationDatesPartition, droitsPartition, devoirsPartition, droitsEtDevoirsPartitionPartition, applicantsRolesCount }
       const stats = fluxBeneficiaire.retrievePartitions();
 
       const newKeysDroits = keysDroits.concat(Object.keys(stats.droitsPartition));
@@ -148,12 +148,17 @@ export default function Beneficiaire() {
                 <tr>
                   <th rowSpan="2"></th>
                   <th rowSpan="2">Dossiers (Foyers)</th>
-                  <th rowSpan="2">Personnes</th>
+                  <th colSpan="5">Personnes</th>
                   <th colSpan={keysDroits.length}>Valeurs balises ETATDOSRSA</th>
                   <th colSpan={keysDevoirs.length}>Valeurs balises TOPPERSDRODEVORSA</th>
                   <th colSpan="3">Nombre de personnes dans foyer droit ouvert et versable</th>
                 </tr>
                 <tr>
+                  <th colSpan="1">DEM</th>
+                  <th colSpan="1">CJT</th>
+                  <th colSpan="1">ENF</th>
+                  <th colSpan="1">AUT</th>
+                  <th colSpan="1">Total</th>
                   {keysDroits.map(k => (
                     <th key={k} colSpan="1">
                       {k}
@@ -176,8 +181,12 @@ export default function Beneficiaire() {
                     key={`${r.timestamp}-${r.filename}-${r.seed}-0`}
                     style={i == dateData.index ? { backgroundColor: "lightgrey" } : {}}
                   >
-                    <td>{i + 1}</td>
+                    <td className={styles.center}>{i + 1}</td>
                     <td className={styles.center}>{r.total}</td>
+                    <td className={styles.center}>{r.applicantsRolesCount["DEM"] || "0"}</td>
+                    <td className={styles.center}>{r.applicantsRolesCount["CJT"] || "0"}</td>
+                    <td className={styles.center}>{r.applicantsRolesCount["ENF"] || "0"}</td>
+                    <td className={styles.center}>{r.applicantsRolesCount["AUT"] || "0"}</td>
                     <td className={styles.center}>{r.applicantsCount}</td>
                     {keysDroits.map(k => (
                       <td key={k} className={styles.center}>
@@ -197,7 +206,11 @@ export default function Beneficiaire() {
                 <tr>
                   <td>Total</td>
                   <td className={styles.center}>{calculateTotal("total")}</td>
-                  <td className={styles.center}>{calculateTotal("people")}</td>
+                  <td className={styles.center}>{calculateTotal("applicantsRolesCount", "DEM") || 0}</td>
+                  <td className={styles.center}>{calculateTotal("applicantsRolesCount", "CJT") || 0}</td>
+                  <td className={styles.center}>{calculateTotal("applicantsRolesCount", "ENF") || 0}</td>
+                  <td className={styles.center}>{calculateTotal("applicantsRolesCount", "AUT") || 0}</td>
+                  <td className={styles.center}>{calculateTotal("applicantsCount")}</td>
                   {keysDroits.map(k => (
                     <td key={k} className={styles.center}>
                       {calculateTotal("droitsPartition", k) || 0}
@@ -297,21 +310,21 @@ export default function Beneficiaire() {
                     key={`${r.timestamp}-${r.filename}-${r.seed}`}
                     style={i == dateData.index ? { backgroundColor: "lightgrey" } : {}}
                   >
-                    <td>{i + 1}</td>
-                    <td>{r.filename}</td>
-                    <td>{r.timestamp}</td>
-                    {devMode && <td>{r.fileSize}</td>}
-                    {devMode && <td>{!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}</td>}
-                    <td>{r.fileDatetime}</td>
-                    <td>{`${r.frequency} (${FLUX_FREQUENCIES[r.frequency] || "?"})`}</td>
-                    <td>{`${r.origin} (${FLUX_ORIGINS[r.origin] || "?"})`}</td>
-                    <td className={styles.numeric}>{r.total}</td>
+                    <td className={styles.center}>{i + 1}</td>
+                    <td className={styles.center}>{r.filename}</td>
+                    <td className={styles.center}>{r.timestamp}</td>
+                    {devMode && <td className={styles.center}>{r.fileSize}</td>}
+                    {devMode && <td className={styles.center}>{!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}</td>}
+                    <td className={styles.center}>{r.fileDatetime}</td>
+                    <td className={styles.center}>{`${r.frequency} (${FLUX_FREQUENCIES[r.frequency] || "?"})`}</td>
+                    <td className={styles.center}>{`${r.origin} (${FLUX_ORIGINS[r.origin] || "?"})`}</td>
+                    <td className={styles.center}>{r.total}</td>
                     <td className="shrink">
                       <button onClick={handleDateHistogram} data-index={i}>
                         Afficher par date
                       </button>
                     </td>
-                    <td>{r.parseError ? "Oui" : "Non"}</td>
+                    <td className={styles.center}>{r.parseError ? "Oui" : "Non"}</td>
                   </tr>
                 ))}
               </tbody>
