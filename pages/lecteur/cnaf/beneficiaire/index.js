@@ -77,6 +77,13 @@ export default function Beneficiaire() {
     });
   });
 
+  const calculateTotal = (category, key = null) => {
+    return runs.reduce((accum, run) => {
+      const toAdd = key === null ? run[category] : run[category][key];
+      return accum + (toAdd || 0);
+    }, 0);
+  };
+
   const handleFile = file => {
     if (devMode && file != devFile) {
       setDevFile(file);
@@ -89,7 +96,7 @@ export default function Beneficiaire() {
     reader.onload = function (event) {
       const fluxBeneficiaire = new FluxBeneficiaireReader(event.target.result);
 
-      // => { applicationDatesPartition, droitsPartition, devoirsPartition, droitsEtDevoirsPartition }
+      // => { applicationDatesPartition, droitsPartition, devoirsPartition, droitsEtDevoirsPartitionPartition }
       const stats = fluxBeneficiaire.retrievePartitions();
 
       const newKeysDroits = keysDroits.concat(Object.keys(stats.droitsPartition));
@@ -144,9 +151,7 @@ export default function Beneficiaire() {
                   <th rowSpan="2">Personnes</th>
                   <th colSpan={keysDroits.length}>Valeurs balises ETATDOSRSA</th>
                   <th colSpan={keysDevoirs.length}>Valeurs balises TOPPERSDRODEVORSA</th>
-                  <th rowSpan="2">
-                    Personnes soumises droits et devoirs dans foyer droit ouvert et versable
-                  </th>
+                  <th colSpan="3">Nombre de personnes dans foyer droit ouvert et versable</th>
                 </tr>
                 <tr>
                   {keysDroits.map(k => (
@@ -159,15 +164,19 @@ export default function Beneficiaire() {
                       {k}
                     </th>
                   ))}
+                  <th colSpan="1">Soumises droits & devoirs</th>
+                  <th colSpan="1">Non soumises droits & devoirs</th>
+                  <th colSpan="1">Total</th>
                 </tr>
               </thead>
               <tbody>
-                {runs.map((r, i) => (
+                {/* reverse est utilisé pour que les fichiers apparaissent dans leur ordre d'upload */}
+                {runs.reverse().map((r, i) => (
                   <tr
                     key={`${r.timestamp}-${r.filename}-${r.seed}-0`}
                     style={i == dateData.index ? { backgroundColor: "lightgrey" } : {}}
                   >
-                    <td>{runs.length - i}</td>
+                    <td>{i + 1}</td>
                     <td className={styles.center}>{r.total}</td>
                     <td className={styles.center}>{r.applicantsCount}</td>
                     {keysDroits.map(k => (
@@ -181,8 +190,34 @@ export default function Beneficiaire() {
                       </td>
                     ))}
                     <td className={styles.center}>{r.droitsEtDevoirsPartition[1] || 0}</td>
+                    <td className={styles.center}>{r.droitsEtDevoirsPartition[0] || 0}</td>
+                    <td className={styles.center}>{r.droitsEtDevoirsPartition["Total"] || 0}</td>
                   </tr>
                 ))}
+                <tr>
+                  <td>Total</td>
+                  <td className={styles.center}>{calculateTotal("total")}</td>
+                  <td className={styles.center}>{calculateTotal("people")}</td>
+                  {keysDroits.map(k => (
+                    <td key={k} className={styles.center}>
+                      {calculateTotal("droitsPartition", k) || 0}
+                    </td>
+                  ))}
+                  {keysDevoirs.map(k => (
+                    <td key={k} className={styles.center}>
+                      {calculateTotal("devoirsPartition", k) || 0}
+                    </td>
+                  ))}
+                  <td className={styles.center}>
+                    {calculateTotal("droitsEtDevoirsPartition", 1) || 0}
+                  </td>
+                  <td className={styles.center}>
+                    {calculateTotal("droitsEtDevoirsPartition", 0) || 0}
+                  </td>
+                  <td className={styles.center}>
+                    {calculateTotal("droitsEtDevoirsPartition", "Total") || 0}
+                  </td>
+                </tr>
 
                 <tr></tr>
               </tbody>
@@ -218,12 +253,14 @@ export default function Beneficiaire() {
                   1=Personne soumise à droits et devoirs
                 </p>
                 <p>&nbsp;</p>
-                <p className={styles.bold}>
-                  Personnes soumises droits et devoirs dans foyer droit ouvert et versable
+                <p className={styles.bold}>Personnes dans foyer droit ouvert et versable</p>
+                <p>
+                  Soumises droits & devoirs : Nombre de personnes dont la balise TOPPERSDRODEVORSA=1
+                  présents dans des foyers dont la balise ETATDOSRSA=2
                 </p>
                 <p>
-                  Nombre de personnes dont la balise TOPPERSDRODEVORSA=1 présents dans des foyers
-                  dont la balise ETATDOSRSA=2
+                  Non soumises droits & devoirs : Nombre de personnes dont la balise
+                  TOPPERSDRODEVORSA=0 présents dans des foyers dont la balise ETATDOSRSA=2
                 </p>
               </div>
             </div>
@@ -254,12 +291,13 @@ export default function Beneficiaire() {
                 <tr></tr>
               </thead>
               <tbody>
-                {runs.map((r, i) => (
+                {/* reverse est utilisé pour que les fichiers apparaissent dans leur ordre d'upload */}
+                {runs.reverse().map((r, i) => (
                   <tr
                     key={`${r.timestamp}-${r.filename}-${r.seed}`}
                     style={i == dateData.index ? { backgroundColor: "lightgrey" } : {}}
                   >
-                    <td>{runs.length - i}</td>
+                    <td>{i + 1}</td>
                     <td>{r.filename}</td>
                     <td>{r.timestamp}</td>
                     {devMode && <td>{r.fileSize}</td>}
