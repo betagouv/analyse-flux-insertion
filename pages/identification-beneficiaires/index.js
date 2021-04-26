@@ -7,6 +7,8 @@ import { useState, useReducer } from "react";
 import { initReducer, reducerFactory } from "../../lib/reducerFactory";
 import FluxBeneficiaireReader from "../../lib/readers/FluxBeneficiaireReader";
 import FluxInstructionReader from "../../lib/readers/FluxInstructionReader";
+import { csvExport } from "../../lib/csvExport";
+import { getDateTimeString } from "../../lib/dates";
 
 const reducer = reducerFactory("Test - CNAF - Identification nouveaux demandeurs");
 
@@ -44,7 +46,6 @@ export default function identificationBeneficiaire() {
       }
 
       setIsPending(false);
-      setFluxToProcess("instructions");
 
       dispatchRuns({
         type: "append",
@@ -102,6 +103,38 @@ export default function identificationBeneficiaire() {
     });
   };
 
+  const handleCsvExport = () => {
+    const dataToExport = [];
+    const withContactInfos = someWithEmail || someWithPhone;
+    runs.forEach(run => {
+      run.applicantsPersonalData.forEach(applicantPersonalData => {
+        // If phone and mail address not present then it is an empty string
+        if (withContactInfos) {
+          applicantPersonalData.mailAddress ??= "";
+          applicantPersonalData.phoneNumber ??= "";
+        }
+        // We want to export the applicants data along with the file name
+        dataToExport.push([...Object.values(applicantPersonalData), run.fileName]);
+      });
+    });
+
+    const csvHeader = withContactInfos
+      ? [
+          "NUMERO DEMANDE RSA",
+          "NIR",
+          "NOM",
+          "PRENOM",
+          "ROLE",
+          "EMAIL",
+          "TELEPHONE",
+          "FICHIER SOURCE",
+        ]
+      : ["NUMERO DEMANDE RSA", "NIR", "NOM", "PRENOM", "ROLE", "FICHIER SOURCE"];
+
+    const csvName = "nouveaux_demandeurs_rsa_" + getDateTimeString() + ".csv";
+    csvExport(csvName, dataToExport, csvHeader);
+  };
+
   const someWithEmail = runs.some(run => {
     return run.applicantsPersonalData.some(personalData => personalData.mailAddress);
   });
@@ -116,7 +149,13 @@ export default function identificationBeneficiaire() {
         <h1>Identifiez les nouveaux demandeurs à l'aide des flux CNAF</h1>
         <ol>
           <li style={fluxToProcess === "bénéficiaires" ? { fontWeight: "bold" } : {}}>
-            Uploadez le ou les fichiers "bénéficiaires" pour identifier les nouveaux demandeurs.
+            Uploadez le ou les fichiers "bénéficiaires" pour identifier les nouveaux demandeurs{" "}
+            {"(< 100 Mo) "}
+          </li>
+          <br />
+          <li>
+            {" "}
+            Une fois les flux bénéficiaires uploadés, cliquez sur "Passer aux flux d'instructions"
           </li>
           <br />
           <li style={fluxToProcess === "instructions" ? { fontWeight: "bold" } : {}}>
@@ -129,12 +168,39 @@ export default function identificationBeneficiaire() {
           handleFile={handleFileUpload}
           isPending={isPending}
           fileSize={fileSize}
-          uploadMessage={`Glissez et déposez les flux ${fluxToProcess} à analyser ou sélectionnez-les.`}
+          uploadMessage={[
+            "Glissez et déposez les flux ",
+            <strong>{fluxToProcess}</strong>,
+            " à analyser ou sélectionnez-les.",
+          ]}
           pendingMessage={"Traitement en cours, merci de patienter."}
         />
 
         {runs && runs.length > 0 && (
           <>
+            {fluxToProcess === "bénéficiaires" && (
+              <button className={styles.button} onClick={() => setFluxToProcess("instructions")}>
+                Passer aux flux instructions
+              </button>
+            )}
+            {fluxToProcess === "instructions" && (
+              <button className={styles.button} onClick={() => setFluxToProcess("bénéficiaires")}>
+                Revenir aux flux bénéficiaires
+              </button>
+            )}
+            <div className={styles.button_group}>
+              <div style={{ marginRight: "20px" }}>
+                <button className={styles.button} onClick={handleCsvExport}>
+                  {" "}
+                  Exporter au format CSV{" "}
+                </button>
+              </div>
+              <div>
+                <button className={styles.button} onClick={handleReset}>
+                  Vider l'historique
+                </button>
+              </div>
+            </div>
             <table className={styles.margin_side}>
               <thead>
                 <tr>
@@ -188,9 +254,6 @@ export default function identificationBeneficiaire() {
                   })}
               </tbody>
             </table>
-            <button className={styles.button} onClick={handleReset}>
-              Vider l'historique
-            </button>
           </>
         )}
       </main>

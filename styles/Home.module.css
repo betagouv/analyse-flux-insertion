@@ -208,6 +208,11 @@
   cursor: pointer;
 }
 
+.button_group {
+  display: flex;
+  justify-content: space-between;
+}
+
 .button:hover {
   background: black;
   color: white;
