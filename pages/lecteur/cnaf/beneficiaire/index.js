@@ -6,7 +6,7 @@ import FileHandler from "../../../../components/fileHandler";
 import Footer from "../../../../components/footer";
 import Layout from "../../../../components/layout";
 import { FLUX_FREQUENCIES, FLUX_ORIGINS } from "../../../../lib/cnafGlossary";
-import { initReducer, reducerFactory } from "../../../../lib/historique";
+import { initReducer, reducerFactory } from "../../../../lib/reducerFactory";
 import styles from "../../../../styles/Home.module.css";
 
 import FluxBeneficiaireReader from "../../../../lib/readers/FluxBeneficiaireReader";

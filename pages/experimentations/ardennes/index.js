@@ -7,9 +7,9 @@ import Footer from "../../../components/footer";
 import LoginForm from "../../../components/loginForm";
 import styles from "../../../styles/Home.module.css";
 
-import { appFetch } from "../../../lib/appFetch"
-import { initReducer, reducerFactory } from '../../../lib/historique'
-import { getDateTimeString, getFrenchFormatDateString, stringToDate } from '../../../lib/dates'
+import { appFetch } from "../../../lib/appFetch";
+import { initReducer, reducerFactory } from "../../../lib/reducerFactory";
+import { getDateTimeString, getFrenchFormatDateString, stringToDate } from "../../../lib/dates";
 
 const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
 const devMode = process.env.NODE_ENV == "development";
