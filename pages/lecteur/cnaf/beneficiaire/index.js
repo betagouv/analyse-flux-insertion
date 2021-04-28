@@ -19,8 +19,8 @@ export default function Beneficiaire() {
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
-  const [keysDroits, setKeysDroits] = useState([]);
-  const [keysDevoirs, setKeysDevoirs] = useState([]);
+  const [processedApplicationsCount, setProcessedApplicationsCount] = useState(0);
+  const [fluxPartitions, setFluxPartitions] = useState(FluxBeneficiaireReader.initialPartitions);
   const [dateData, setDateData] = useState({
     index: undefined,
     data: [],
@@ -85,25 +85,121 @@ export default function Beneficiaire() {
   };
 
   const handleFile = file => {
-    if (devMode && file != devFile) {
-      setDevFile(file);
-    }
     setFileSize(file.size);
+    file.size > 100_000_000 ? processFileByChunks(file) : processEntireFile(file);
+  };
+
+  const processFileByChunks = async file => {
     setIsPending(true);
-    const start_time = new Date();
+
+    const startTime = new Date();
+
+    let offset = 0;
+    const CHUNK_SIZE = 512 * 1024;
+    const seed = Math.random();
+    const timestamp = new Date().toISOString().slice(0, 19);
+
+    while (offset < file.size) {
+      // we read the file inside a Promise because we want the chunks to be read synchronously
+      // one after the other
+      await new Promise(resolve => {
+        var reader = new FileReader();
+        reader.onload = function (event) {
+          let buffer = new Uint8Array(event.target.result);
+
+          if (offset > file.size) {
+            resolve();
+            return;
+          }
+
+          const textChunk = new TextDecoder().decode(buffer);
+
+          // if it is the first chunk we retrieve the infos from <IdentificationFlux> only
+          if (offset === 0) {
+            let matchedText = textChunk.match(
+              new RegExp(/<IdentificationFlux>[\s\S]*?<\/IdentificationFlux>/)
+            );
+            let textToProcess = matchedText && matchedText[0];
+            const fluxBeneficiaire = new FluxBeneficiaireReader(textToProcess);
+            offset += textToProcess.length;
+            dispatchRuns({
+              type: "append",
+              item: {
+                filename: file.name,
+                seed: seed,
+                timestamp: timestamp,
+                fileSize: file.size,
+                fileDatetime: fluxBeneficiaire.fileDatetime,
+                frequency: fluxBeneficiaire.frequency,
+                origin: fluxBeneficiaire.origin,
+                ...fluxPartitions, // => FluxBeneficiaireReader.initialPartitions
+              },
+            });
+            resolve();
+            return;
+          }
+
+          // we take one application in a chunk
+          let matchedText = textChunk.match(new RegExp(/<InfosFoyerRSA>[\s\S]*?<\/InfosFoyerRSA>/));
+          let textToProcess = matchedText && matchedText[0];
+
+          if (!textToProcess) {
+            offset += CHUNK_SIZE;
+            resolve();
+            return;
+          }
+
+          // we update the offset so that next chunk begins when this one ends
+          offset += textToProcess.length;
+
+          const fluxChunk = new FluxBeneficiaireReader(textToProcess);
+
+          // fluxPartitions has the partition from the stage before
+          const updatedPartitions = fluxChunk.updatePartitions(fluxPartitions);
+
+          dispatchRuns({
+            type: "update",
+            item: {
+              seed: seed,
+              ...updatedPartitions,
+            },
+          });
+          setFluxPartitions(updatedPartitions);
+          setProcessedApplicationsCount(updatedPartitions.applicationsCount);
+          resolve();
+        };
+
+        let slice = file.slice(offset, offset + CHUNK_SIZE);
+        reader.readAsArrayBuffer(slice);
+      });
+    }
+
+    // after all the file has been processed we set the duration and we reinitialize the
+    // fluxPartitions state in case we process another file by chunks
+    dispatchRuns({
+      type: "update",
+      item: {
+        seed: seed,
+        duration: new Date() - startTime,
+      },
+    });
+    setFluxPartitions(FluxBeneficiaireReader.initialPartitions);
+
+    setIsPending(false);
+    alert("Toutes les demandes ont été traitées ✅");
+  };
+
+  const processEntireFile = file => {
+    setIsPending(true);
+
+    const startTime = new Date();
 
     var reader = new FileReader();
     reader.onload = function (event) {
       const fluxBeneficiaire = new FluxBeneficiaireReader(event.target.result);
 
-      // => { applicationDatesPartition, droitsPartition, devoirsPartition, droitsEtDevoirsPartitionPartition, applicantsRolesCount }
-      const stats = fluxBeneficiaire.retrievePartitions();
-
-      const newKeysDroits = keysDroits.concat(Object.keys(stats.droitsPartition));
-      setKeysDroits(Array.from(new Set(newKeysDroits)).sort());
-
-      const newKeysDevoirs = keysDevoirs.concat(Object.keys(stats.devoirsPartition));
-      setKeysDevoirs(Array.from(new Set(newKeysDevoirs)).sort());
+      // => { applicationDatesPartition, droitsPartition, devoirsPartition, droitsEtDevoirsPartition, applicantsRolesPartition, applicationsCount, applicantsCount }
+      const partitions = fluxBeneficiaire.retrievePartitions();
 
       setIsPending(false);
 
@@ -111,22 +207,30 @@ export default function Beneficiaire() {
         type: "append",
         item: {
           seed: Math.random(),
+          duration: new Date() - startTime,
           timestamp: new Date().toISOString().slice(0, 19),
-          duration: new Date() - start_time,
           filename: file.name,
+          fileSize: file.size,
           fileDatetime: fluxBeneficiaire.fileDatetime,
           frequency: fluxBeneficiaire.frequency,
           origin: fluxBeneficiaire.origin,
           parseError: fluxBeneficiaire.parseError,
-          total: fluxBeneficiaire.applicationsCount,
-          fileSize: file.size,
-          applicantsCount: fluxBeneficiaire.applicantsCount,
-          ...stats,
+          ...partitions,
         },
       });
     };
     reader.readAsText(file);
   };
+
+  const keysDroits = runs.reduce((keysDroits, run) => {
+    keysDroits = keysDroits.concat(Object.keys(run.droitsPartition));
+    return Array.from(new Set(keysDroits)).sort();
+  }, []);
+
+  const keysDevoirs = runs.reduce((keysDevoirs, run) => {
+    keysDevoirs = keysDevoirs.concat(Object.keys(run.devoirsPartition));
+    return Array.from(new Set(keysDevoirs)).sort();
+  }, []);
 
   return (
     <Layout className={styles.container} handleFile={handleFile}>
@@ -137,7 +241,16 @@ export default function Beneficiaire() {
           <br />« Bénéficiaire » de la CNAF
         </h1>
 
-        <FileHandler handleFile={handleFile} isPending={isPending} fileSize={fileSize} />
+        <FileHandler
+          handleFile={handleFile}
+          isPending={isPending}
+          fileSize={fileSize}
+          pendingMessage={
+            processedApplicationsCount > 0
+              ? `${processedApplicationsCount} demandes traitées`
+              : undefined
+          }
+        />
 
         {runs && runs.length > 0 && (
           <>
@@ -182,11 +295,11 @@ export default function Beneficiaire() {
                     style={i == dateData.index ? { backgroundColor: "lightgrey" } : {}}
                   >
                     <td className={styles.center}>{i + 1}</td>
-                    <td className={styles.center}>{r.total}</td>
-                    <td className={styles.center}>{r.applicantsRolesCount["DEM"] || "0"}</td>
-                    <td className={styles.center}>{r.applicantsRolesCount["CJT"] || "0"}</td>
-                    <td className={styles.center}>{r.applicantsRolesCount["ENF"] || "0"}</td>
-                    <td className={styles.center}>{r.applicantsRolesCount["AUT"] || "0"}</td>
+                    <td className={styles.center}>{r.applicationsCount}</td>
+                    <td className={styles.center}>{r.applicantsRolesPartition["DEM"] || "0"}</td>
+                    <td className={styles.center}>{r.applicantsRolesPartition["CJT"] || "0"}</td>
+                    <td className={styles.center}>{r.applicantsRolesPartition["ENF"] || "0"}</td>
+                    <td className={styles.center}>{r.applicantsRolesPartition["AUT"] || "0"}</td>
                     <td className={styles.center}>{r.applicantsCount}</td>
                     {keysDroits.map(k => (
                       <td key={k} className={styles.center}>
@@ -205,11 +318,19 @@ export default function Beneficiaire() {
                 ))}
                 <tr>
                   <td>Total</td>
-                  <td className={styles.center}>{calculateTotal("total")}</td>
-                  <td className={styles.center}>{calculateTotal("applicantsRolesCount", "DEM") || 0}</td>
-                  <td className={styles.center}>{calculateTotal("applicantsRolesCount", "CJT") || 0}</td>
-                  <td className={styles.center}>{calculateTotal("applicantsRolesCount", "ENF") || 0}</td>
-                  <td className={styles.center}>{calculateTotal("applicantsRolesCount", "AUT") || 0}</td>
+                  <td className={styles.center}>{calculateTotal("applicationsCount")}</td>
+                  <td className={styles.center}>
+                    {calculateTotal("applicantsRolesPartition", "DEM") || 0}
+                  </td>
+                  <td className={styles.center}>
+                    {calculateTotal("applicantsRolesPartition", "CJT") || 0}
+                  </td>
+                  <td className={styles.center}>
+                    {calculateTotal("applicantsRolesPartition", "ENF") || 0}
+                  </td>
+                  <td className={styles.center}>
+                    {calculateTotal("applicantsRolesPartition", "AUT") || 0}
+                  </td>
                   <td className={styles.center}>{calculateTotal("applicantsCount")}</td>
                   {keysDroits.map(k => (
                     <td key={k} className={styles.center}>
@@ -314,11 +435,19 @@ export default function Beneficiaire() {
                     <td className={styles.center}>{r.filename}</td>
                     <td className={styles.center}>{r.timestamp}</td>
                     {devMode && <td className={styles.center}>{r.fileSize}</td>}
-                    {devMode && <td className={styles.center}>{!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}</td>}
+                    {devMode && (
+                      <td className={styles.center}>
+                        {!isNaN(r.duration) ? r.duration / 1000 : "#N/A"}
+                      </td>
+                    )}
                     <td className={styles.center}>{r.fileDatetime}</td>
-                    <td className={styles.center}>{`${r.frequency} (${FLUX_FREQUENCIES[r.frequency] || "?"})`}</td>
-                    <td className={styles.center}>{`${r.origin} (${FLUX_ORIGINS[r.origin] || "?"})`}</td>
-                    <td className={styles.center}>{r.total}</td>
+                    <td className={styles.center}>{`${r.frequency} (${
+                      FLUX_FREQUENCIES[r.frequency] || "?"
+                    })`}</td>
+                    <td className={styles.center}>{`${r.origin} (${
+                      FLUX_ORIGINS[r.origin] || "?"
+                    })`}</td>
+                    <td className={styles.center}>{r.applicationsCount}</td>
                     <td className="shrink">
                       <button onClick={handleDateHistogram} data-index={i}>
                         Afficher par date
