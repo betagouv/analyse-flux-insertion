@@ -121,7 +121,8 @@ export default function Beneficiaire() {
             );
             let textToProcess = matchedText && matchedText[0];
             const fluxBeneficiaire = new FluxBeneficiaireReader(textToProcess);
-            offset += textToProcess.length;
+            offset += textToProcess.length + matchedText.index;
+
             dispatchRuns({
               type: "append",
               item: {
@@ -139,24 +140,28 @@ export default function Beneficiaire() {
             return;
           }
 
-          // we take one application in a chunk
-          let matchedText = textChunk.match(new RegExp(/<InfosFoyerRSA>[\s\S]*?<\/InfosFoyerRSA>/));
-          let textToProcess = matchedText && matchedText[0];
+          // we take all the applications in the chunk
+          let allMatches = [
+            ...textChunk.matchAll(new RegExp(/<InfosFoyerRSA>[\s\S]*?<\/InfosFoyerRSA>/g)),
+          ];
 
-          if (!textToProcess) {
+          let textToProcess = allMatches.map(match => match[0]).join("");
+
+          if (textToProcess.length === 0) {
             offset += CHUNK_SIZE;
             resolve();
             return;
           }
 
-          // we update the offset so that next chunk begins when this one ends
-          offset += textToProcess.length;
+          const lastMatch = allMatches[allMatches.length - 1];
 
-          const fluxChunk = new FluxBeneficiaireReader(textToProcess);
+          // we update the offset so that next chunk begins when the last match ends
+          offset += lastMatch.index + lastMatch[0].length;
 
-          // fluxPartitions has the partition from the stage before
+          // we have to put the entire xml content between tags for it to be correctly parsed
+          const fluxChunk = new FluxBeneficiaireReader("<Racine>" + textToProcess + "</Racine>");
+
           const updatedPartitions = fluxChunk.updatePartitions(fluxPartitions);
-
           dispatchRuns({
             type: "update",
             item: {
