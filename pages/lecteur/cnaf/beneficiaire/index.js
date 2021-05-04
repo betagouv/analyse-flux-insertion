@@ -7,9 +7,10 @@ import Footer from "../../../../components/footer";
 import Layout from "../../../../components/layout";
 import { FLUX_FREQUENCIES, FLUX_ORIGINS } from "../../../../lib/cnafGlossary";
 import { initReducer, reducerFactory } from "../../../../lib/reducerFactory";
+import { sumPartitions } from "../../../../lib/sumPartitions";
 import styles from "../../../../styles/Home.module.css";
 
-import FluxBeneficiaireReader from "../../../../lib/readers/FluxBeneficiaireReader";
+import FluxBeneficiaire from "../../../../models/FluxBeneficiaire";
 
 const reducer = reducerFactory("Test - CNAF - Bénéficiaire");
 const devMode = process.env.NODE_ENV == "development";
@@ -20,7 +21,6 @@ export default function Beneficiaire() {
   const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [processedApplicationsCount, setProcessedApplicationsCount] = useState(0);
-  const [fluxPartitions, setFluxPartitions] = useState(FluxBeneficiaireReader.initialPartitions);
   const [dateData, setDateData] = useState({
     index: undefined,
     data: [],
@@ -41,13 +41,20 @@ export default function Beneficiaire() {
     }
   }, [devFile]);
 
+  const calculateTotal = (category, key = null) => {
+    return runs.reduce((accum, run) => {
+      const toAdd = key === null ? run[category] : run[category][key];
+      return accum + (toAdd || 0);
+    }, 0);
+  };
+
   const handleDateHistogram = useCallback(event =>
     showDateHistogram(parseInt(event.target.dataset.index))
   );
   const showDateHistogram = useCallback(index => {
     const source = runs[index];
 
-    const dates = Object.keys(source.applicationDatesPartition);
+    const dates = Object.keys(source.applicationsDatesPartition);
     let minDate = null;
     let maxDate = null;
 
@@ -63,7 +70,7 @@ export default function Beneficiaire() {
       }
       return {
         day: date.toISOString().slice(0, 10),
-        value: source.applicationDatesPartition[d],
+        value: source.applicationsDatesPartition[d],
       };
     });
 
@@ -77,13 +84,6 @@ export default function Beneficiaire() {
     });
   });
 
-  const calculateTotal = (category, key = null) => {
-    return runs.reduce((accum, run) => {
-      const toAdd = key === null ? run[category] : run[category][key];
-      return accum + (toAdd || 0);
-    }, 0);
-  };
-
   const handleFile = file => {
     setFileSize(file.size);
     file.size > 100_000_000 ? processFileByChunks(file) : processEntireFile(file);
@@ -93,11 +93,20 @@ export default function Beneficiaire() {
     setIsPending(true);
 
     const startTime = new Date();
-
     let offset = 0;
     const CHUNK_SIZE = 512 * 1024;
     const seed = Math.random();
     const timestamp = new Date().toISOString().slice(0, 19);
+
+    let fluxPartitions = {
+      applicationsDatesPartition: {},
+      applicationsStatusCodesPartition: {},
+      applicantsTopDroitsEtDevoirsPartition: {},
+      applicantsRolesPartition: {},
+      applicantsWithDroitsOuvertsEtVersablesTopDroitsEtDevoirsPartition: {},
+    };
+    let applicationsCount = 0;
+    let applicantsCount = 0;
 
     while (offset < file.size) {
       // we read the file inside a Promise because we want the chunks to be read synchronously
@@ -120,7 +129,7 @@ export default function Beneficiaire() {
               new RegExp(/<IdentificationFlux>[\s\S]*?<\/IdentificationFlux>/)
             );
             let textToProcess = matchedText && matchedText[0];
-            const fluxBeneficiaire = new FluxBeneficiaireReader(textToProcess);
+            const fluxBeneficiaire = new FluxBeneficiaire(textToProcess);
             offset += textToProcess.length + matchedText.index;
 
             dispatchRuns({
@@ -133,7 +142,7 @@ export default function Beneficiaire() {
                 fileDatetime: fluxBeneficiaire.fileDatetime,
                 frequency: fluxBeneficiaire.frequency,
                 origin: fluxBeneficiaire.origin,
-                ...fluxPartitions, // => FluxBeneficiaireReader.initialPartitions
+                ...fluxPartitions,
               },
             });
             resolve();
@@ -159,18 +168,32 @@ export default function Beneficiaire() {
           offset += lastMatch.index + lastMatch[0].length;
 
           // we have to put the entire xml content between tags for it to be correctly parsed
-          const fluxChunk = new FluxBeneficiaireReader("<Racine>" + textToProcess + "</Racine>");
+          const fluxChunk = new FluxBeneficiaire("<Racine>" + textToProcess + "</Racine>");
 
-          const updatedPartitions = fluxChunk.updatePartitions(fluxPartitions);
+          Object.keys(fluxPartitions).forEach(partition => {
+            fluxPartitions[partition] = sumPartitions(
+              fluxPartitions[partition],
+              fluxChunk[partition]
+            );
+          });
+
+          applicationsCount += fluxChunk.applicationsCount;
+          applicantsCount += fluxChunk.applicantsCount;
+
           dispatchRuns({
             type: "update",
             item: {
               seed: seed,
-              ...updatedPartitions,
+              applicationsCount: applicationsCount,
+              applicantsCount: applicantsCount,
+              ...fluxPartitions,
             },
           });
-          setFluxPartitions(updatedPartitions);
-          setProcessedApplicationsCount(updatedPartitions.applicationsCount);
+
+          setProcessedApplicationsCount(
+            prevApplicationsCount => prevApplicationsCount + fluxChunk.applicationsCount
+          );
+
           resolve();
         };
 
@@ -179,8 +202,7 @@ export default function Beneficiaire() {
       });
     }
 
-    // after all the file has been processed we set the duration and we reinitialize the
-    // fluxPartitions state in case we process another file by chunks
+    // after all the file has been processed we set the duration
     dispatchRuns({
       type: "update",
       item: {
@@ -188,8 +210,7 @@ export default function Beneficiaire() {
         duration: new Date() - startTime,
       },
     });
-    setFluxPartitions(FluxBeneficiaireReader.initialPartitions);
-
+    setProcessedApplicationsCount(0);
     setIsPending(false);
     alert("Toutes les demandes ont été traitées ✅");
   };
@@ -201,10 +222,7 @@ export default function Beneficiaire() {
 
     var reader = new FileReader();
     reader.onload = function (event) {
-      const fluxBeneficiaire = new FluxBeneficiaireReader(event.target.result);
-
-      // => { applicationDatesPartition, droitsPartition, devoirsPartition, droitsEtDevoirsPartition, applicantsRolesPartition, applicationsCount, applicantsCount }
-      const partitions = fluxBeneficiaire.retrievePartitions();
+      const fluxBeneficiaire = new FluxBeneficiaire(event.target.result);
 
       setIsPending(false);
 
@@ -220,21 +238,27 @@ export default function Beneficiaire() {
           frequency: fluxBeneficiaire.frequency,
           origin: fluxBeneficiaire.origin,
           parseError: fluxBeneficiaire.parseError,
-          ...partitions,
+          applicationsCount: fluxBeneficiaire.applicationsCount,
+          applicantsCount: fluxBeneficiaire.applicantsCount,
+          ...fluxBeneficiaire.partitions,
         },
       });
     };
     reader.readAsText(file);
   };
 
-  const keysDroits = runs.reduce((keysDroits, run) => {
-    keysDroits = keysDroits.concat(Object.keys(run.droitsPartition));
-    return Array.from(new Set(keysDroits)).sort();
+  const applicationsStatusCodes = runs.reduce((applicationsStatusCodes, run) => {
+    applicationsStatusCodes = applicationsStatusCodes.concat(
+      Object.keys(run.applicationsStatusCodesPartition)
+    );
+    return Array.from(new Set(applicationsStatusCodes)).sort();
   }, []);
 
-  const keysDevoirs = runs.reduce((keysDevoirs, run) => {
-    keysDevoirs = keysDevoirs.concat(Object.keys(run.devoirsPartition));
-    return Array.from(new Set(keysDevoirs)).sort();
+  const applicantsTopDroitsEtDevoirs = runs.reduce((applicantsTopDroitsEtDevoirs, run) => {
+    applicantsTopDroitsEtDevoirs = applicantsTopDroitsEtDevoirs.concat(
+      Object.keys(run.applicantsTopDroitsEtDevoirsPartition)
+    );
+    return Array.from(new Set(applicantsTopDroitsEtDevoirs)).sort();
   }, []);
 
   return (
@@ -267,8 +291,10 @@ export default function Beneficiaire() {
                   <th rowSpan="2"></th>
                   <th rowSpan="2">Dossiers (Foyers)</th>
                   <th colSpan="5">Personnes</th>
-                  <th colSpan={keysDroits.length}>Valeurs balises ETATDOSRSA</th>
-                  <th colSpan={keysDevoirs.length}>Valeurs balises TOPPERSDRODEVORSA</th>
+                  <th colSpan={applicationsStatusCodes.length}>Valeurs balises ETATDOSRSA</th>
+                  <th colSpan={applicantsTopDroitsEtDevoirs.length}>
+                    Valeurs balises TOPPERSDRODEVORSA
+                  </th>
                   <th colSpan="3">Nombre de personnes dans foyer droit ouvert et versable</th>
                 </tr>
                 <tr>
@@ -277,12 +303,12 @@ export default function Beneficiaire() {
                   <th colSpan="1">ENF</th>
                   <th colSpan="1">AUT</th>
                   <th colSpan="1">Total</th>
-                  {keysDroits.map(k => (
+                  {applicationsStatusCodes.map(k => (
                     <th key={k} colSpan="1">
                       {k}
                     </th>
                   ))}
-                  {keysDevoirs.map(k => (
+                  {applicantsTopDroitsEtDevoirs.map(k => (
                     <th key={k} colSpan="1">
                       {k}
                     </th>
@@ -306,19 +332,27 @@ export default function Beneficiaire() {
                     <td className={styles.center}>{r.applicantsRolesPartition["ENF"] || "0"}</td>
                     <td className={styles.center}>{r.applicantsRolesPartition["AUT"] || "0"}</td>
                     <td className={styles.center}>{r.applicantsCount}</td>
-                    {keysDroits.map(k => (
+                    {applicationsStatusCodes.map(k => (
                       <td key={k} className={styles.center}>
-                        {r.droitsPartition[k] || 0}
+                        {r.applicationsStatusCodesPartition[k] || 0}
                       </td>
                     ))}
-                    {keysDevoirs.map(k => (
+                    {applicantsTopDroitsEtDevoirs.map(k => (
                       <td key={k} className={styles.center}>
-                        {r.devoirsPartition[k] || 0}
+                        {r.applicantsTopDroitsEtDevoirsPartition[k] || 0}
                       </td>
                     ))}
-                    <td className={styles.center}>{r.droitsEtDevoirsPartition[1] || 0}</td>
-                    <td className={styles.center}>{r.droitsEtDevoirsPartition[0] || 0}</td>
-                    <td className={styles.center}>{r.droitsEtDevoirsPartition["Total"] || 0}</td>
+                    <td className={styles.center}>
+                      {r.applicantsWithDroitsOuvertsEtVersablesTopDroitsEtDevoirsPartition[1] || 0}
+                    </td>
+                    <td className={styles.center}>
+                      {r.applicantsWithDroitsOuvertsEtVersablesTopDroitsEtDevoirsPartition[0] || 0}
+                    </td>
+                    <td className={styles.center}>
+                      {r.applicantsWithDroitsOuvertsEtVersablesTopDroitsEtDevoirsPartition[
+                        "Total"
+                      ] || 0}
+                    </td>
                   </tr>
                 ))}
                 <tr>
@@ -337,24 +371,33 @@ export default function Beneficiaire() {
                     {calculateTotal("applicantsRolesPartition", "AUT") || 0}
                   </td>
                   <td className={styles.center}>{calculateTotal("applicantsCount")}</td>
-                  {keysDroits.map(k => (
+                  {applicationsStatusCodes.map(k => (
                     <td key={k} className={styles.center}>
-                      {calculateTotal("droitsPartition", k) || 0}
+                      {calculateTotal("applicationsStatusCodesPartition", k) || 0}
                     </td>
                   ))}
-                  {keysDevoirs.map(k => (
+                  {applicantsTopDroitsEtDevoirs.map(k => (
                     <td key={k} className={styles.center}>
-                      {calculateTotal("devoirsPartition", k) || 0}
+                      {calculateTotal("applicantsTopDroitsEtDevoirsPartition", k) || 0}
                     </td>
                   ))}
                   <td className={styles.center}>
-                    {calculateTotal("droitsEtDevoirsPartition", 1) || 0}
+                    {calculateTotal(
+                      "applicantsWithDroitsOuvertsEtVersablesTopDroitsEtDevoirsPartition",
+                      1
+                    ) || 0}
                   </td>
                   <td className={styles.center}>
-                    {calculateTotal("droitsEtDevoirsPartition", 0) || 0}
+                    {calculateTotal(
+                      "applicantsWithDroitsOuvertsEtVersablesTopDroitsEtDevoirsPartition",
+                      0
+                    ) || 0}
                   </td>
                   <td className={styles.center}>
-                    {calculateTotal("droitsEtDevoirsPartition", "Total") || 0}
+                    {calculateTotal(
+                      "applicantsWithDroitsOuvertsEtVersablesTopDroitsEtDevoirsPartition",
+                      "Total"
+                    ) || 0}
                   </td>
                 </tr>
 

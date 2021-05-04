@@ -9,7 +9,7 @@ import styles from "../../../../styles/Home.module.css";
 
 import { FLUX_FREQUENCIES, FLUX_ORIGINS } from "../../../../lib/cnafGlossary";
 import { initReducer, reducerFactory } from "../../../../lib/reducerFactory";
-import FluxInstructionReader from "../../../../lib/readers/FluxInstructionReader";
+import FluxInstruction from "../../../../models/FluxInstruction";
 import { csvExport } from "../../../../lib/csvExport";
 import { getDateTimeString } from "../../../../lib/dates";
 
@@ -35,7 +35,7 @@ export default function Instruction() {
 
     var reader = new FileReader();
     reader.onload = function (event) {
-      const fluxInstruction = new FluxInstructionReader(event.target.result);
+      const fluxInstruction = new FluxInstruction(event.target.result);
 
       setIsPending(false);
 
@@ -52,20 +52,21 @@ export default function Instruction() {
           origin: fluxInstruction.origin,
           // WIP: OK sur Firefox KO sur Chrome
           parseError: fluxInstruction.parseError,
-          total: fluxInstruction.applicationsCount,
+          applicationsCount: fluxInstruction.applicationsCount,
+          applicantsCount: fluxInstruction.applicantsCount,
           email: {
-            total: fluxInstruction.withEmail.length,
-            withAutorisation: fluxInstruction.withUsableEmail.length,
-            withExplicitRefusal: fluxInstruction.withForbiddenEmailUsage.length,
-            withoutAutorisationDetails: fluxInstruction.withoutEmailUsage.length,
+            total: fluxInstruction.applicationsWithEmail.length,
+            withAutorisation: fluxInstruction.applicationsWithUsableEmail.length,
+            withExplicitRefusal: fluxInstruction.applicationsWithForbiddenEmailUsage.length,
+            withoutAutorisationDetails: fluxInstruction.applicationsWithoutEmailUsage.length,
           },
           phone: {
-            total: fluxInstruction.withPhone.length,
-            withAutorisation: fluxInstruction.withUsableEmail.length,
-            withExplicitRefusal: fluxInstruction.withForbiddenEmailUsage.length,
-            withoutAutorisationDetails: fluxInstruction.withoutEmailUsage.length,
+            total: fluxInstruction.applicatonsWithPhone.length,
+            withAutorisation: fluxInstruction.applicationsWithUsablePhone.length,
+            withExplicitRefusal: fluxInstruction.applicationsWithForbiddenPhoneUsage.length,
+            withoutAutorisationDetails: fluxInstruction.applicationsWithoutPhoneUsage.length,
           },
-          withDSP: fluxInstruction.withDSP.length,
+          withDSP: fluxInstruction.applicationsWithDSP.length,
           applicantsPersonalData: fluxInstruction.applicantsPersonalData,
         },
       });
@@ -134,7 +135,7 @@ export default function Instruction() {
                   <th colSpan="8">avec email</th>
                   <th colSpan="8">avec téléphone</th>
                   <th colSpan="2" rowSpan="2">
-                    DSP (%)
+                    avec DSP (%)
                   </th>
                   <th rowSpan="2">Erreur</th>
                 </tr>
@@ -168,42 +169,46 @@ export default function Instruction() {
                     <td>{r.fileDatetime}</td>
                     <td>{`${r.frequency} (${FLUX_FREQUENCIES[r.frequency] || "?"})`}</td>
                     <td>{`${r.origin} (${FLUX_ORIGINS[r.origin] || "?"})`}</td>
-                    <td className={styles.numeric}>{r.total}</td>
+                    <td className={styles.numeric}>{r.applicationsCount}</td>
 
                     <td className={styles.numeric}>{r.email.total}</td>
-                    <td className="shrink">{round((r.email.total / r.total) * 100)}</td>
+                    <td className="shrink">{round((r.email.total / r.applicationsCount) * 100)}</td>
 
                     <td className={styles.numeric}>{r.email.withAutorisation}</td>
-                    <td className="shrink">{round((r.email.withAutorisation / r.total) * 100)}</td>
+                    <td className="shrink">
+                      {round((r.email.withAutorisation / r.applicationsCount) * 100)}
+                    </td>
 
                     <td className={styles.numeric}>{r.email.withExplicitRefusal}</td>
                     <td className="shrink">
-                      {round((r.email.withExplicitRefusal / r.total) * 100)}
+                      {round((r.email.withExplicitRefusal / r.applicationsCount) * 100)}
                     </td>
 
                     <td className={styles.numeric}>{r.email.withoutAutorisationDetails}</td>
                     <td className="shrink">
-                      {round((r.email.withoutAutorisationDetails / r.total) * 100)}
+                      {round((r.email.withoutAutorisationDetails / r.applicationsCount) * 100)}
                     </td>
 
                     <td className={styles.numeric}>{r.phone.total}</td>
-                    <td className="shrink">{round((r.phone.total / r.total) * 100)}</td>
+                    <td className="shrink">{round((r.phone.total / r.applicationsCount) * 100)}</td>
 
                     <td className={styles.numeric}>{r.phone.withAutorisation}</td>
-                    <td className="shrink">{round((r.phone.withAutorisation / r.total) * 100)}</td>
+                    <td className="shrink">
+                      {round((r.phone.withAutorisation / r.applicationsCount) * 100)}
+                    </td>
 
                     <td className={styles.numeric}>{r.phone.withExplicitRefusal}</td>
                     <td className="shrink">
-                      {round((r.phone.withExplicitRefusal / r.total) * 100)}
+                      {round((r.phone.withExplicitRefusal / r.applicationsCount) * 100)}
                     </td>
 
                     <td className={styles.numeric}>{r.phone.withoutAutorisationDetails}</td>
                     <td className="shrink">
-                      {round((r.phone.withoutAutorisationDetails / r.total) * 100)}
+                      {round((r.phone.withoutAutorisationDetails / r.applicationsCount) * 100)}
                     </td>
 
                     <td className={styles.numeric}>{r.withDSP}</td>
-                    <td className="shrink">{round((r.withDSP / r.total) * 100)}</td>
+                    <td className="shrink">{round((r.withDSP / r.applicationsCount) * 100)}</td>
                     <td>{r.parseError ? "Oui" : "Non"}</td>
                   </tr>
                 ))}

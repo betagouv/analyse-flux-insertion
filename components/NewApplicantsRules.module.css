@@ -1,0 +1,13 @@
+.rules_container {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 20px;
+  width: 70%;
+  font-size: 1.2em;
+  background-color: yellow;
+  padding: 20px;
+}
+
+.image_container {
+  text-align: center;
+}
