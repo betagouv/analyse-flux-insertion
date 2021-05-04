@@ -48,7 +48,9 @@ export default function identificationBeneficiaire() {
     reader.onload = function (event) {
       const fluxBeneficaire = new FluxBeneficiaire(event.target.result);
       const applicantsEligibleAsNew = fluxBeneficaire.applicantsEligibleAsNew;
-      const newApplicantsData = fluxBeneficaire.newApplicantsData;
+      const newApplicantsData = fluxBeneficaire.topEntrants.map(applicant => {
+        return { ...applicant.personalData, isTopEntrant: true };
+      });
 
       if (FLUX_ORIGINS[fluxBeneficaire.origin] !== "Bénéficiaires") {
         return showAlert();
@@ -133,18 +135,15 @@ export default function identificationBeneficiaire() {
     const dataToExport = [];
     runs.forEach(run => {
       run.newApplicantsData.forEach(applicant => {
-        applicant.emailAddress ??= "";
-        applicant.phoneNumber ??= "";
-
         // We want to export the applicants data along with the file name
         dataToExport.push([
-          applicant.rsaApplicationNumber,
-          applicant.socialSecurityNumber,
-          applicant.lastName,
-          applicant.firstName,
-          APPLICATION_ROLES[applicant.role],
-          applicant.emailAddress,
-          applicant.phoneNumber,
+          applicant.rsaApplicationNumber || "",
+          applicant.socialSecurityNumber || "",
+          applicant.lastName || "",
+          applicant.firstName || "",
+          APPLICATION_ROLES[applicant.role] || "",
+          applicant.emailAddress || "",
+          applicant.phoneNumber || "",
           applicant.isTopEntrant ? "OUI" : "NON",
           applicant.isTopEntrant ? "NON" : "OUI",
           run.fileName,
@@ -199,18 +198,6 @@ export default function identificationBeneficiaire() {
           </li>
         </ol>
 
-        <FileHandler
-          handleFile={handleFileUpload}
-          isPending={isPending}
-          fileSize={fileSize}
-          uploadMessage={[
-            "Glissez et déposez les flux ",
-            <strong>{fluxToProcess}</strong>,
-            " à analyser ou sélectionnez-les.",
-          ]}
-          pendingMessage={"Traitement en cours, merci de patienter."}
-        />
-
         {!showRules && (
           <button className={styles.button} onClick={() => setShowRules(true)}>
             Voir les règles d'identifications
@@ -222,6 +209,17 @@ export default function identificationBeneficiaire() {
           </button>
         )}
         {showRules && <NewApplicantsRules />}
+        <FileHandler
+          handleFile={handleFileUpload}
+          isPending={isPending}
+          fileSize={fileSize}
+          uploadMessage={[
+            "Glissez et déposez les flux ",
+            <strong>{fluxToProcess}</strong>,
+            " à analyser ou sélectionnez-les.",
+          ]}
+          pendingMessage={"Traitement en cours, merci de patienter."}
+        />
 
         {runs && runs.length > 0 && (
           <>
@@ -258,8 +256,8 @@ export default function identificationBeneficiaire() {
                   <th>Rôle</th>
                   {someWithEmail && <th>Email</th>}
                   {someWithPhone && <th>Téléphone</th>}
-                  <th>Selon TOPPERSENTDRODEVORSA</th>
-                  <th>Selon autres critères</th>
+                  <th>Entrant selon TOPPERSENTDRODEVORSA</th>
+                  <th>Entrant selon d'autres critères</th>
                   <th>Ficher source </th>
                 </tr>
               </thead>

@@ -21,12 +21,6 @@ export default class FluxBeneficiaire extends BaseFlux {
     });
   }
 
-  get newApplicantsData() {
-    return this.topEntrants.map(applicant => {
-      return { ...applicant.personalData, isTopEntrant: applicant.isTopEntrant() };
-    });
-  }
-
   get applicantsWithDroitsOuvertsEtVersables() {
     return this.applicants.filter(applicant => {
       return applicant.application.withDroitsOuvertsEtVersables();

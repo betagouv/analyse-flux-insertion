@@ -7,7 +7,7 @@ import FileHandler from "../../../../components/fileHandler";
 import Footer from "../../../../components/footer";
 import styles from "../../../../styles/Home.module.css";
 
-import { FLUX_FREQUENCIES, FLUX_ORIGINS } from "../../../../lib/cnafGlossary";
+import { FLUX_FREQUENCIES, FLUX_ORIGINS, APPLICATION_ROLES } from "../../../../lib/cnafGlossary";
 import { initReducer, reducerFactory } from "../../../../lib/reducerFactory";
 import FluxInstruction from "../../../../models/FluxInstruction";
 import { csvExport } from "../../../../lib/csvExport";
@@ -77,9 +77,18 @@ export default function Instruction() {
   const handleCsvExport = () => {
     const dataToExport = [];
     runs.forEach(run => {
-      run.applicantsPersonalData.forEach(applicantPersonalData => {
+      run.applicantsPersonalData.forEach(applicant => {
         // We want to export the applicants data along with the file name
-        dataToExport.push([...Object.values(applicantPersonalData), run.filename]);
+        dataToExport.push([
+          applicant.rsaApplicationNumber || "",
+          applicant.socialSecurityNumber || "",
+          applicant.lastName || "",
+          applicant.firstName || "",
+          APPLICATION_ROLES[applicant.role] || "",
+          applicant.emailAddress || "",
+          applicant.phoneNumber || "",
+          run.filename,
+        ]);
       });
     });
 
