@@ -25,10 +25,6 @@ export default class Applicant {
     return this.dom.getElementsByTagName("TOPPERSDRODEVORSA")[0]?.innerHTML;
   }
 
-  get topFoyerDroitsEtDevoirs() {
-    return this.dom.getElementsByTagName("TOPFOYDRODEVORSA")[0]?.innerHTML;
-  }
-
   get socioProfessionalData() {
     return this.dom.getElementsByTagName("DonneesSocioProfessionnelles")[0]?.innerHTML;
   }
@@ -61,6 +57,10 @@ export default class Applicant {
     return this.application.socialSecurityNumber;
   }
 
+  get topFoyerDroitsEtDevoirs() {
+    return this.application.topFoyerDroitsEtDevoirs;
+  }
+
   get personalData() {
     return {
       rsaApplicationNumber: this.rsaApplicationNumber,
@@ -80,7 +80,19 @@ export default class Applicant {
   eligibleAsNew() {
     return (
       this.application.eligibleAsNew() &&
-      (this.topDroitsEtDevoirs === "1" || this.topFoyerDroitsEtDevoirs === "1")
+      (this.withDroitsEtDevoirs() || this.eligibleAsNewInFoyer())
     );
+  }
+
+  eligibleAsNewInFoyer() {
+    return this.inFoyerWithDroitsEtDevoirs() && ["ENF", "AUT"].includes(this.role);
+  }
+
+  inFoyerWithDroitsEtDevoirs() {
+    return this.topFoyerDroitsEtDevoirs === "1";
+  }
+
+  withDroitsEtDevoirs() {
+    return this.topDroitsEtDevoirs === "1";
   }
 }

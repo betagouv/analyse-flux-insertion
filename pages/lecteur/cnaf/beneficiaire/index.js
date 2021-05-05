@@ -18,7 +18,6 @@ const devMode = process.env.NODE_ENV == "development";
 export default function Beneficiaire() {
   const [devFile, setDevFile] = useState(null);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
-  const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [processedApplicationsCount, setProcessedApplicationsCount] = useState(0);
   const [dateData, setDateData] = useState({
@@ -84,14 +83,12 @@ export default function Beneficiaire() {
     });
   });
 
-  const handleFile = file => {
+  const handleFile = async file => {
     setFileSize(file.size);
-    file.size > 100_000_000 ? processFileByChunks(file) : processEntireFile(file);
+    file.size > 50_000_000 ? await processFileByChunks(file) : await processEntireFile(file);
   };
 
   const processFileByChunks = async file => {
-    setIsPending(true);
-
     const startTime = new Date();
     let offset = 0;
     const CHUNK_SIZE = 512 * 1024;
@@ -193,7 +190,6 @@ export default function Beneficiaire() {
           setProcessedApplicationsCount(
             prevApplicationsCount => prevApplicationsCount + fluxChunk.applicationsCount
           );
-
           resolve();
         };
 
@@ -211,40 +207,37 @@ export default function Beneficiaire() {
       },
     });
     setProcessedApplicationsCount(0);
-    setIsPending(false);
     alert("Toutes les demandes ont été traitées ✅");
   };
 
-  const processEntireFile = file => {
-    setIsPending(true);
-
+  const processEntireFile = async file => {
     const startTime = new Date();
+    await new Promise(resolve => {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        const fluxBeneficiaire = new FluxBeneficiaire(event.target.result);
 
-    var reader = new FileReader();
-    reader.onload = function (event) {
-      const fluxBeneficiaire = new FluxBeneficiaire(event.target.result);
-
-      setIsPending(false);
-
-      dispatchRuns({
-        type: "append",
-        item: {
-          seed: Math.random(),
-          duration: new Date() - startTime,
-          timestamp: new Date().toISOString().slice(0, 19),
-          filename: file.name,
-          fileSize: file.size,
-          fileDatetime: fluxBeneficiaire.fileDatetime,
-          frequency: fluxBeneficiaire.frequency,
-          origin: fluxBeneficiaire.origin,
-          parseError: fluxBeneficiaire.parseError,
-          applicationsCount: fluxBeneficiaire.applicationsCount,
-          applicantsCount: fluxBeneficiaire.applicantsCount,
-          ...fluxBeneficiaire.partitions,
-        },
-      });
-    };
-    reader.readAsText(file);
+        dispatchRuns({
+          type: "append",
+          item: {
+            seed: Math.random(),
+            duration: new Date() - startTime,
+            timestamp: new Date().toISOString().slice(0, 19),
+            filename: file.name,
+            fileSize: file.size,
+            fileDatetime: fluxBeneficiaire.fileDatetime,
+            frequency: fluxBeneficiaire.frequency,
+            origin: fluxBeneficiaire.origin,
+            parseError: fluxBeneficiaire.parseError,
+            applicationsCount: fluxBeneficiaire.applicationsCount,
+            applicantsCount: fluxBeneficiaire.applicantsCount,
+            ...fluxBeneficiaire.partitions,
+          },
+        });
+        resolve();
+      };
+      reader.readAsText(file);
+    });
   };
 
   const applicationsStatusCodes = runs.reduce((applicationsStatusCodes, run) => {
@@ -272,7 +265,6 @@ export default function Beneficiaire() {
 
         <FileHandler
           handleFile={handleFile}
-          isPending={isPending}
           fileSize={fileSize}
           pendingMessage={
             processedApplicationsCount > 0

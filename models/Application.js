@@ -49,6 +49,10 @@ export default class Application {
     });
   }
 
+  get topFoyerDroitsEtDevoirs() {
+    return this.dom.getElementsByTagName("TOPFOYDRODEVORSA")[0]?.innerHTML;
+  }
+
   eligibleAsNew() {
     return (
       this.withDroitsOuvertsEtVersables() ||

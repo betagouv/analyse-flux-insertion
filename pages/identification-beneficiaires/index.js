@@ -13,16 +13,20 @@ import { csvExport } from "../../lib/csvExport";
 import { getDateTimeString, yesterdayApplicationDate } from "../../lib/dates";
 
 const reducer = reducerFactory("Test - CNAF - Identification nouveaux demandeurs");
-
 export default function identificationBeneficiaire() {
   const [fileSize, setFileSize] = useState(0);
   const [isPending, setIsPending] = useState(false);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [fluxToProcess, setFluxToProcess] = useState("bénéficiaires");
   const [showRules, setShowRules] = useState(false);
+  let itemsToDispatch = [];
 
-  const handleFileUpload = file => {
-    fluxToProcess == "bénéficiaires" ? processFluxBeneficiaire(file) : processFluxInstruction(file);
+  const handleFileUpload = async file => {
+    if (fluxToProcess == "bénéficiaires") {
+      await processFluxBeneficiaire(file);
+    } else {
+      await processFluxInstruction(file);
+    }
   };
 
   const handleReset = () => {
@@ -30,85 +34,110 @@ export default function identificationBeneficiaire() {
     setFluxToProcess("bénéficiaires");
   };
 
-  const showAlert = () => {
-    setIsPending(false);
-
-    alert(`Vous n'avez pas uploadé un flux ${fluxToProcess} !`);
-  };
-
-  const retrieveApplicantsFromDayBefore = date => {
-    return runs.find(run => run.creationDate === yesterdayApplicationDate(date))?.applicants;
-  };
-
-  const processFluxBeneficiaire = file => {
-    setIsPending(true);
+  const processFluxBeneficiaire = async file => {
     setFileSize(file.size);
 
-    var reader = new FileReader();
-    reader.onload = function (event) {
-      const fluxBeneficaire = new FluxBeneficiaire(event.target.result);
-      const applicantsEligibleAsNew = fluxBeneficaire.applicantsEligibleAsNew;
-      const newApplicantsData = fluxBeneficaire.topEntrants.map(applicant => {
-        return { ...applicant.personalData, isTopEntrant: true };
-      });
+    await new Promise(resolve => {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        const fluxBeneficaire = new FluxBeneficiaire(event.target.result);
+        const applicantsEligibleAsNew = fluxBeneficaire.applicantsEligibleAsNew;
+        const applicants = fluxBeneficaire.applicants;
+        const newApplicantsData = fluxBeneficaire.topEntrants.map(applicant => {
+          return { ...applicant.personalData, isTopEntrant: true };
+        });
+        const creationDate = fluxBeneficaire.creationDate;
 
-      if (FLUX_ORIGINS[fluxBeneficaire.origin] !== "Bénéficiaires") {
-        return showAlert();
-      }
+        if (FLUX_ORIGINS[fluxBeneficaire.origin] !== "Bénéficiaires") {
+          alert(`Vous n'avez pas uploadé un flux ${fluxToProcess} 🛑!`);
+          resolve();
+          return;
+        }
 
-      const applicantsFromDayBefore = retrieveApplicantsFromDayBefore(fluxBeneficaire.creationDate);
+        if (runs.map(run => run.fileName).includes(file.name)) {
+          alert(`le fichier ${file.name} a déjà été uploadé 🛑!`);
+          resolve();
+          return;
+        }
 
-      if (applicantsFromDayBefore) {
-        fluxBeneficaire.applicantsEligibleAsNew.forEach(applicant => {
-          const yesterdayApplicant = applicantsFromDayBefore.find(yesterdayApplicant => {
-            return (
-              yesterdayApplicant.lastName === applicant.lastName &&
-              yesterdayApplicant.firstName === applicant.firstName &&
-              yesterdayApplicant.rsaApplicationNumber === applicant.rsaApplicationNumber
-            );
-          });
+        // We check if there is a flux from the day before to check if there are new applicants
+        // fitting the J-1 -> J condition.
+        // We do these checks on the `runs` for the previous uploads and on the `itemsToDispatch` for the current uploads
+        // in cases where we upload several files in the same time
+        [runs, itemsToDispatch].forEach(resources => {
+          let applicantsFromDayBefore = resources.find(
+            item => item.creationDate === yesterdayApplicationDate(creationDate)
+          )?.applicants;
 
-          if (yesterdayApplicant && yesterdayApplicant.topDroitsEtDevoirs === "0") {
-            newApplicantsData.push({ ...yesterdayApplicant.personalData, isTopEntrant: false });
+          if (applicantsFromDayBefore) {
+            applicantsEligibleAsNew.forEach(applicant => {
+              const yesterdayApplicant = applicantsFromDayBefore.find(yesterdayApplicant => {
+                return (
+                  yesterdayApplicant.lastName === applicant.lastName &&
+                  yesterdayApplicant.firstName === applicant.firstName &&
+                  yesterdayApplicant.rsaApplicationNumber === applicant.rsaApplicationNumber
+                );
+              });
+
+              if (!yesterdayApplicant) {
+                return;
+              }
+
+              if (
+                (applicant.withDroitsEtDevoirs() && !yesterdayApplicant.withDroitsEtDevoirs()) ||
+                (applicant.eligibleAsNewInFoyer() &&
+                  !yesterdayApplicant.inFoyerWithDroitsEtDevoirs())
+              ) {
+                newApplicantsData.push({
+                  ...applicant.personalData,
+                  isTopEntrant: false,
+                });
+              }
+            });
           }
         });
-      }
-      setIsPending(false);
 
-      dispatchRuns({
-        type: "append",
-        item: {
+        const itemToDispatch = {
           seed: Math.random(),
           newApplicantsData: newApplicantsData,
-          applicants: fluxBeneficaire.applicants,
+          applicants: applicants,
+          applicantsEligibleAsNew: applicantsEligibleAsNew,
           fileName: file.name,
-          creationDate: fluxBeneficaire.creationDate,
-        },
-      });
-    };
-    reader.readAsText(file);
+          creationDate: creationDate,
+        };
+
+        itemsToDispatch.push(itemToDispatch);
+
+        dispatchRuns({
+          type: "append",
+          item: itemToDispatch,
+        });
+        resolve();
+        return;
+      };
+      reader.readAsText(file);
+    });
   };
 
-  const processFluxInstruction = file => {
-    setIsPending(true);
+  const processFluxInstruction = async file => {
     setFileSize(file.size);
+    await new Promise(resolve => {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        const fluxInstruction = new FluxInstruction(event.target.result);
 
-    var reader = new FileReader();
-    reader.onload = function (event) {
-      const fluxInstruction = new FluxInstruction(event.target.result);
+        if (FLUX_ORIGINS[fluxInstruction.origin] !== "Instructions") {
+          return showAlert();
+        }
 
-      if (FLUX_ORIGINS[fluxInstruction.origin] !== "Instructions") {
-        return showAlert();
-      }
-
-      setIsPending(false);
-
-      dispatchRuns({
-        type: "replace",
-        items: augmentItems(fluxInstruction.applicantsPersonalData),
-      });
-    };
-    reader.readAsText(file);
+        dispatchRuns({
+          type: "replace",
+          items: augmentItems(fluxInstruction.applicantsPersonalData),
+        });
+        resolve();
+      };
+      reader.readAsText(file);
+    });
   };
 
   const augmentItems = instuctionsPersonalData => {
@@ -209,16 +238,22 @@ export default function identificationBeneficiaire() {
           </button>
         )}
         {showRules && <NewApplicantsRules />}
+
         <FileHandler
           handleFile={handleFileUpload}
           isPending={isPending}
           fileSize={fileSize}
+          sortFilesByFluxDate={true}
           uploadMessage={[
             "Glissez et déposez les flux ",
             <strong>{fluxToProcess}</strong>,
             " à analyser ou sélectionnez-les.",
           ]}
-          pendingMessage={"Traitement en cours, merci de patienter."}
+          pendingMessage={[
+            "Traitement en cours, merci de patienter.",
+            <br />,
+            "L'identification peut prendre du temps (> 1 minute) lorsque plusieurs fichier sont uploadés",
+          ]}
         />
 
         {runs && runs.length > 0 && (

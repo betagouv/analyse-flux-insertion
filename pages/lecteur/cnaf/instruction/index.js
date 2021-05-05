@@ -18,7 +18,6 @@ const devMode = process.env.NODE_ENV == "development";
 
 export default function Instruction() {
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
-  const [isPending, setIsPending] = useState(false);
   const [fileSize, setFileSize] = useState(0);
 
   const handleNewRuns = useCallback(data => {
@@ -28,50 +27,50 @@ export default function Instruction() {
     });
   });
 
-  const handleFile = file => {
+  const handleFile = async file => {
     setFileSize(file.size);
-    setIsPending(true);
     const start_time = new Date();
 
-    var reader = new FileReader();
-    reader.onload = function (event) {
-      const fluxInstruction = new FluxInstruction(event.target.result);
+    await new Promise(resolve => {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        const fluxInstruction = new FluxInstruction(event.target.result);
 
-      setIsPending(false);
-
-      dispatchRuns({
-        type: "append",
-        item: {
-          seed: Math.random(),
-          timestamp: new Date().toISOString().slice(0, 19),
-          duration: new Date() - start_time,
-          filename: file.name,
-          fileSize: file.size,
-          fileDatetime: fluxInstruction.fileDatetime,
-          frequency: fluxInstruction.frequency,
-          origin: fluxInstruction.origin,
-          // WIP: OK sur Firefox KO sur Chrome
-          parseError: fluxInstruction.parseError,
-          applicationsCount: fluxInstruction.applicationsCount,
-          applicantsCount: fluxInstruction.applicantsCount,
-          email: {
-            total: fluxInstruction.applicationsWithEmail.length,
-            withAutorisation: fluxInstruction.applicationsWithUsableEmail.length,
-            withExplicitRefusal: fluxInstruction.applicationsWithForbiddenEmailUsage.length,
-            withoutAutorisationDetails: fluxInstruction.applicationsWithoutEmailUsage.length,
+        dispatchRuns({
+          type: "append",
+          item: {
+            seed: Math.random(),
+            timestamp: new Date().toISOString().slice(0, 19),
+            duration: new Date() - start_time,
+            filename: file.name,
+            fileSize: file.size,
+            fileDatetime: fluxInstruction.fileDatetime,
+            frequency: fluxInstruction.frequency,
+            origin: fluxInstruction.origin,
+            // WIP: OK sur Firefox KO sur Chrome
+            parseError: fluxInstruction.parseError,
+            applicationsCount: fluxInstruction.applicationsCount,
+            applicantsCount: fluxInstruction.applicantsCount,
+            email: {
+              total: fluxInstruction.applicationsWithEmail.length,
+              withAutorisation: fluxInstruction.applicationsWithUsableEmail.length,
+              withExplicitRefusal: fluxInstruction.applicationsWithForbiddenEmailUsage.length,
+              withoutAutorisationDetails: fluxInstruction.applicationsWithoutEmailUsage.length,
+            },
+            phone: {
+              total: fluxInstruction.applicatonsWithPhone.length,
+              withAutorisation: fluxInstruction.applicationsWithUsablePhone.length,
+              withExplicitRefusal: fluxInstruction.applicationsWithForbiddenPhoneUsage.length,
+              withoutAutorisationDetails: fluxInstruction.applicationsWithoutPhoneUsage.length,
+            },
+            withDSP: fluxInstruction.applicationsWithDSP.length,
+            applicantsPersonalData: fluxInstruction.applicantsPersonalData,
           },
-          phone: {
-            total: fluxInstruction.applicatonsWithPhone.length,
-            withAutorisation: fluxInstruction.applicationsWithUsablePhone.length,
-            withExplicitRefusal: fluxInstruction.applicationsWithForbiddenPhoneUsage.length,
-            withoutAutorisationDetails: fluxInstruction.applicationsWithoutPhoneUsage.length,
-          },
-          withDSP: fluxInstruction.applicationsWithDSP.length,
-          applicantsPersonalData: fluxInstruction.applicantsPersonalData,
-        },
-      });
-    };
-    reader.readAsText(file);
+        });
+        resolve();
+      };
+      reader.readAsText(file);
+    });
   };
 
   const handleCsvExport = () => {
@@ -118,7 +117,7 @@ export default function Instruction() {
           <br />« Instruction » de la CNAF
         </h1>
 
-        <FileHandler handleFile={handleFile} isPending={isPending} fileSize={fileSize} />
+        <FileHandler handleFile={handleFile} fileSize={fileSize} />
 
         {runs && runs.length > 0 && (
           <>
