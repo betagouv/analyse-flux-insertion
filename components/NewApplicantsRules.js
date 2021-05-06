@@ -1,4 +1,3 @@
-import Image from "next/image";
 import styles from "./NewApplicantsRules.module.css";
 
 export default function NewApplicantsRules() {
@@ -40,11 +39,10 @@ export default function NewApplicantsRules() {
           </p>
           <p>
             <div className={styles.image_container}>
-              <Image
+              <img
                 src="/new_applicants_rules.png"
                 alt="new_applicants_rules"
-                width={3146}
-                height={1398}
+                className={styles.rules_image}
               />
             </div>
           </p>
