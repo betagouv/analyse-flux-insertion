@@ -52,8 +52,8 @@ export default function Ardennes() {
     XLSX.utils.book_append_sheet(outWorkbook, outWorksheet, "DIVERGENCES");
     // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[1]], "GRAPHIQUE");
     // XLSX.utils.book_append_sheet(outWorkbook, xls.Sheets[xls.SheetNames[2]], "Selection COA");
-    XLSX.writeFile(outWorkbook, `ardennes_rsa_${getDateTimeString(new Date())}.xlsx`)
-  }
+    XLSX.writeFile(outWorkbook, `ardennes_rsa_${getDateTimeString(new Date())}.xlsx`);
+  };
 
   async function generateInvitationUrl(userId, userIndex) {
     const invitationUrl = userUrl + `/${userId}/invite`;
@@ -75,27 +75,27 @@ export default function Ardennes() {
     if (result.user.invitation_created_at) {
       let invitation_date = result.user.invitation_created_at // Date au format : 2021-04-15 14:53:56 +0200
         .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
-      invitation_date = new Date(invitation_date) // Créer une date JS
+      invitation_date = new Date(invitation_date); // Créer une date JS
       newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(invitation_date);
     }
     if (result.user.invitation_accepted_at) {
       let inscription_date = result.user.invitation_accepted_at // Date au format : 2021-04-15 14:53:56 +0200
         .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
-      inscription_date = new Date(inscription_date) // Créer une date JS
+      inscription_date = new Date(inscription_date); // Créer une date JS
       newUsersData[userIndex]["Date d'inscription"] = getFrenchFormatDateString(inscription_date);
     }
     setUsersData(newUsersData);
   }
 
   async function createUser(userData, userIndex) {
+    const address = userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
 
-    const address = userData["ADRESSE"] + " - " + userData["CODE\r\nPOSTAL"] + " " + userData["VILLE"]
     const user = {
       first_name: userData["PRENOM"],
       last_name: userData["NOM"],
       email: userData["MAIL"],
       phone_number: userData["TELEPHONE"].replace(/\s+/g, ""),
-      birth_date: stringToDate(userData["DATE DE\r\nNAISSANCE"]),
+      birth_date: stringToDate(userData["DATE DE NAISSANCE"]),
       address: address,
       caisse_affiliation: "caf",
       affiliation_number: userData["N°CAF"],
@@ -153,12 +153,21 @@ export default function Ardennes() {
         range.e.c = 21; // 19 == XLSX.utils.decode_col("V")
         const new_range = XLSX.utils.encode_range(range);
 
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+        let jsonData = XLSX.utils.sheet_to_json(worksheet, {
           blankrows: false,
           raw: false,
           defval: "",
           range: new_range,
         });
+
+        // we remove line breaks from all keys
+        jsonData = jsonData.map(userData => {
+          return [...Object.keys(userData)].reduce((res, key) => {
+            res[key.replace(/[\n\r]+/g, " ")] = userData[key];
+            return res;
+          }, {});
+        });
+
         jsonData == null && setIsPending(false);
         setUserStatusChecked(false);
         setUsersData(jsonData);
@@ -220,7 +229,7 @@ export default function Ardennes() {
                         <tr>
                           <th colSpan="1">Dernier envoi le</th>
                           <th colSpan="1">Date d'inscription</th>
-                          <th colSpan="1"></th>
+                          <th colSpan="1">Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -231,28 +240,29 @@ export default function Ardennes() {
                             <td className={styles.center}>{user["MAIL"]}</td>
                             <td className={styles.center}>{user["TELEPHONE"]}</td>
 
-                            {user["ID RDV"] == "" && (
+                            {user["ID RDV"] === "" && (
                               <td className={styles.center}>
                                 <button onClick={() => createUser(user, index)}>
                                   Créer un compte
                                 </button>
                               </td>
                             )}
-                            {user["ID RDV"] != "" && (
+                            {user["ID RDV"] !== "" && (
                               <td className={styles.center}>{user["ID RDV"]}</td>
                             )}
                             <td className={styles.center}>{user["Date d'invitation"]}</td>
                             <td className={styles.center}>{user["Date d'inscription"]}</td>
-                            {user["ID RDV"] != "" && (
+                            {user["ID RDV"] !== "" && (
                               <td className={styles.center}>
                                 <button
                                   onClick={() => generateInvitationUrl(user["ID RDV"], index)}
                                 >
-                                  {user["Date d'invitation"] != "" && "Regénérer invitation"}
-                                  {user["Date d'invitation"] == "" && "Générer invitation"}
+                                  {user["Date d'invitation"] !== "" && "Regénérer invitation"}
+                                  {user["Date d'invitation"] === "" && "Générer invitation"}
                                 </button>
                               </td>
                             )}
+                            {user["ID RDV"] === "" && <td className={styles.center}></td>}
                           </tr>
                         ))}
                       </tbody>
