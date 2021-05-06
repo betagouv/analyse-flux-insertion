@@ -11,3 +11,9 @@
 .image_container {
   text-align: center;
 }
+
+.rules_image {
+  width: 100%;
+  max-width: 1080px;
+  height: auto;
+}
