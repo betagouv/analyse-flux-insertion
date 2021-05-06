@@ -125,9 +125,10 @@ export default function identificationBeneficiaire() {
       var reader = new FileReader();
       reader.onload = function (event) {
         const fluxInstruction = new FluxInstruction(event.target.result);
-
         if (FLUX_ORIGINS[fluxInstruction.origin] !== "Instructions") {
-          return showAlert();
+          alert(`Vous n'avez pas uploadé un flux ${fluxToProcess} 🛑!`);
+          resolve();
+          return;
         }
 
         dispatchRuns({
@@ -252,7 +253,7 @@ export default function identificationBeneficiaire() {
           pendingMessage={[
             "Traitement en cours, merci de patienter.",
             <br />,
-            "L'identification peut prendre du temps (> 1 minute) lorsque plusieurs fichier sont uploadés",
+            "L'identification peut prendre du temps (> 1 minute) lorsque plusieurs fichiers sont uploadés",
           ]}
         />
 

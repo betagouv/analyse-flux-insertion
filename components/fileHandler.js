@@ -45,9 +45,7 @@ export default function FileHandler({
         applicationStringToDate(fluxDates[secondFile.name])
       );
     });
-    // handleFiles(sortedFilesToProcess);
-    await Promise.all(sortedFilesToProcess.map(async file => await handleFile(file)));
-    setIsPending(false);
+    handleFiles(sortedFilesToProcess);
   };
 
   const retrieveFluxDate = async file => {
