@@ -20,7 +20,6 @@ export default function Ardennes() {
   const [devFile, setDevFile] = useState(null);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [usersData, setUsersData] = useState(null);
-  const [isPending, setIsPending] = useState(false);
   const [userStatusChecked, setUserStatusChecked] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [isLogged, setIsLogged] = useState(false);
@@ -37,16 +36,15 @@ export default function Ardennes() {
   }, [devFile]);
 
   useEffect(() => {
-    if(usersData && userStatusChecked === false) {
+    if (usersData && userStatusChecked === false) {
       usersData.forEach((user, userIndex) => {
         if (user["ID RDV"] != "") {
           checkUserInvitationStatus(user["ID RDV"], userIndex);
         }
       });
       setUserStatusChecked(true);
-      setIsPending(false);
     }
-  }, [usersData])
+  }, [usersData]);
 
   const writeFile = () => {
     const outWorkbook = XLSX.utils.book_new();
@@ -116,55 +114,68 @@ export default function Ardennes() {
       setUsersData(newUsersData);
       checkUserInvitationStatus(result.errors.email[0].id, userIndex);
       alert("Un compte associé à cet email existe déjà");
-    } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
-      alert("La création de ce compte a échoué. L'utilisateur semble déjà exister mais n'a pas pu être récupéré.");
+    } else if (
+      result.errors &&
+      result.errors.first_name &&
+      result.errors.first_name[0].error === "déjà utilisé"
+    ) {
+      alert(
+        "La création de ce compte a échoué. L'utilisateur semble déjà exister mais n'a pas pu être récupéré."
+      );
     } else if (result.errors.email && result.errors.email[0].error === "invalid") {
       alert("L'adresse mail n'est pas valide");
     } else if (result.errors && result.errors[0]) {
       alert(result.errors[0]);
     }
-  };
+  }
 
   const handleLogin = (tokenId, uid, client) => {
     setToken({ ...token, tokenId: tokenId, uid: uid, client: client });
     setIsLogged(true);
   };
 
-  const handleFile = file => {
+  const handleFile = async file => {
     if (devMode && file != devFile) {
       setDevFile(file);
     }
     setFileSize(file.size);
-    setIsPending(true);
     const start_time = new Date();
 
-    var reader = new FileReader();
-    reader.onload = function (event) {
-      const fileData = new Uint8Array(event.target.result);
-      const xls = XLSX.read(fileData, {type:'array', cellDates: true, dateNF:'dd/mm/yyyy'})
-      const worksheet = xls.Sheets[xls.SheetNames[0]];
-      // Limiter la capture aux colonnes A-V
-      const range = XLSX.utils.decode_range(worksheet['!ref']);
-      range.s.c = 0; // 0 == XLSX.utils.decode_col("A")
-      range.e.c = 21; // 19 == XLSX.utils.decode_col("V")
-      const new_range = XLSX.utils.encode_range(range);
+    await new Promise(resolve => {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        const fileData = new Uint8Array(event.target.result);
+        const xls = XLSX.read(fileData, { type: "array", cellDates: true, dateNF: "dd/mm/yyyy" });
+        const worksheet = xls.Sheets[xls.SheetNames[0]];
+        // Limiter la capture aux colonnes A-V
+        const range = XLSX.utils.decode_range(worksheet["!ref"]);
+        range.s.c = 0; // 0 == XLSX.utils.decode_col("A")
+        range.e.c = 21; // 19 == XLSX.utils.decode_col("V")
+        const new_range = XLSX.utils.encode_range(range);
 
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { blankrows: false, raw: false, defval: "", range: new_range });
-      jsonData == null && setIsPending(false);
-      setUserStatusChecked(false);
-      setUsersData(jsonData);
-      dispatchRuns({
-        type: "append",
-        item: {
-          timestamp: new Date().toISOString().slice(0, 19),
-          duration: new Date() - start_time,
-          filename: file.name,
-          fileSize: file.size,
-          fileLines: jsonData.length,
-        },
-      });
-    };
-    reader.readAsArrayBuffer(file);
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          blankrows: false,
+          raw: false,
+          defval: "",
+          range: new_range,
+        });
+        jsonData == null && setIsPending(false);
+        setUserStatusChecked(false);
+        setUsersData(jsonData);
+        dispatchRuns({
+          type: "append",
+          item: {
+            timestamp: new Date().toISOString().slice(0, 19),
+            duration: new Date() - start_time,
+            filename: file.name,
+            fileSize: file.size,
+            fileLines: jsonData.length,
+          },
+        });
+        resolve();
+      };
+      reader.readAsArrayBuffer(file);
+    });
   };
 
   return (
@@ -182,7 +193,6 @@ export default function Ardennes() {
           <>
             <FileHandler
               handleFile={handleFile}
-              isPending={isPending}
               fileSize={fileSize}
               pendingMessage={"Récupération des informations, merci de patienter"}
             />
@@ -192,9 +202,7 @@ export default function Ardennes() {
                 <h2 className={styles.subtitle}>Bénéficiaires RSA</h2>
 
                 {usersData.length == 0 && (
-                  <p className={styles.description}>
-                    Aucun bénéficiaire dans le fichier
-                  </p>
+                  <p className={styles.description}>Aucun bénéficiaire dans le fichier</p>
                 )}
 
                 {usersData.length > 0 && (
@@ -221,9 +229,7 @@ export default function Ardennes() {
                             <td className={styles.center}>{user["NOM"]}</td>
                             <td className={styles.center}>{user["PRENOM"]}</td>
                             <td className={styles.center}>{user["MAIL"]}</td>
-                            <td className={styles.center}>
-                              {user["TELEPHONE"]}
-                            </td>
+                            <td className={styles.center}>{user["TELEPHONE"]}</td>
 
                             {user["ID RDV"] == "" && (
                               <td className={styles.center}>
@@ -233,21 +239,17 @@ export default function Ardennes() {
                               </td>
                             )}
                             {user["ID RDV"] != "" && (
-                              <td className={styles.center}>
-                                {user["ID RDV"]}
-                              </td>
+                              <td className={styles.center}>{user["ID RDV"]}</td>
                             )}
                             <td className={styles.center}>{user["Date d'invitation"]}</td>
                             <td className={styles.center}>{user["Date d'inscription"]}</td>
                             {user["ID RDV"] != "" && (
                               <td className={styles.center}>
-                                <button onClick={() => generateInvitationUrl(user["ID RDV"], index)}>
-                                  {user["Date d'invitation"] != "" &&
-                                  "Regénérer invitation"
-                                  }
-                                  {user["Date d'invitation"] == "" &&
-                                  "Générer invitation"
-                                  }
+                                <button
+                                  onClick={() => generateInvitationUrl(user["ID RDV"], index)}
+                                >
+                                  {user["Date d'invitation"] != "" && "Regénérer invitation"}
+                                  {user["Date d'invitation"] == "" && "Générer invitation"}
                                 </button>
                               </td>
                             )}
@@ -272,9 +274,9 @@ export default function Ardennes() {
           text={
             <>
               <p className={styles.text}>
-                Faciliter le travail des agents du département et tester
-                l'utilisation de l'application RDV-Solidarités pour accélérer la
-                prise du premier rendez-vous d'orientation.
+                Faciliter le travail des agents du département et tester l'utilisation de
+                l'application RDV-Solidarités pour accélérer la prise du premier rendez-vous
+                d'orientation.
               </p>
             </>
           }

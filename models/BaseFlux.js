@@ -1,4 +1,6 @@
-export default class BaseFluxReader {
+import Applicant from "./Applicant";
+
+export default class BaseFlux {
   constructor(fileContent) {
     const parser = new DOMParser();
     this.dom = parser.parseFromString(fileContent, "application/xml");
@@ -9,11 +11,17 @@ export default class BaseFluxReader {
   }
 
   get applicants() {
-    return new Array(...this.dom.getElementsByTagName("Personne"));
+    return [...this.dom.getElementsByTagName("Personne")].map(applicantDom => {
+      return new Applicant(applicantDom);
+    });
   }
 
   get applicantsCount() {
-    return this.dom.getElementsByTagName("Personne").length;
+    return this.applicants.length;
+  }
+
+  get applicationsCount() {
+    return this.applications.length;
   }
 
   get frequency() {
