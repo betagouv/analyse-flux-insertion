@@ -14,10 +14,9 @@ export default class FluxBeneficiaire extends BaseFlux {
     });
   }
 
-  // can be new but not top entrant
   get applicantsEligibleAsNew() {
     return this.applicants.filter(applicant => {
-      return applicant.eligibleAsNew() && !applicant.isTopEntrant();
+      return applicant.eligibleAsNew();
     });
   }
 
