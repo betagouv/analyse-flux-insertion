@@ -78,6 +78,12 @@ export default class Applicant {
       lastName: this.lastName,
       firstName: this.firstName,
       role: this.role,
+      ...this.contactInfos(),
+    };
+  }
+
+  contactInfos() {
+    return {
       ...(this.phoneNumber && { phoneNumber: this.phoneNumber }),
       ...(this.emailAddress && { emailAddress: this.emailAddress }),
     };
