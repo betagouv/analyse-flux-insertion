@@ -46,6 +46,6 @@ export default class FluxInstruction extends BaseFlux {
   }
 
   get applicantsPersonalData() {
-    return this.applicants.map(applicant => applicant.personalData);
+    return this.applicants.map(applicant => applicant.personalData());
   }
 }

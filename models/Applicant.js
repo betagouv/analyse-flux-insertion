@@ -61,7 +61,17 @@ export default class Applicant {
     return this.application.topFoyerDroitsEtDevoirs;
   }
 
-  get personalData() {
+  // string used to identify applicants
+  get id() {
+    return [
+      this.rsaApplicationNumber,
+      this.lastName.split(" ").join("-"),
+      this.firstName.split(" ").join("-"),
+      this.role,
+    ].join("-");
+  }
+
+  personalData() {
     return {
       rsaApplicationNumber: this.rsaApplicationNumber,
       socialSecurityNumber: this.socialSecurityNumber,

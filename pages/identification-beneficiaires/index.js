@@ -41,10 +41,14 @@ export default function identificationBeneficiaire() {
       reader.onload = function (event) {
         const fluxBeneficaire = new FluxBeneficiaire(event.target.result);
         const applicantsEligibleAsNew = fluxBeneficaire.applicantsEligibleAsNew;
-        const applicants = fluxBeneficaire.applicants;
-        const newApplicantsData = fluxBeneficaire.topEntrants.map(applicant => {
-          return { ...applicant.personalData, isTopEntrant: true };
-        });
+        const applicantsObject = fluxBeneficaire.applicantsObject;
+        let newApplicantsData = fluxBeneficaire.topEntrants.reduce((applicantsData, applicant) => {
+          applicantsData[applicant.id] = {
+            ...applicant.personalData(),
+            isTopEntrant: true,
+          };
+          return applicantsData;
+        }, {});
         const creationDate = fluxBeneficaire.creationDate;
 
         if (FLUX_ORIGINS[fluxBeneficaire.origin] !== "Bénéficiaires") {
@@ -62,7 +66,7 @@ export default function identificationBeneficiaire() {
         // We check if there is a flux from the day before to check if there are new applicants
         // fitting the J-1 -> J condition.
         // We do these checks on the `runs` for the previous uploads and on the `itemsToDispatch` for the current uploads
-        // in cases where we upload several files in the same time
+        // in cases where we upload several files at the same time
         [runs, itemsToDispatch].forEach(resources => {
           let applicantsFromDayBefore = resources.find(
             item => item.creationDate === yesterdayApplicationDate(creationDate)
@@ -70,27 +74,28 @@ export default function identificationBeneficiaire() {
 
           if (applicantsFromDayBefore) {
             applicantsEligibleAsNew.forEach(applicant => {
-              const yesterdayApplicant = applicantsFromDayBefore.find(yesterdayApplicant => {
-                return (
-                  yesterdayApplicant.lastName === applicant.lastName &&
-                  yesterdayApplicant.firstName === applicant.firstName &&
-                  yesterdayApplicant.rsaApplicationNumber === applicant.rsaApplicationNumber
-                );
-              });
+              const yesterdayApplicant = applicantsFromDayBefore[applicant.id];
 
               if (!yesterdayApplicant) {
                 return;
               }
 
+              if (applicant.withDroitsEtDevoirs() && !yesterdayApplicant.withDroitsEtDevoirs()) {
+                newApplicantsData[applicant.id] = {
+                  ...newApplicantsData[applicant.id],
+                  ...applicant.personalData(),
+                  category: "1-2-3",
+                };
+              }
               if (
-                (applicant.withDroitsEtDevoirs() && !yesterdayApplicant.withDroitsEtDevoirs()) ||
-                (applicant.eligibleAsNewInFoyer() &&
-                  !yesterdayApplicant.inFoyerWithDroitsEtDevoirs())
+                applicant.eligibleAsNewInFoyer() &&
+                !yesterdayApplicant.inFoyerWithDroitsEtDevoirs()
               ) {
-                newApplicantsData.push({
-                  ...applicant.personalData,
-                  isTopEntrant: false,
-                });
+                newApplicantsData[applicant.id] = {
+                  ...newApplicantsData[applicant.id],
+                  ...applicant.personalData(),
+                  category: "4",
+                };
               }
             });
           }
@@ -99,7 +104,7 @@ export default function identificationBeneficiaire() {
         const itemToDispatch = {
           seed: Math.random(),
           newApplicantsData: newApplicantsData,
-          applicants: applicants,
+          applicants: applicantsObject,
           applicantsEligibleAsNew: applicantsEligibleAsNew,
           fileName: file.name,
           creationDate: creationDate,
@@ -132,7 +137,7 @@ export default function identificationBeneficiaire() {
 
         dispatchRuns({
           type: "replace",
-          items: augmentItems(fluxInstruction.applicantsPersonalData),
+          items: augmentItemsWith(fluxInstruction.applicants),
         });
         resolve();
       };
@@ -140,30 +145,31 @@ export default function identificationBeneficiaire() {
     });
   };
 
-  const augmentItems = instuctionsPersonalData => {
+  const augmentItemsWith = instructionApplicants => {
     return runs.map(run => {
       return {
         ...run,
-        newApplicantsData: augmentPersonalData(instuctionsPersonalData, run.newApplicantsData),
+        newApplicantsData: augmentWithInstructionData(instructionApplicants, run.newApplicantsData),
       };
     });
   };
 
-  const augmentPersonalData = (instuctionsPersonalData, beneficiairesPersonalData) => {
-    return beneficiairesPersonalData.map(applicantBeneficiaireData => {
-      const applicantInstructionData = instuctionsPersonalData.find(instructionData => {
-        return (
-          instructionData.rsaApplicationNumber === applicantBeneficiaireData.rsaApplicationNumber
-        );
-      });
-      return { ...applicantInstructionData, ...applicantBeneficiaireData };
+  const augmentWithInstructionData = (instructionApplicants, applicantsData) => {
+    instructionApplicants.forEach(instructionApplicant => {
+      if (applicantsData[instructionApplicant.id] !== undefined) {
+        applicantsData[instructionApplicant.id] = {
+          ...applicantsData[instructionApplicant.id],
+          ...instructionApplicant.personalData(),
+        };
+      }
     });
+    return applicantsData;
   };
 
   const handleCsvExport = () => {
     const dataToExport = [];
     runs.forEach(run => {
-      run.newApplicantsData.forEach(applicant => {
+      Object.values(run.newApplicantsData).forEach(applicant => {
         // We want to export the applicants data along with the file name
         dataToExport.push([
           applicant.rsaApplicationNumber || "",
@@ -174,7 +180,7 @@ export default function identificationBeneficiaire() {
           applicant.emailAddress || "",
           applicant.phoneNumber || "",
           applicant.isTopEntrant ? "OUI" : "NON",
-          applicant.isTopEntrant ? "NON" : "OUI",
+          applicant.category === undefined ? "NON" : `OUI - Catégorie ${applicant.category}`,
           run.fileName,
         ]);
       });
@@ -198,11 +204,11 @@ export default function identificationBeneficiaire() {
   };
 
   const someWithEmail = runs.some(run => {
-    return run.newApplicantsData.some(personalData => personalData.emailAddress);
+    return Object.values(run.newApplicantsData).some(personalData => personalData.emailAddress);
   });
 
   const someWithPhone = runs.some(run => {
-    return run.newApplicantsData.some(personalData => personalData.phoneNumber);
+    return Object.values(run.newApplicantsData).some(personalData => personalData.phoneNumber);
   });
 
   return (
@@ -297,45 +303,41 @@ export default function identificationBeneficiaire() {
                 </tr>
               </thead>
               <tbody>
-                {runs
-                  .flatMap(({ newApplicantsData, ...run }) => {
-                    // { applicantsPersonalData: [...], fileName: ... } => [{ applicantData, fileName }, ...]
-                    return newApplicantsData.map(applicant => {
-                      return { ...applicant, ...run };
-                    });
-                  })
-                  .map(({ fileName, ...applicant }) => {
-                    const keyId = [
-                      applicant.rsaApplicationNumber,
-                      applicant.lastName,
-                      applicant.firstName,
-                      applicant.role,
-                      fileName,
-                    ].join("-");
+                {runs.map(({ newApplicantsData, fileName, ...run }) => {
+                  // { newApplicantsData: { id: applicantData }, fileName: ... } => [{ id, applicantData, fileName }, ...]
+                  return Object.entries(newApplicantsData).map(([applicantId, applicantData]) => {
+                    const keyId = [applicantId, fileName].join("-");
 
                     return (
                       <tr key={keyId}>
-                        <td>{applicant.rsaApplicationNumber}</td>
-                        <td>{applicant.socialSecurityNumber}</td>
-                        <td>{applicant.lastName}</td>
-                        <td>{applicant.firstName}</td>
-                        <td>{APPLICATION_ROLES[applicant.role]}</td>
+                        <td>{applicantData.rsaApplicationNumber}</td>
+                        <td>{applicantData.socialSecurityNumber}</td>
+                        <td>{applicantData.lastName}</td>
+                        <td>{applicantData.firstName}</td>
+                        <td>{APPLICATION_ROLES[applicantData.role]}</td>
                         {someWithEmail && (
                           <>
-                            <td>{applicant.emailAddress || ""}</td>
+                            <td>{applicantData.emailAddress || ""}</td>
                           </>
                         )}
                         {someWithPhone && (
                           <>
-                            <td>{applicant.phoneNumber || ""}</td>
+                            <td>{applicantData.phoneNumber || ""}</td>
                           </>
                         )}
-                        <td className={styles.center}>{applicant.isTopEntrant ? "OUI" : "NON"}</td>
-                        <td className={styles.center}>{applicant.isTopEntrant ? "NON" : "OUI"}</td>
+                        <td className={styles.center}>
+                          {applicantData.isTopEntrant ? "OUI" : "NON"}
+                        </td>
+                        <td className={styles.center}>
+                          {applicantData.category === undefined
+                            ? "NON"
+                            : `OUI - Catégorie ${applicantData.category}`}
+                        </td>
                         <td>{fileName}</td>
                       </tr>
                     );
-                  })}
+                  });
+                })}
               </tbody>
             </table>
           </>

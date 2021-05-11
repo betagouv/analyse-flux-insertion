@@ -35,17 +35,16 @@ export default function NewApplicantsRules() {
             Le croisement de plusieurs balises des flux bénéficiaires quotidien ou mensuel (sans
             utiliser le TOPPERSENTDRODEVORSA). Cette méthode permet de reconstituer les catégories
             de nouveaux entrants définies dans l'instruction du 19 mars 2021, comme présenté dans le
-            tableau suivant:
+            tableau suivant (la catégorie numéro <strong>"5"</strong> n'est pas prise en compte par
+            cet outil):
           </p>
-          <p>
-            <div className={styles.image_container}>
-              <img
-                src="./new_applicants_rules.png"
-                alt="new_applicants_rules"
-                className={styles.rules_image}
-              />
-            </div>
-          </p>
+          <div className={styles.image_container}>
+            <img
+              src="./new_applicants_rules.png"
+              alt="new_applicants_rules"
+              className={styles.rules_image}
+            />
+          </div>
         </li>
       </ul>
     </div>
