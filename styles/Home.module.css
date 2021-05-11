@@ -56,6 +56,17 @@
   font-size: 4rem;
 }
 
+.applicants_table {
+  table-layout: fixed;
+}
+
+.applicants_table td {
+  overflow-wrap: break-word;
+}
+.applicants_table th {
+  overflow-wrap: break-word;
+}
+
 .subtitle {
   margin: 0;
   line-height: 1.15;

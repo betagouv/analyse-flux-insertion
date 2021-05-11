@@ -134,10 +134,9 @@ export default function identificationBeneficiaire() {
           resolve();
           return;
         }
-
         dispatchRuns({
           type: "replace",
-          items: augmentItemsWith(fluxInstruction.applicants),
+          items: augmentItemsWithInstruction(fluxInstruction, file.name),
         });
         resolve();
       };
@@ -145,25 +144,37 @@ export default function identificationBeneficiaire() {
     });
   };
 
-  const augmentItemsWith = instructionApplicants => {
+  const augmentItemsWithInstruction = (fluxInstruction, fileName) => {
     return runs.map(run => {
       return {
         ...run,
-        newApplicantsData: augmentWithInstructionData(instructionApplicants, run.newApplicantsData),
+        newApplicantsData: augmentApplicantsDataWithInstruction(
+          fluxInstruction.applicants,
+          fileName,
+          run.newApplicantsData
+        ),
       };
     });
   };
 
-  const augmentWithInstructionData = (instructionApplicants, applicantsData) => {
-    instructionApplicants.forEach(instructionApplicant => {
-      if (applicantsData[instructionApplicant.id] !== undefined) {
-        applicantsData[instructionApplicant.id] = {
-          ...applicantsData[instructionApplicant.id],
-          ...instructionApplicant.personalData(),
+  const augmentApplicantsDataWithInstruction = (
+    instructionApplicants,
+    instructionFileName,
+    newApplicantsData
+  ) => {
+    Object.entries(newApplicantsData).forEach(([applicantId, applicant]) => {
+      const instructionApplicant = instructionApplicants.find(instructionApplicant => {
+        return instructionApplicant.rsaApplicationNumber === applicant.rsaApplicationNumber;
+      });
+      if (instructionApplicant) {
+        newApplicantsData[applicantId] = {
+          instructionFileName,
+          ...applicant,
+          ...instructionApplicant.contactInfos(),
         };
       }
     });
-    return applicantsData;
+    return newApplicantsData;
   };
 
   const handleCsvExport = () => {
@@ -182,6 +193,7 @@ export default function identificationBeneficiaire() {
           applicant.isTopEntrant ? "OUI" : "NON",
           applicant.category === undefined ? "NON" : `OUI - Catégorie ${applicant.category}`,
           run.fileName,
+          applicant.instructionFileName || "",
         ]);
       });
     });
@@ -197,6 +209,7 @@ export default function identificationBeneficiaire() {
       "ENTRANT SELON TOPPERSENTDRODEVORSA",
       "ENTRANT SELON AUTRES CRITERES",
       "FICHIER SOURCE",
+      "FICHIER D'INSTRUCTION",
     ];
 
     const csvName = "nouveaux_demandeurs_rsa_" + getDateTimeString() + ".csv";
@@ -210,6 +223,8 @@ export default function identificationBeneficiaire() {
   const someWithPhone = runs.some(run => {
     return Object.values(run.newApplicantsData).some(personalData => personalData.phoneNumber);
   });
+
+  const someWithContactInfos = someWithEmail || someWithPhone;
 
   return (
     <Layout className={styles.container} handleFile={handleFileUpload}>
@@ -287,59 +302,67 @@ export default function identificationBeneficiaire() {
                 </button>
               </div>
             </div>
-            <table className={styles.margin_side}>
-              <thead>
-                <tr>
-                  <th>Numéro de demande RSA</th>
-                  <th>NIR</th>
-                  <th>Nom</th>
-                  <th>Prénom</th>
-                  <th>Rôle</th>
-                  {someWithEmail && <th>Email</th>}
-                  {someWithPhone && <th>Téléphone</th>}
-                  <th>Entrant selon TOPPERSENTDRODEVORSA</th>
-                  <th>Entrant selon d'autres critères</th>
-                  <th>Ficher source </th>
-                </tr>
-              </thead>
-              <tbody>
-                {runs.map(({ newApplicantsData, fileName, ...run }) => {
-                  // { newApplicantsData: { id: applicantData }, fileName: ... } => [{ id, applicantData, fileName }, ...]
-                  return Object.entries(newApplicantsData).map(([applicantId, applicantData]) => {
-                    const keyId = [applicantId, fileName].join("-");
+            <div>
+              <table className={styles.applicants_table}>
+                <thead>
+                  <tr>
+                    <th>Numéro de demande RSA</th>
+                    <th>NIR</th>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Rôle</th>
+                    {someWithEmail && <th>Email</th>}
+                    {someWithPhone && <th>Téléphone</th>}
+                    <th>Entrant selon TOPPERSENTDRODEVORSA</th>
+                    <th>Entrant selon d'autres critères</th>
+                    <th>Ficher source </th>
+                    {someWithContactInfos && <th>Fichier d'instruction</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {runs.map(({ newApplicantsData, fileName, ...run }) => {
+                    // { newApplicantsData: { id: applicantData }, fileName: ... } => [{ id, applicantData, fileName }, ...]
+                    return Object.entries(newApplicantsData).map(([applicantId, applicantData]) => {
+                      const keyId = [applicantId, fileName].join("-");
 
-                    return (
-                      <tr key={keyId}>
-                        <td>{applicantData.rsaApplicationNumber}</td>
-                        <td>{applicantData.socialSecurityNumber}</td>
-                        <td>{applicantData.lastName}</td>
-                        <td>{applicantData.firstName}</td>
-                        <td>{APPLICATION_ROLES[applicantData.role]}</td>
-                        {someWithEmail && (
-                          <>
-                            <td>{applicantData.emailAddress || ""}</td>
-                          </>
-                        )}
-                        {someWithPhone && (
-                          <>
-                            <td>{applicantData.phoneNumber || ""}</td>
-                          </>
-                        )}
-                        <td className={styles.center}>
-                          {applicantData.isTopEntrant ? "OUI" : "NON"}
-                        </td>
-                        <td className={styles.center}>
-                          {applicantData.category === undefined
-                            ? "NON"
-                            : `OUI - Catégorie ${applicantData.category}`}
-                        </td>
-                        <td>{fileName}</td>
-                      </tr>
-                    );
-                  });
-                })}
-              </tbody>
-            </table>
+                      return (
+                        <tr key={keyId}>
+                          <td>{applicantData.rsaApplicationNumber}</td>
+                          <td>{applicantData.socialSecurityNumber}</td>
+                          <td>{applicantData.lastName}</td>
+                          <td>{applicantData.firstName}</td>
+                          <td>{APPLICATION_ROLES[applicantData.role]}</td>
+                          {someWithEmail && (
+                            <>
+                              <td>{applicantData.emailAddress || ""}</td>
+                            </>
+                          )}
+                          {someWithPhone && (
+                            <>
+                              <td>{applicantData.phoneNumber || ""}</td>
+                            </>
+                          )}
+                          <td className={styles.center}>
+                            {applicantData.isTopEntrant ? "OUI" : "NON"}
+                          </td>
+                          <td className={styles.center}>
+                            {applicantData.category === undefined
+                              ? "NON"
+                              : `OUI - Catégorie ${applicantData.category}`}
+                          </td>
+                          <td>{fileName}</td>
+                          {someWithContactInfos && (
+                            <>
+                              <td>{applicantData.instructionFileName || ""}</td>
+                            </>
+                          )}
+                        </tr>
+                      );
+                    });
+                  })}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </main>
