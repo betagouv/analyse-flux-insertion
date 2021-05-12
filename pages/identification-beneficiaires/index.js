@@ -1,6 +1,6 @@
 import Layout from "../../components/layout";
 import FileHandler from "../../components/fileHandler";
-import NewApplicantsRules from "../../components/newApplicantsRules";
+import NewApplicantsRules from "../../components/NewApplicantsRules";
 
 import styles from "../../styles/Home.module.css";
 import { FLUX_ORIGINS, APPLICATION_ROLES } from "../../lib/cnafGlossary";
