@@ -1,6 +1,7 @@
 import BaseFlux from "./BaseFlux";
 import Application from "./Application";
 import Applicant from "./Applicant";
+import { retrieveAttributePartitionFrom } from "../lib/partitionsHelper";
 
 export default class FluxInstruction extends BaseFlux {
   get applications() {
@@ -47,5 +48,13 @@ export default class FluxInstruction extends BaseFlux {
 
   get applicantsPersonalData() {
     return this.applicants.map(applicant => applicant.personalData());
+  }
+
+  get nationalitiesPartition() {
+    return retrieveAttributePartitionFrom(this.applicants, "nationality", false);
+  }
+
+  get activitiesPartition() {
+    return retrieveAttributePartitionFrom(this.applicants, "activity", false);
   }
 }
