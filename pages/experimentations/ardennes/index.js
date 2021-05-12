@@ -67,9 +67,13 @@ export default function Ardennes() {
     }
   }
 
-  async function checkUserInvitationStatus(userId, userIndex) {
+  async function getUser(userId, token) {
     const getUserUrl = userUrl + `/${userId}`;
-    const result = await appFetch(getUserUrl, token);
+    return await appFetch(getUserUrl, token);
+  }
+
+  async function checkUserInvitationStatus(userId, userIndex) {
+    const result = await getUser(userId, token);
 
     let newUsersData = [...usersData];
     if (result.user.invitation_created_at) {
@@ -114,16 +118,12 @@ export default function Ardennes() {
       setUsersData(newUsersData);
       checkUserInvitationStatus(result.errors.email[0].id, userIndex);
       alert("Un compte associé à cet email existe déjà");
-    } else if (
-      result.errors &&
-      result.errors.first_name &&
-      result.errors.first_name[0].error === "déjà utilisé"
-    ) {
-      alert(
-        "La création de ce compte a échoué. L'utilisateur semble déjà exister mais n'a pas pu être récupéré."
-      );
-    } else if (result.errors.email && result.errors.email[0].error === "invalid") {
+    } else if (result.errors && result.errors.email && result.errors.email[0].error === "invalid") {
       alert("L'adresse mail n'est pas valide");
+    } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
+      alert("La création du compte a échoué. L'utilisateur semble exister mais n'a pu être récupéré.");
+    } else if (result.errors && result.errors[0] && result.errors[0].base === "forbidden") {
+      alert("Votre compte agent RDV-Solidarités ne vous permet pas d'effectuer cette action.");
     } else if (result.errors && result.errors[0]) {
       alert(result.errors[0]);
     }
