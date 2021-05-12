@@ -122,7 +122,7 @@ export default function Ardennes() {
       alert("L'adresse mail n'est pas valide");
     } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
       alert("La création du compte a échoué. L'utilisateur semble exister mais n'a pu être récupéré.");
-    } else if (result.errors && result.errors[0] && result.errors[0].base && result.errors[0].base === "forbidden") {
+    } else if (result.errors && result.errors[0] && result.errors[0].base === "forbidden") {
       alert("Votre compte agent RDV-Solidarités ne vous permet pas d'effectuer cette action.");
     } else if (result.errors && result.errors[0]) {
       alert(result.errors[0]);
