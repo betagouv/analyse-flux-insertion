@@ -61,7 +61,12 @@ export default function Ardennes() {
 
     if (result.invitation_url) {
       let newUsersData = [...usersData];
-      newUsersData[userIndex]["Invitation"] = result.invitation_url;
+      newUsersData[userIndex]["Lien d'invitation"] = result.invitation_url;
+      newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
+      setUsersData(newUsersData);
+    } else if (result.invitation_token) {
+      let newUsersData = [...usersData];
+      newUsersData[userIndex]["Code d'invitation"] = result.invitation_token;
       newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
       setUsersData(newUsersData);
     }
@@ -94,7 +99,7 @@ export default function Ardennes() {
   async function createUser(userData, userIndex) {
     const address = userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
 
-    const user = {
+    let user = {
       first_name: userData["PRENOM"],
       last_name: userData["NOM"],
       email: userData["MAIL"],
@@ -105,23 +110,30 @@ export default function Ardennes() {
       affiliation_number: userData["N°CAF"],
       organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO],
     };
+    if (userData.invalid_or_taken_mail === true) delete user.email
 
     const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
 
+    delete userData.invalid_or_taken_mail;
     let newUsersData = [...usersData];
     if (result.user) {
       newUsersData[userIndex]["ID RDV"] = result.user.id;
       setUsersData(newUsersData);
       generateInvitationUrl(result.user.id, userIndex);
-    } else if (result.errors && result.errors.email && result.errors.email[0].error === "taken") {
-      newUsersData[userIndex]["ID RDV"] = result.errors.email[0].id;
-      setUsersData(newUsersData);
-      checkUserInvitationStatus(result.errors.email[0].id, userIndex);
-      alert("Un compte associé à cet email existe déjà");
-    } else if (result.errors && result.errors.email && result.errors.email[0].error === "invalid") {
-      alert("L'adresse mail n'est pas valide");
-    } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
-      alert("La création du compte a échoué. L'utilisateur semble exister mais n'a pu être récupéré.");
+    } else if (
+      (result.errors && result.errors.email && result.errors.email[0]?.error === "taken") ||
+      (result.errors && result.errors.email && result.errors.email[0]?.error === "invalid")
+    ) {
+      userData.invalid_or_taken_mail = true;
+      createUser(userData, userIndex);
+    } else if (
+      result.errors &&
+      result.errors.first_name &&
+      result.errors.first_name[0].error === "déjà utilisé"
+    ) {
+      alert(
+        "La création du compte a échoué. L'utilisateur semble exister mais n'a pu être récupéré."
+      );
     } else if (result.errors && result.errors[0] && result.errors[0].base === "forbidden") {
       alert("Votre compte agent RDV-Solidarités ne vous permet pas d'effectuer cette action.");
     } else if (result.errors && result.errors[0]) {
@@ -150,7 +162,7 @@ export default function Ardennes() {
         // Limiter la capture aux colonnes A-V
         const range = XLSX.utils.decode_range(worksheet["!ref"]);
         range.s.c = 0; // 0 == XLSX.utils.decode_col("A")
-        range.e.c = 21; // 19 == XLSX.utils.decode_col("V")
+        range.e.c = 22; // 22 == XLSX.utils.decode_col("W")
         const new_range = XLSX.utils.encode_range(range);
 
         let jsonData = XLSX.utils.sheet_to_json(worksheet, {
