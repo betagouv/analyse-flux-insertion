@@ -63,10 +63,11 @@ export default function Instruction() {
               withExplicitRefusal: fluxInstruction.applicationsWithForbiddenPhoneUsage.length,
               withoutAutorisationDetails: fluxInstruction.applicationsWithoutPhoneUsage.length,
             },
-            withDSP: fluxInstruction.applicationsWithDSP.length,
+            applicationsWithDSP: fluxInstruction.applicationsWithDSP.length,
             applicantsPersonalData: fluxInstruction.applicantsPersonalData,
             nationalitiesPartition: fluxInstruction.nationalitiesPartition,
             activitiesPartition: fluxInstruction.activitiesPartition,
+            dspRolesPartition: fluxInstruction.dspRolesPartition,
           },
         });
         resolve();
@@ -112,55 +113,61 @@ export default function Instruction() {
     // const dataToExport = [];
     const dataToExport = runs.map(r => {
       return [
-        r.applicationsCount,
-        r.email.total,
-        round((r.email.total / r.applicationsCount) * 100),
-        r.email.withAutorisation,
-        round((r.email.withAutorisation / r.applicationsCount) * 100),
-        r.email.withExplicitRefusal,
-        round((r.email.withExplicitRefusal / r.applicationsCount) * 100),
-        r.email.withoutAutorisationDetails,
-        round((r.email.withoutAutorisationDetails / r.applicationsCount) * 100),
-        r.phone.total,
-        round((r.phone.total / r.applicationsCount) * 100),
-        r.phone.withAutorisation,
-        round((r.phone.withAutorisation / r.applicationsCount) * 100),
-        r.phone.withExplicitRefusal,
-        round((r.phone.withExplicitRefusal / r.applicationsCount) * 100),
-        r.phone.withoutAutorisationDetails,
-        round((r.phone.withoutAutorisationDetails / r.applicationsCount) * 100),
-        r.withDSP,
-        round((r.withDSP / r.applicationsCount) * 100),
-        r.applicantsCount,
+        r.applicationsCount || 0,
+        r.email.total || 0,
+        round((r.email.total / r.applicationsCount) * 100) || 0,
+        r.email.withAutorisation || 0,
+        round((r.email.withAutorisation / r.applicationsCount) * 100) || 0,
+        r.email.withExplicitRefusal || 0,
+        round((r.email.withExplicitRefusal / r.applicationsCount) * 100) || 0,
+        r.email.withoutAutorisationDetails || 0,
+        round((r.email.withoutAutorisationDetails / r.applicationsCount) * 100) || 0,
+        r.phone.total || 0,
+        round((r.phone.total / r.applicationsCount) * 100) || 0,
+        r.phone.withAutorisation || 0,
+        round((r.phone.withAutorisation / r.applicationsCount) * 100) || 0,
+        r.phone.withExplicitRefusal || 0,
+        round((r.phone.withExplicitRefusal / r.applicationsCount) * 100) || 0,
+        r.phone.withoutAutorisationDetails || 0,
+        round((r.phone.withoutAutorisationDetails / r.applicationsCount) * 100) || 0,
+        r.applicationsWithDSP || 0,
+        round((r.applicationsWithDSP / r.applicationsCount) * 100) || 0,
+        r.applicantsCount || 0,
+        r.dspRolesPartition["DEM"] || 0,
+        r.dspRolesPartition["CJT"] || 0,
+        r.dspRolesPartition["Total"] || 0,
       ]
         .concat(nationalities.map(n => r.nationalitiesPartition[n] || 0))
         .concat(activities.map(a => r.activitiesPartition[a] || 0));
     });
 
     const csvHeader = [
-      "Dossiers",
-      "Nb total de dossiers avec email",
+      "Nombre total de dossiers",
+      "Nombre total de dossiers avec email",
       "Pourcentage de dossiers avec email",
-      "Nb de dossiers avec autorisation explicite pour l'email",
+      "Nombre de dossiers avec autorisation explicite pour l'email",
       "Pourcentage de dossiers avec autorisation explicite pour l'email",
-      "Nb de dossiers avec refus explicite pour l'email",
+      "Nombre de dossiers avec refus explicite pour l'email",
       "Pourcentage de dossiers avec refus explicite pour l'email",
-      "Nb de dossiers avec autorisation inconnue explicite pour l'email",
+      "Nombre de dossiers avec autorisation inconnue explicite pour l'email",
       "Pourcentage de dossiers avec autorisation inconnue explicite pour l'email",
-      "Nb total de dossiers avec téléphone",
+      "Nombre total de dossiers avec téléphone",
       "Pourcentage de dossiers avec téléphone",
-      "Nb de dossiers avec autorisation explicite pour le téléphone",
+      "Nombre de dossiers avec autorisation explicite pour le téléphone",
       "Pourcentage de dossiers avec autorisation explicite pour le téléphone",
-      "Nb de dossiers avec refus explicite pour le téléphone",
+      "Nombre de dossiers avec refus explicite pour le téléphone",
       "Pourcentage de dossiers avec refus explicite pour le téléphone",
-      "Nb de dossiers avec autorisation inconnue explicite pour le téléphone",
+      "Nombre de dossiers avec autorisation inconnue explicite pour le téléphone",
       "Pourcentage de dossiers avec autorisation inconnue explicite pour le téléphone",
-      "Nb de dossiers avec DSP",
+      "Nombre de dossiers avec DSP",
       "Pourcentage de dossiers avec DSP",
       "Nombre total de personnes",
+      "Nombre de demandeurs (DEM) avec DSP",
+      "Nombre de Conjoints (CJT) avec DSP",
+      "Nombre total de personnes avec DSP",
     ]
-      .concat(nationalities.map(n => `Nb de personnes de nationalité ${n}`))
-      .concat(activities.map(a => `Nb de personne avec Activité ${a}`));
+      .concat(nationalities.map(n => `Nombre de personnes de nationalité ${n}`))
+      .concat(activities.map(a => `Nombre de personne avec Activité ${a}`));
 
     const csvName = "flux_insertion_statistiques_" + getDateTimeString() + ".csv";
     csvExport(csvName, dataToExport, csvHeader);
@@ -254,8 +261,8 @@ export default function Instruction() {
                         {round((r.phone.withoutAutorisationDetails / r.applicationsCount) * 100)}%
                       </td>
 
-                      <td>{r.withDSP}</td>
-                      <td>{round((r.withDSP / r.applicationsCount) * 100)}%</td>
+                      <td>{r.applicationsWithDSP}</td>
+                      <td>{round((r.applicationsWithDSP / r.applicationsCount) * 100)}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -265,10 +272,14 @@ export default function Instruction() {
                   <tr>
                     <th rowSpan="2">#</th>
                     <th rowSpan="2">Personnes</th>
+                    <th colSpan="3">DSP</th>
                     <th colSpan={nationalities.length}>Nationalités</th>
                     <th colSpan={activities.length}>Activités</th>
                   </tr>
                   <tr>
+                    <th>DEM</th>
+                    <th>CJT</th>
+                    <th>Total</th>
                     {nationalities.map(nationality => (
                       <th key={nationality} colSpan="1">
                         {nationality}
@@ -287,6 +298,9 @@ export default function Instruction() {
                     <tr key={`${r.timestamp}-${r.filename}-${r.seed}`}>
                       <td>{i + 1}</td>
                       <td>{r.applicantsCount}</td>
+                      <td>{r.dspRolesPartition["DEM"] || 0}</td>
+                      <td>{r.dspRolesPartition["CJT"] || 0}</td>
+                      <td>{r.dspRolesPartition["Total"] || 0}</td>
                       {nationalities.map(n => (
                         <td key={n} className={styles.center}>
                           {r.nationalitiesPartition[n] || 0}

@@ -46,12 +46,20 @@ export default class FluxInstruction extends BaseFlux {
     return this.applications.filter(application => application.withDSP());
   }
 
+  get applicantsWithDSP() {
+    return this.applicants.filter(applicant => applicant.socioProfessionalData);
+  }
+
   get applicantsPersonalData() {
     return this.applicants.map(applicant => applicant.personalData());
   }
 
   get nationalitiesPartition() {
     return retrieveAttributePartitionFrom(this.applicants, "nationality", false);
+  }
+
+  get dspRolesPartition() {
+    return retrieveAttributePartitionFrom(this.applicantsWithDSP, "role");
   }
 
   get activitiesPartition() {
