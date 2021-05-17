@@ -5,7 +5,7 @@ export default function LoginForm({ handleLogin }) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
-  const RDV_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_PROD_URL;
+  const RDV_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
   const path = "/auth/sign_in";
   const url = `${RDV_URL}/api/v1${path}`;
 

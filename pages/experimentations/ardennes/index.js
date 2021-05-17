@@ -13,7 +13,7 @@ import { getDateTimeString, getFrenchFormatDateString, stringToDate } from "../.
 
 const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
 const devMode = process.env.NODE_ENV == "development";
-const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_PROD_URL;
+const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
 const userUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
 
 export default function Ardennes() {
@@ -103,7 +103,7 @@ export default function Ardennes() {
       address: address,
       caisse_affiliation: "caf",
       affiliation_number: userData["N°CAF"],
-      organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_PROD],
+      organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO],
     };
 
     const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
