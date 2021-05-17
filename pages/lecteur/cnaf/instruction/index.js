@@ -191,7 +191,7 @@ export default function Instruction() {
               <table>
                 <thead>
                   <tr>
-                    <th rowSpan="2"></th>
+                    <th rowSpan="2">#</th>
                     <th rowSpan="2">Dossiers</th>
                     <th colSpan="8">avec email</th>
                     <th colSpan="8">avec téléphone</th>
@@ -199,10 +199,6 @@ export default function Instruction() {
                     <th colSpan="2" rowSpan="2">
                       avec DSP
                     </th>
-                    <th rowSpan="2">Personnes</th>
-
-                    <th colSpan={nationalities.length}>Nationalités</th>
-                    <th colSpan={activities.length}>Activités</th>
                   </tr>
                   <tr>
                     <th colSpan="2">Total</th>
@@ -222,16 +218,6 @@ export default function Instruction() {
                         inconnu explicit (I)
                       </abbr>
                     </th>
-                    {nationalities.map(nationality => (
-                      <th key={nationality} colSpan="1">
-                        {nationality}
-                      </th>
-                    ))}
-                    {activities.map(activity => (
-                      <th key={activity} colSpan="1">
-                        {activity}
-                      </th>
-                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -270,6 +256,36 @@ export default function Instruction() {
 
                       <td>{r.withDSP}</td>
                       <td>{round((r.withDSP / r.applicationsCount) * 100)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <table>
+                <thead>
+                  <tr>
+                    <th rowSpan="2">#</th>
+                    <th rowSpan="2">Personnes</th>
+                    <th colSpan={nationalities.length}>Nationalités</th>
+                    <th colSpan={activities.length}>Activités</th>
+                  </tr>
+                  <tr>
+                    {nationalities.map(nationality => (
+                      <th key={nationality} colSpan="1">
+                        {nationality}
+                      </th>
+                    ))}
+                    {activities.map(activity => (
+                      <th key={activity} colSpan="1">
+                        {activity}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {runs.map((r, i) => (
+                    <tr key={`${r.timestamp}-${r.filename}-${r.seed}`}>
+                      <td>{i + 1}</td>
                       <td>{r.applicantsCount}</td>
                       {nationalities.map(n => (
                         <td key={n} className={styles.center}>
@@ -285,13 +301,16 @@ export default function Instruction() {
                   ))}
                 </tbody>
               </table>
-              <div className={styles.button_group}>
-                <button className={styles.button} onClick={handlePersonalDataCsvExport}>
-                  Exporter les données de contacts
-                </button>
-                <button className={styles.button} onClick={handleStatsCsvExport}>
-                  Exporter les statistiques
-                </button>
+
+              <div style={{ paddingRight: "30%", paddingLeft: "30%" }}>
+                <div className={styles.button_group}>
+                  <button className={styles.button} onClick={handlePersonalDataCsvExport}>
+                    Exporter les données de contacts
+                  </button>
+                  <button className={styles.button} onClick={handleStatsCsvExport}>
+                    Exporter les statistiques
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -301,7 +320,7 @@ export default function Instruction() {
               <table className={styles.margin_side}>
                 <thead>
                   <tr>
-                    <th rowSpan="2"></th>
+                    <th rowSpan="2">#</th>
                     <th rowSpan="2">Date</th>
                     <th rowSpan="2">Fichier</th>
                     {devMode && <th rowSpan="2">Taille</th>}
