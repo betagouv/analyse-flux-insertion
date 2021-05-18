@@ -157,7 +157,7 @@ export default function Ardennes() {
         // Limiter la capture aux colonnes A-V
         const range = XLSX.utils.decode_range(worksheet["!ref"]);
         range.s.c = 0; // 0 == XLSX.utils.decode_col("A")
-        range.e.c = 21; // 19 == XLSX.utils.decode_col("V")
+        range.e.c = 24; // 24 == XLSX.utils.decode_col("Y")
         const new_range = XLSX.utils.encode_range(range);
 
         let jsonData = XLSX.utils.sheet_to_json(worksheet, {
@@ -189,7 +189,7 @@ export default function Ardennes() {
           },
         });
         resolve();
-      };
+      };;
       reader.readAsArrayBuffer(file);
     });
   };
