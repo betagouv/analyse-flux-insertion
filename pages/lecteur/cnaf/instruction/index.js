@@ -110,9 +110,9 @@ export default function Instruction() {
   };
 
   const handleStatsCsvExport = () => {
-    // const dataToExport = [];
     const dataToExport = runs.map(r => {
       return [
+        r.filename,
         r.applicationsCount || 0,
         r.email.total || 0,
         round((r.email.total / r.applicationsCount) * 100) || 0,
@@ -142,6 +142,7 @@ export default function Instruction() {
     });
 
     const csvHeader = [
+      "Fichier source",
       "Nombre total de dossiers",
       "Nombre total de dossiers avec email",
       "Pourcentage de dossiers avec email",
