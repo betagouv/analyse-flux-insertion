@@ -13,6 +13,7 @@ import { getDateTimeString, getFrenchFormatDateString, stringToDate } from "../.
 
 const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
 const devMode = process.env.NODE_ENV == "development";
+const orgaID = process.env.NEXT_PUBLIC_ORGANISATION_ID_PROD;
 const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_PROD_URL;
 const userUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
 
@@ -103,7 +104,7 @@ export default function Ardennes() {
       address: address,
       caisse_affiliation: "caf",
       affiliation_number: userData["N°CAF"],
-      organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_PROD],
+      organisation_ids: [orgaID],
     };
 
     const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
@@ -225,6 +226,7 @@ export default function Ardennes() {
                     <table>
                       <thead>
                         <tr>
+                          <th rowSpan="2">Date</th>
                           <th rowSpan="2">Nom</th>
                           <th rowSpan="2">Prénom</th>
                           <th rowSpan="2">Mail</th>
@@ -239,38 +241,42 @@ export default function Ardennes() {
                         </tr>
                       </thead>
                       <tbody>
-                        {usersData.map((user, index) => (
-                          <tr key={index}>
-                            <td className={styles.center}>{user["NOM"]}</td>
-                            <td className={styles.center}>{user["PRENOM"]}</td>
-                            <td className={styles.center}>{user["MAIL"]}</td>
-                            <td className={styles.center}>{user["TELEPHONE"]}</td>
+                        {/* reverse est utilisé pour que les utilisateurs les plus récents apparaissent en haut */}
+                        {usersData.reverse().map((user, index) =>
+                          {user["DATE"] !== "" && (
+                            <tr key={index}>
+                              <td className={styles.center}>{user["DATE"]}</td>
+                              <td className={styles.center}>{user["NOM"]}</td>
+                              <td className={styles.center}>{user["PRENOM"]}</td>
+                              <td className={styles.center}>{user["MAIL"]}</td>
+                              <td className={styles.center}>{user["TELEPHONE"]}</td>
 
-                            {user["ID RDV"] === "" && (
-                              <td className={styles.center}>
-                                <button onClick={() => createUser(user, index)}>
-                                  Créer un compte
-                                </button>
-                              </td>
-                            )}
-                            {user["ID RDV"] !== "" && (
-                              <td className={styles.center}>{user["ID RDV"]}</td>
-                            )}
-                            <td className={styles.center}>{user["Date d'invitation"]}</td>
-                            <td className={styles.center}>{user["Date d'inscription"]}</td>
-                            {user["ID RDV"] !== "" && (
-                              <td className={styles.center}>
-                                <button
-                                  onClick={() => generateInvitationUrl(user["ID RDV"], index)}
-                                >
-                                  {user["Date d'invitation"] !== "" && "Regénérer invitation"}
-                                  {user["Date d'invitation"] === "" && "Générer invitation"}
-                                </button>
-                              </td>
-                            )}
-                            {user["ID RDV"] === "" && <td className={styles.center}></td>}
-                          </tr>
-                        ))}
+                              {user["ID RDV"] === "" && (
+                                <td className={styles.center}>
+                                  <button onClick={() => createUser(user, index)}>
+                                    Créer un compte
+                                  </button>
+                                </td>
+                              )}
+                              {user["ID RDV"] !== "" && (
+                                <td className={styles.center}>{user["ID RDV"]}</td>
+                              )}
+                              <td className={styles.center}>{user["Date d'invitation"]}</td>
+                              <td className={styles.center}>{user["Date d'inscription"]}</td>
+                              {user["ID RDV"] !== "" && (
+                                <td className={styles.center}>
+                                  <button
+                                    onClick={() => generateInvitationUrl(user["ID RDV"], index)}
+                                  >
+                                    {user["Date d'invitation"] !== "" && "Regénérer invitation"}
+                                    {user["Date d'invitation"] === "" && "Générer invitation"}
+                                  </button>
+                                </td>
+                              )}
+                              {user["ID RDV"] === "" && <td className={styles.center}></td>}
+                            </tr>
+                          )}
+                        )}
                       </tbody>
                     </table>
 
