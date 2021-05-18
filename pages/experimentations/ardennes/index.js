@@ -13,7 +13,7 @@ import { getDateTimeString, getFrenchFormatDateString, stringToDate } from "../.
 
 const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
 const devMode = process.env.NODE_ENV == "development";
-const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
+const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_PROD_URL;
 const userUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
 
 export default function Ardennes() {
@@ -103,7 +103,7 @@ export default function Ardennes() {
       address: address,
       caisse_affiliation: "caf",
       affiliation_number: userData["N°CAF"],
-      organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO],
+      organisation_ids: [process.env.NEXT_PUBLIC_ORGANISATION_ID_PROD],
     };
 
     const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
@@ -120,8 +120,14 @@ export default function Ardennes() {
       alert("Un compte associé à cet email existe déjà");
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "invalid") {
       alert("L'adresse mail n'est pas valide");
-    } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
-      alert("La création du compte a échoué. L'utilisateur semble exister mais n'a pu être récupéré.");
+    } else if (
+      result.errors &&
+      result.errors.first_name &&
+      result.errors.first_name[0].error === "déjà utilisé"
+    ) {
+      alert(
+        "La création du compte a échoué. L'utilisateur semble exister mais n'a pu être récupéré."
+      );
     } else if (result.errors && result.errors[0] && result.errors[0].base === "forbidden") {
       alert("Votre compte agent RDV-Solidarités ne vous permet pas d'effectuer cette action.");
     } else if (result.errors && result.errors[0]) {
