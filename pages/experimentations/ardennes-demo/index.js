@@ -242,7 +242,7 @@ export default function Ardennes() {
                       </thead>
                       <tbody>
                         {/* reverse est utilisé pour que les utilisateurs les plus récents apparaissent en haut */}
-                        {usersData.reverse().map((user, index) => {
+                        {[...usersData].reverse().map((user, index) => {
                           user["DATE"] !== "" && (
                             <tr key={index}>
                               <td className={styles.center}>{user["DATE"]}</td>
