@@ -1,11 +1,11 @@
 import { useState } from "react";
 import styles from "../styles/Home.module.css";
 
-export default function LoginForm({ handleLogin, RDV_URL }) {
+export default function LoginForm({ handleLogin, rdvUrl }) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
-  const url = `${RDV_URL}/api/v1/auth/sign_in`;
+  const url = `${rdvUrl}/api/v1/auth/sign_in`;
 
   const handleSubmit = e => {
     e.preventDefault();

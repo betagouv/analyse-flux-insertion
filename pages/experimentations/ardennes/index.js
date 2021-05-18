@@ -194,7 +194,7 @@ export default function Ardennes() {
 
         {!isLogged && (
           <div className={styles.create}>
-            <LoginForm handleLogin={handleLogin} url={RDV_SOLIDARITES_URL} />
+            <LoginForm handleLogin={handleLogin} rdvUrl={RDV_SOLIDARITES_URL} />
           </div>
         )}
 
