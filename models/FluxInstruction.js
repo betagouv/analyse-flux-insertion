@@ -1,6 +1,7 @@
 import BaseFlux from "./BaseFlux";
 import Application from "./Application";
 import Applicant from "./Applicant";
+import { retrieveAttributePartitionFrom } from "../lib/partitionsHelper";
 
 export default class FluxInstruction extends BaseFlux {
   get applications() {
@@ -45,7 +46,23 @@ export default class FluxInstruction extends BaseFlux {
     return this.applications.filter(application => application.withDSP());
   }
 
+  get applicantsWithDSP() {
+    return this.applicants.filter(applicant => applicant.socioProfessionalData);
+  }
+
   get applicantsPersonalData() {
     return this.applicants.map(applicant => applicant.personalData());
+  }
+
+  get nationalitiesPartition() {
+    return retrieveAttributePartitionFrom(this.applicants, "nationality", false);
+  }
+
+  get dspRolesPartition() {
+    return retrieveAttributePartitionFrom(this.applicantsWithDSP, "role");
+  }
+
+  get activitiesPartition() {
+    return retrieveAttributePartitionFrom(this.applicants, "activity", false);
   }
 }

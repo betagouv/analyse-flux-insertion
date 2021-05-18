@@ -29,6 +29,14 @@ export default class Applicant {
     return this.dom.getElementsByTagName("DonneesSocioProfessionnelles")[0]?.innerHTML;
   }
 
+  get nationality() {
+    return this.dom.getElementsByTagName("NATI")[0]?.innerHTML;
+  }
+
+  get activity() {
+    return this.dom.getElementsByTagName("ACT")[0]?.innerHTML;
+  }
+
   get application() {
     return new Application(this.dom.parentNode);
   }
