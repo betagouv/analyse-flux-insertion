@@ -1,4 +1,5 @@
 import { useEffect, useState, useReducer } from "react";
+import { useRouter } from "next/router";
 import * as XLSX from "xlsx";
 
 import Layout from "../../../components/layout";
@@ -12,12 +13,20 @@ import { initReducer, reducerFactory } from "../../../lib/reducerFactory";
 import { getDateTimeString, getFrenchFormatDateString, stringToDate } from "../../../lib/dates";
 
 const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
-const devMode = process.env.NODE_ENV == "development";
-const orgaID = process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO;
-const RDV_SOLIDARITES_URL = process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL;
-const userUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
 
 export default function Ardennes() {
+  const router = useRouter();
+  const isDemo = router.pathname.includes("demo");
+  const devMode = process.env.NODE_ENV == "development";
+  const orgaID = isDemo
+    ? process.env.NEXT_PUBLIC_ORGANISATION_ID_DEMO
+    : process.env.NEXT_PUBLIC_ORGANISATION_ID_PROD;
+
+  const RDV_SOLIDARITES_URL = isDemo
+    ? process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL
+    : process.env.NEXT_PUBLIC_RDV_SOLIDARITES_PROD_URL;
+  const userUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
+
   const [devFile, setDevFile] = useState(null);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [usersData, setUsersData] = useState(null);
@@ -189,7 +198,7 @@ export default function Ardennes() {
           },
         });
         resolve();
-      };;
+      };
       reader.readAsArrayBuffer(file);
     });
   };

@@ -35,6 +35,16 @@ yarn deploy
 
 The added changes will then be visible on [https://betagouv.github.io/analyse-flux-insertion/](https://betagouv.github.io/analyse-flux-insertion/).
 
+### Apply changes to production pages
+
+Some pages are targetting demo environments of [`RDV-Solidarités`](https://github.com/betagouv/rdv-solidarites.fr). Since this application does not have a staging environment, we have pages targetting the demo env and pages targetting the prod env.
+
+Once the changes are tested on the demo env, you can apply them to the pages targetting the production environments by running:
+
+```bash
+npm run apply-to-production-pages
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
