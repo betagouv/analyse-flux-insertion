@@ -37,7 +37,7 @@ exit_with_message () {
   exit 1
 }
 
-print_text "\nMerge and deploy\n" "info"
+print_text "\nPush changes\n" "info"
 print_text "------------------------\n\n"
 
 # Gets the current branch by looking for `*` character
@@ -45,7 +45,7 @@ print_text "------------------------\n\n"
 # - `/p` prints the result
 current_branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
 
-# Make sure that we are on staging branch
+# Make sure that we are on main branch
 print_text "Branch check: "
 if [ $current_branch != "main" ]
 then
@@ -61,7 +61,7 @@ print_text "\n"
 # - `porcelain` flag returns the output in an easy to parse format for scripts
 st=$(git status --porcelain 2> /dev/null)
 
-# # Make sure that the status is clean
+# Make sure that the status is clean
 print_text "Git status check: "
 if [[ "$st" != "" ]];
 then
