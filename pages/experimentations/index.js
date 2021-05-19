@@ -19,6 +19,12 @@ export default function Home() {
               <p>Good morning Charleville-Mézières&nbsp;!</p>
             </a>
           </Link>
+          <Link href="/experimentations/ardennes-demo">
+            <a className={styles.card}>
+              <h3>Ardennes Démo &rarr;</h3>
+              <p>Encore démo, toujours démo&hellip;</p>
+            </a>
+          </Link>
           {/*
           <Link href="/experimentations/rdv-solidarites">
             <a className={styles.card}>

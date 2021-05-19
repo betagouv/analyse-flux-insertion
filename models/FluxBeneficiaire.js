@@ -1,5 +1,6 @@
 import BaseFlux from "./BaseFlux";
 import Application from "./Application";
+import { retrieveAttributePartitionFrom } from "../lib/partitionsHelper";
 
 export default class FluxBeneficiaire extends BaseFlux {
   get applications() {
@@ -38,37 +39,25 @@ export default class FluxBeneficiaire extends BaseFlux {
   }
 
   get applicationsDatesPartition() {
-    return this.retrieveAttributePartitionFrom(this.applications, "date", false);
+    return retrieveAttributePartitionFrom(this.applications, "date", false);
   }
 
   get applicationsStatusCodesPartition() {
-    return this.retrieveAttributePartitionFrom(this.applications, "statusCode");
+    return retrieveAttributePartitionFrom(this.applications, "statusCode");
   }
 
   get applicantsTopDroitsEtDevoirsPartition() {
-    return this.retrieveAttributePartitionFrom(this.applicants, "topDroitsEtDevoirs");
+    return retrieveAttributePartitionFrom(this.applicants, "topDroitsEtDevoirs");
   }
 
   get applicantsRolesPartition() {
-    return this.retrieveAttributePartitionFrom(this.applicants, "role");
+    return retrieveAttributePartitionFrom(this.applicants, "role");
   }
 
   get applicantsWithDroitsOuvertsEtVersablesTopDroitsEtDevoirsPartition() {
-    return this.retrieveAttributePartitionFrom(
+    return retrieveAttributePartitionFrom(
       this.applicantsWithDroitsOuvertsEtVersables,
       "topDroitsEtDevoirs"
     );
-  }
-
-  retrieveAttributePartitionFrom(resources, attribute, withTotal = true) {
-    return resources.reduce((partition, resource) => {
-      if (resource[attribute] !== undefined) {
-        partition[resource[attribute]] = (partition[resource[attribute]] || 0) + 1;
-        if (withTotal) {
-          partition["Total"] = (partition["Total"] || 0) + 1;
-        }
-      }
-      return partition;
-    }, {});
   }
 }

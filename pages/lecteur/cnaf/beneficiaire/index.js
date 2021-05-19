@@ -7,7 +7,7 @@ import Footer from "../../../../components/footer";
 import Layout from "../../../../components/layout";
 import { FLUX_FREQUENCIES, FLUX_ORIGINS } from "../../../../lib/cnafGlossary";
 import { initReducer, reducerFactory } from "../../../../lib/reducerFactory";
-import { sumPartitions } from "../../../../lib/sumPartitions";
+import { retrieveSortedKeysFromPartitions, sumPartitions } from "../../../../lib/partitionsHelper";
 import styles from "../../../../styles/Home.module.css";
 
 import FluxBeneficiaire from "../../../../models/FluxBeneficiaire";
@@ -240,19 +240,13 @@ export default function Beneficiaire() {
     });
   };
 
-  const applicationsStatusCodes = runs.reduce((applicationsStatusCodes, run) => {
-    applicationsStatusCodes = applicationsStatusCodes.concat(
-      Object.keys(run.applicationsStatusCodesPartition)
-    );
-    return Array.from(new Set(applicationsStatusCodes)).sort();
-  }, []);
+  const applicationsStatusCodes = retrieveSortedKeysFromPartitions(
+    runs.map(run => run.applicationsStatusCodesPartition)
+  );
 
-  const applicantsTopDroitsEtDevoirs = runs.reduce((applicantsTopDroitsEtDevoirs, run) => {
-    applicantsTopDroitsEtDevoirs = applicantsTopDroitsEtDevoirs.concat(
-      Object.keys(run.applicantsTopDroitsEtDevoirsPartition)
-    );
-    return Array.from(new Set(applicantsTopDroitsEtDevoirs)).sort();
-  }, []);
+  const applicantsTopDroitsEtDevoirs = retrieveSortedKeysFromPartitions(
+    runs.map(run => run.applicantsTopDroitsEtDevoirsPartition)
+  );
 
   return (
     <Layout className={styles.container} handleFile={handleFile}>
@@ -311,8 +305,7 @@ export default function Beneficiaire() {
                 </tr>
               </thead>
               <tbody>
-                {/* reverse est utilisé pour que les fichiers apparaissent dans leur ordre d'upload */}
-                {runs.reverse().map((r, i) => (
+                {runs.map((r, i) => (
                   <tr
                     key={`${r.timestamp}-${r.filename}-${r.seed}-0`}
                     style={i == dateData.index ? { backgroundColor: "lightgrey" } : {}}
