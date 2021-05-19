@@ -8,7 +8,7 @@
     "deploy:github": "touch out/.nojekyll && gh-pages -d out --dotfiles",
     "dev": "next dev",
     "start": "next start",
-    "apply-to-production-pages": "./apply_to_production_pages.sh && npm run deploy"
+    "apply-to-production-pages": "./apply_changes_to_production_pages.sh && npm run deploy"
   },
   "dependencies": {
     "@nivo/calendar": "^0.67.0",
