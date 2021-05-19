@@ -263,9 +263,11 @@ export default function Ardennes() {
 
                                 {user["ID RDV"] === "" && (
                                   <td className={styles.center}>
-                                    <button onClick={() => createUser(user, index)}>
+                                    <button
+                                      onClick={() => createUser(user, usersData.length - index - 1)}
+                                    >
                                       Créer un compte
-                                  </button>
+                                    </button>
                                   </td>
                                 )}
                                 {user["ID RDV"] !== "" && (
