@@ -242,41 +242,43 @@ export default function Ardennes() {
                       </thead>
                       <tbody>
                         {/* reverse est utilisé pour que les utilisateurs les plus récents apparaissent en haut */}
-                        {[...usersData].reverse().map((user, index) => {
-                          user["DATE"] !== "" && (
-                            <tr key={index}>
-                              <td className={styles.center}>{user["DATE"]}</td>
-                              <td className={styles.center}>{user["NOM"]}</td>
-                              <td className={styles.center}>{user["PRENOM"]}</td>
-                              <td className={styles.center}>{user["MAIL"]}</td>
-                              <td className={styles.center}>{user["TELEPHONE"]}</td>
+                        {[...usersData].reverse().map((user, index) => (
+                          <>
+                            {user["DATE"] !== "" && (
+                              <tr key={index}>
+                                <td className={styles.center}>{user["DATE"]}</td>
+                                <td className={styles.center}>{user["NOM"]}</td>
+                                <td className={styles.center}>{user["PRENOM"]}</td>
+                                <td className={styles.center}>{user["MAIL"]}</td>
+                                <td className={styles.center}>{user["TELEPHONE"]}</td>
 
-                              {user["ID RDV"] === "" && (
-                                <td className={styles.center}>
-                                  <button onClick={() => createUser(user, index)}>
-                                    Créer un compte
+                                {user["ID RDV"] === "" && (
+                                  <td className={styles.center}>
+                                    <button onClick={() => createUser(user, index)}>
+                                      Créer un compte
                                   </button>
-                                </td>
-                              )}
-                              {user["ID RDV"] !== "" && (
-                                <td className={styles.center}>{user["ID RDV"]}</td>
-                              )}
-                              <td className={styles.center}>{user["Date d'invitation"]}</td>
-                              <td className={styles.center}>{user["Date d'inscription"]}</td>
-                              {user["ID RDV"] !== "" && (
-                                <td className={styles.center}>
-                                  <button
-                                    onClick={() => generateInvitationUrl(user["ID RDV"], index)}
-                                  >
-                                    {user["Date d'invitation"] !== "" && "Regénérer invitation"}
-                                    {user["Date d'invitation"] === "" && "Générer invitation"}
-                                  </button>
-                                </td>
-                              )}
-                              {user["ID RDV"] === "" && <td className={styles.center}></td>}
-                            </tr>
-                          );
-                        })}
+                                  </td>
+                                )}
+                                {user["ID RDV"] !== "" && (
+                                  <td className={styles.center}>{user["ID RDV"]}</td>
+                                )}
+                                <td className={styles.center}>{user["Date d'invitation"]}</td>
+                                <td className={styles.center}>{user["Date d'inscription"]}</td>
+                                {user["ID RDV"] !== "" && (
+                                  <td className={styles.center}>
+                                    <button
+                                      onClick={() => generateInvitationUrl(user["ID RDV"], index)}
+                                    >
+                                      {user["Date d'invitation"] !== "" && "Regénérer invitation"}
+                                      {user["Date d'invitation"] === "" && "Générer invitation"}
+                                    </button>
+                                  </td>
+                                )}
+                                {user["ID RDV"] === "" && <td className={styles.center}></td>}
+                              </tr>
+                            )}
+                          </>
+                        ))}
                       </tbody>
                     </table>
 
