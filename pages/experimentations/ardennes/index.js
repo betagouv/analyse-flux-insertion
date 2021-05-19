@@ -69,17 +69,14 @@ export default function Ardennes() {
     const invitationUrl = userUrl + `/${userId}/invite`;
     const result = await appFetch(invitationUrl, token);
 
+    let newUsersData = [...usersData];
     if (result.invitation_url) {
-      let newUsersData = [...usersData];
       newUsersData[userIndex]["Lien d'invitation"] = result.invitation_url;
-      newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
-      setUsersData(newUsersData);
     } else if (result.invitation_token) {
-      let newUsersData = [...usersData];
       newUsersData[userIndex]["Code d'invitation"] = result.invitation_token;
-      newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
-      setUsersData(newUsersData);
     }
+    newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
+    setUsersData(newUsersData);
   }
 
   async function getUser(userId, token) {
@@ -120,11 +117,9 @@ export default function Ardennes() {
       affiliation_number: userData["N°CAF"],
       organisation_ids: [orgaID],
     };
-    if (userData.invalid_or_taken_mail === true) delete user.email
 
     const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
 
-    delete userData.invalid_or_taken_mail;
     let newUsersData = [...usersData];
     if (result.user) {
       newUsersData[userIndex]["ID RDV"] = result.user.id;
