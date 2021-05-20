@@ -37,6 +37,10 @@ export default class Applicant {
     return this.dom.getElementsByTagName("ACT")[0]?.innerHTML;
   }
 
+  get socialSecurityNumber() {
+    return this.dom.getElementsByTagName("NIR")[0]?.innerHTML;
+  }
+
   get application() {
     return new Application(this.dom.parentNode);
   }
@@ -59,10 +63,6 @@ export default class Applicant {
 
   get phoneNumber() {
     return this.application.phoneNumber;
-  }
-
-  get socialSecurityNumber() {
-    return this.application.socialSecurityNumber;
   }
 
   get topFoyerDroitsEtDevoirs() {
