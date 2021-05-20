@@ -15,10 +15,6 @@ export default class Application {
     return this.dom.getElementsByTagName("NUMTEL")[0]?.innerHTML;
   }
 
-  get socialSecurityNumber() {
-    return this.dom.getElementsByTagName("NIR")[0]?.innerHTML;
-  }
-
   get rsaApplicationNumber() {
     return this.dom.getElementsByTagName("NUMDEMRSA")[0]?.innerHTML;
   }
