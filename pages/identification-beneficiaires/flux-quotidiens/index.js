@@ -1,6 +1,6 @@
 import Layout from "../../../components/layout";
 import FileHandler from "../../../components/fileHandler";
-import NewApplicantsRules from "../../../components/NewApplicantsRules";
+import NewApplicantsRules from "../../../components/NewApplicantsRules/Quotidien";
 
 import styles from "../../../styles/Home.module.css";
 import { FLUX_ORIGINS, APPLICATION_ROLES } from "../../../lib/cnafGlossary";
@@ -11,7 +11,7 @@ import FluxInstruction from "../../../models/FluxInstruction";
 import { csvExport } from "../../../lib/csvExport";
 import { getDateTimeString, yesterdayApplicationDate } from "../../../lib/dates";
 
-const reducer = reducerFactory("Test - CNAF - Identification nouveaux demandeurs");
+const reducer = reducerFactory("Identification nouveaux demandeurs quotidiens");
 export default function identificationBeneficiaire() {
   const [fileSize, setFileSize] = useState(0);
   const [isPending, setIsPending] = useState(false);
@@ -212,7 +212,7 @@ export default function identificationBeneficiaire() {
       "FICHIER D'INSTRUCTION",
     ];
 
-    const csvName = "nouveaux_demandeurs_rsa_" + getDateTimeString() + ".csv";
+    const csvName = "nouveaux_demandeurs_rsa_quotidiens_" + getDateTimeString() + ".csv";
     csvExport(csvName, dataToExport, csvHeader);
   };
 

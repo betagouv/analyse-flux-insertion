@@ -27,6 +27,12 @@ export default class FluxBeneficiaire extends BaseFlux {
     });
   }
 
+  get applicantsWithRights() {
+    return this.applicants.filter(applicant => {
+      return applicant.application.eligibleAsNew() && applicant.withDroitsEtDevoirs();
+    });
+  }
+
   get partitions() {
     return {
       applicationsDatesPartition: this.applicationsDatesPartition,
