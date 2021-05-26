@@ -9,7 +9,7 @@ import { initReducer, reducerFactory } from "../../../lib/reducerFactory";
 import FluxBeneficiaire from "../../../models/FluxBeneficiaire";
 import FluxInstruction from "../../../models/FluxInstruction";
 import { FLUX_ORIGINS, APPLICATION_ROLES, FLUX_FREQUENCIES } from "../../../lib/cnafGlossary";
-import { getDateTimeString } from "../../../lib/dates";
+import { getDateTimeString, applicationStringToDate } from "../../../lib/dates";
 import { csvExport } from "../../../lib/csvExport";
 
 const reducer = reducerFactory("Identification nouveaux demandeurs quotidiens");
@@ -20,6 +20,7 @@ export default function identificationBeneficiaire() {
   const [step, setStep] = useState("previousMonth");
   const [processedApplicationsCount, setProcessedApplicationsCount] = useState(0);
   const [newApplicantsCount, setNewApplicantsCount] = useState(0);
+  const [fileDate, setFileDate] = useState(null);
   const [enrichedApplicantsCount, setEnrichedApplicantsCount] = useState(0);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const CHUNK_SIZE = 512 * 1024;
@@ -79,7 +80,21 @@ export default function identificationBeneficiaire() {
               return;
             }
 
+            if (
+              step === "currentMonth" &&
+              applicationStringToDate(fluxBeneficiaire.creationDate) <=
+                applicationStringToDate(fileDate)
+            ) {
+              alert(
+                `Vous n'avez pas uploadé un flux bénéficiaires postérieur au premier flux uploadé 🛑!`
+              );
+              return;
+            }
+
+            setFileDate(fluxBeneficiaire.creationDate);
+
             offset += textToProcess.length + matchedText.index;
+
             dispatchRuns({
               type: "append",
               item: {
@@ -87,6 +102,7 @@ export default function identificationBeneficiaire() {
                 seed: seed,
                 fileSize: file.size,
                 fileDatetime: fluxBeneficiaire.fileDatetime,
+                fileDate: fileDate,
                 frequency: fluxFrequency,
                 origin: fluxOrigin,
               },
@@ -139,7 +155,7 @@ export default function identificationBeneficiaire() {
     let applicantsWithRightsIds = await retrieveDataFromMonthlyFlux(
       file,
       seed,
-      function (fluxChunk, applicantsWithRightsIds, additonnalArgs) {
+      function (fluxChunk, applicantsWithRightsIds, _additonnalArgs) {
         return applicantsWithRightsIds.concat(
           fluxChunk.applicantsWithRights.map(applicant => applicant.id)
         );
@@ -174,7 +190,10 @@ export default function identificationBeneficiaire() {
       function (fluxChunk, applicantsWithRights, existingApplicantsWithRightsIds) {
         fluxChunk.applicantsWithRights.forEach(applicant => {
           if (!existingApplicantsWithRightsIds.includes(applicant.id)) {
-            applicantsWithRights.push(applicant.personalData());
+            applicantsWithRights.push({
+              ...applicant.personalData(),
+              applicationStatusCode: applicant.applicationStatusCode,
+            });
           }
         });
 
@@ -260,6 +279,7 @@ export default function identificationBeneficiaire() {
     const dataToExport = currentFlux.applicantsWithRights.map(applicant => {
       return [
         applicant.rsaApplicationNumber || "",
+        applicant.applicationStatusCode || "",
         applicant.socialSecurityNumber || "",
         applicant.lastName || "",
         applicant.firstName || "",
@@ -273,6 +293,7 @@ export default function identificationBeneficiaire() {
 
     const csvHeader = [
       "NUMERO DEMANDE RSA",
+      "ETATDOSRSA",
       "NIR",
       "NOM",
       "PRENOM",
