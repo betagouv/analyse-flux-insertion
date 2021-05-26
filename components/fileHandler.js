@@ -11,6 +11,7 @@ const DEFAULT_PENDING_MESSAGE = "Calcul des statistiques en cours, merci de pati
 export default function FileHandler({
   handleFile,
   fileSize,
+  multiple = true,
   sortFilesByFluxDate = false,
   pendingMessage = DEFAULT_PENDING_MESSAGE,
   uploadMessage = DEFAULT_UPLOAD_MESSAGE,
@@ -64,7 +65,7 @@ export default function FileHandler({
       <p className={styles.description}>
         {uploadMessage}
         <br />
-        <input type="file" onChange={handleUploads} multiple />
+        <input type="file" onChange={handleUploads} multiple={multiple} />
       </p>
 
       {isPending && <PendingMessage message={pendingMessage} fileSize={fileSize} />}

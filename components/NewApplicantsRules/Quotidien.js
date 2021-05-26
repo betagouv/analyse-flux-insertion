@@ -40,7 +40,7 @@ export default function NewApplicantsRules() {
           </p>
           <div className={styles.image_container}>
             <img
-              src="./new_applicants_rules.png"
+              src="../new_applicants_rules.png"
               alt="new_applicants_rules"
               className={styles.rules_image}
             />
