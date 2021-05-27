@@ -1,4 +1,4 @@
-import { useEffect, useState, useReducer } from "react";
+import React, { useEffect, useState, useReducer } from "react";
 import { useRouter } from "next/router";
 import * as XLSX from "xlsx";
 
@@ -69,12 +69,14 @@ export default function Ardennes() {
     const invitationUrl = userUrl + `/${userId}/invite`;
     const result = await appFetch(invitationUrl, token);
 
+    let newUsersData = [...usersData];
     if (result.invitation_url) {
-      let newUsersData = [...usersData];
-      newUsersData[userIndex]["Invitation"] = result.invitation_url;
-      newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
-      setUsersData(newUsersData);
+      newUsersData[userIndex]["Lien d'invitation"] = result.invitation_url;
+    } else if (result.invitation_token) {
+      newUsersData[userIndex]["Code d'invitation"] = result.invitation_token;
     }
+    newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
+    setUsersData(newUsersData);
   }
 
   async function getUser(userId, token) {
@@ -104,7 +106,7 @@ export default function Ardennes() {
   async function createUser(userData, userIndex) {
     const address = userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
 
-    const user = {
+    let user = {
       first_name: userData["PRENOM"],
       last_name: userData["NOM"],
       email: userData["MAIL"],
@@ -252,9 +254,9 @@ export default function Ardennes() {
                       <tbody>
                         {/* reverse est utilisé pour que les utilisateurs les plus récents apparaissent en haut */}
                         {[...usersData].reverse().map((user, index) => (
-                          <>
+                          <React.Fragment key={index}>
                             {user["DATE"] !== "" && (
-                              <tr key={index}>
+                              <tr>
                                 <td className={styles.center}>{user["DATE"]}</td>
                                 <td className={styles.center}>{user["NOM"]}</td>
                                 <td className={styles.center}>{user["PRENOM"]}</td>
@@ -278,7 +280,12 @@ export default function Ardennes() {
                                 {user["ID RDV"] !== "" && (
                                   <td className={styles.center}>
                                     <button
-                                      onClick={() => generateInvitationUrl(user["ID RDV"], index)}
+                                      onClick={() =>
+                                        generateInvitationUrl(
+                                          user["ID RDV"],
+                                          usersData.length - index - 1
+                                        )
+                                      }
                                     >
                                       {user["Date d'invitation"] !== "" && "Regénérer invitation"}
                                       {user["Date d'invitation"] === "" && "Générer invitation"}
@@ -288,7 +295,7 @@ export default function Ardennes() {
                                 {user["ID RDV"] === "" && <td className={styles.center}></td>}
                               </tr>
                             )}
-                          </>
+                          </React.Fragment>
                         ))}
                       </tbody>
                     </table>
