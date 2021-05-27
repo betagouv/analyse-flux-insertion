@@ -1,4 +1,4 @@
-import { useEffect, useState, useReducer } from "react";
+import React, { useEffect, useState, useReducer } from "react";
 import { useRouter } from "next/router";
 import * as XLSX from "xlsx";
 
@@ -254,9 +254,9 @@ export default function Ardennes() {
                       <tbody>
                         {/* reverse est utilisé pour que les utilisateurs les plus récents apparaissent en haut */}
                         {[...usersData].reverse().map((user, index) => (
-                          <>
+                          <React.Fragment key={index}>
                             {user["DATE"] !== "" && (
-                              <tr key={index}>
+                              <tr>
                                 <td className={styles.center}>{user["DATE"]}</td>
                                 <td className={styles.center}>{user["NOM"]}</td>
                                 <td className={styles.center}>{user["PRENOM"]}</td>
@@ -280,7 +280,12 @@ export default function Ardennes() {
                                 {user["ID RDV"] !== "" && (
                                   <td className={styles.center}>
                                     <button
-                                      onClick={() => generateInvitationUrl(user["ID RDV"], index)}
+                                      onClick={() =>
+                                        generateInvitationUrl(
+                                          user["ID RDV"],
+                                          usersData.length - index - 1
+                                        )
+                                      }
                                     >
                                       {user["Date d'invitation"] !== "" && "Regénérer invitation"}
                                       {user["Date d'invitation"] === "" && "Générer invitation"}
@@ -290,7 +295,7 @@ export default function Ardennes() {
                                 {user["ID RDV"] === "" && <td className={styles.center}></td>}
                               </tr>
                             )}
-                          </>
+                          </React.Fragment>
                         ))}
                       </tbody>
                     </table>
