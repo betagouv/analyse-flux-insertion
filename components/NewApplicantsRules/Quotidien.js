@@ -6,45 +6,30 @@ export default function NewApplicantsRules() {
       <p>
         L'identification des nouveaux entrants est souvent difficile à mettre à place par les
         départements. Cet outil vous permet d'obtenir des listes de nouveaux entrants que vous
-        pourrez comparer avec les listes obtenues dans votre département. Nous utilisons aujourd'hui
-        deux méthodes:
+        pourrez comparer avec les listes obtenues dans votre département.
       </p>
+      <p>
+        Pour les identifier dans les flux quotidiens, nous identifions d'abord tous les
+        bénéficiaires du RSA du mois précédent à l'aide du flux mensuel du mois précédent. Ensuite
+        nous identifions les demandeurs dans les flux quotidiens <strong>postérieurs</strong> à ce
+        flux mensuel, et nous ne gardons que ceux qui n'ont pas été identifiés comme bénéficiaires
+        au mois précédent.
+      </p>
+      <p>Pour le moment, nous considérons qu'un demandeur bénéficie du RSA si:</p>
       <ul>
         <li>
           <p>
-            L'utilisation de la variable <strong>TOPPERSENTDRODEVORSA</strong>, présente dans le
-            flux bénéficiaire quotidien. Elle signale si la personne est entrante en droits et
-            devoirs depuis le dernier flux quotidien. Cette balise n'est présente que pour les
-            personnes ayant un à<strong> "1"</strong> et sous deux conditions:
+            <strong>ETATDOSRSA = 2</strong> OU (<strong>ETATDOSRSA = 4 </strong>&{" "}
+            <strong>
+              MOTISUSVERSRSA compris dans les valeurs : ‘01’, ‘05’; ‘06’, ‘35’, ‘36’, ou ‘CV’
+            </strong>
+            )
           </p>
-          <ul>
-            <li>
-              <p>Il existe un droit réel ou théorique au RSA</p>
-            </li>
-            <li>
-              <p>
-                Absence de contrat d'engagement et/ou de projet personnel d'accompagnement pour la
-                personne sur le mois de début du top personne soumis à droits et devoirs dans les
-                dossiers CAF
-              </p>
-            </li>
-          </ul>
         </li>
         <li>
           <p>
-            Le croisement de plusieurs balises des flux bénéficiaires quotidien ou mensuel (sans
-            utiliser le TOPPERSENTDRODEVORSA). Cette méthode permet de reconstituer les catégories
-            de nouveaux entrants définies dans l'instruction du 19 mars 2021, comme présenté dans le
-            tableau suivant (la catégorie numéro <strong>"5"</strong> n'est pas prise en compte par
-            cet outil):
+            <strong>TOPPERSDRODEVORSA = 1</strong>
           </p>
-          <div className={styles.image_container}>
-            <img
-              src="../new_applicants_rules.png"
-              alt="new_applicants_rules"
-              className={styles.rules_image}
-            />
-          </div>
         </li>
       </ul>
     </div>
