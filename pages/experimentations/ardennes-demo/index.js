@@ -170,7 +170,6 @@ export default function Ardennes() {
           blankrows: false,
           raw: false,
           defval: "",
-          range: new_range,
         });
 
         // we remove line breaks from all keys
