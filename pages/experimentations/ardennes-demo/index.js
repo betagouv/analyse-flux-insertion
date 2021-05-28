@@ -10,7 +10,7 @@ import styles from "../../../styles/Home.module.css";
 
 import { appFetch } from "../../../lib/appFetch";
 import { initReducer, reducerFactory } from "../../../lib/reducerFactory";
-import { getDateTimeString, getFrenchFormatDateString, stringToDate } from "../../../lib/dates";
+import { applicationDateToString, getDateTimeString, getFrenchFormatDateString, stringToDate } from "../../../lib/dates";
 
 const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
 
@@ -79,13 +79,13 @@ export default function Ardennes() {
     setUsersData(newUsersData);
   }
 
-  async function getUser(userId, token) {
+  async function getUser(userId) {
     const getUserUrl = userUrl + `/${userId}`;
     return await appFetch(getUserUrl, token);
   }
 
   async function checkUserInvitationStatus(userId, userIndex) {
-    const result = await getUser(userId, token);
+    const result = await getUser(userId);
 
     let newUsersData = [...usersData];
     if (result.user.invitation_created_at) {
@@ -103,13 +103,41 @@ export default function Ardennes() {
     setUsersData(newUsersData);
   }
 
-  async function createUser(userData, userIndex) {
+  async function invalidOrTakenMail(userData, userIndex, userId = null) {
+    if (userId != null) {
+      const result = await getUser(userId);
+
+      if (
+        result &&
+        result.user.first_name.toUpperCase() === userData["PRENOM"].toUpperCase() &&
+        result.user.last_name.toUpperCase() === userData["NOM"].toUpperCase() &&
+        result.user.birth_date === applicationDateToString(stringToDate(userData["DATE DE NAISSANCE"])) &&
+        result.user.address.toUpperCase() ===
+          userData["ADRESSE"].toUpperCase() +
+            " - " +
+            userData["CODE POSTAL"].toUpperCase() +
+            " " +
+            userData["VILLE"].toUpperCase()
+      ) {
+        let newUsersData = [...usersData];
+        newUsersData[userIndex]["ID RDV"] = userId;
+        setUsersData(newUsersData);
+        checkUserInvitationStatus(userId, userIndex);
+        alert("Un compte associé à cet email existe déjà");
+      } else {
+        createUser(userData, userIndex, false);
+      }
+    } else {
+      createUser(userData, userIndex, false);
+    }
+  }
+
+  async function createUser(userData, userIndex, withEmail = true) {
     const address = userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
 
     let user = {
       first_name: userData["PRENOM"],
       last_name: userData["NOM"],
-      email: userData["MAIL"],
       phone_number: userData["TELEPHONE"].replace(/\s+/g, ""),
       birth_date: stringToDate(userData["DATE DE NAISSANCE"]),
       address: address,
@@ -117,6 +145,7 @@ export default function Ardennes() {
       affiliation_number: userData["N°CAF"],
       organisation_ids: [orgaID],
     };
+    if (withEmail === true) user.email = userData["MAIL"];
 
     const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
 
@@ -126,20 +155,11 @@ export default function Ardennes() {
       setUsersData(newUsersData);
       generateInvitationUrl(result.user.id, userIndex);
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "taken") {
-      newUsersData[userIndex]["ID RDV"] = result.errors.email[0].id;
-      setUsersData(newUsersData);
-      checkUserInvitationStatus(result.errors.email[0].id, userIndex);
-      alert("Un compte associé à cet email existe déjà");
+      invalidOrTakenMail(userData, userIndex, result.errors.email[0].id);
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "invalid") {
-      alert("L'adresse mail n'est pas valide");
-    } else if (
-      result.errors &&
-      result.errors.first_name &&
-      result.errors.first_name[0].error === "déjà utilisé"
-    ) {
-      alert(
-        "La création du compte a échoué. L'utilisateur semble exister mais n'a pu être récupéré."
-      );
+      invalidOrTakenMail(userData, userIndex)
+    } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
+      alert("La création du compte a échoué. L'utilisateur semble exister mais n'a pu être récupéré.");
     } else if (result.errors && result.errors[0] && result.errors[0].base === "forbidden") {
       alert("Votre compte agent RDV-Solidarités ne vous permet pas d'effectuer cette action.");
     } else if (result.errors && result.errors[0]) {
@@ -180,7 +200,6 @@ export default function Ardennes() {
           }, {});
         });
 
-        jsonData == null && setIsPending(false);
         setUserStatusChecked(false);
         setUsersData(jsonData);
         dispatchRuns({
