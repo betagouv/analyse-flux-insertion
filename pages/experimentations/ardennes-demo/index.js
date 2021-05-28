@@ -125,7 +125,7 @@ export default function Ardennes() {
         checkUserInvitationStatus(userId, userIndex);
         alert("Un compte associé à cet email existe déjà");
       } else {
-        createUser(userData, userIndex, false);
+        createUser(userData, userIndex, false); // pourra être remplacé par createRelative lorsque l'endpoint aura été créé côté RDV-Solidarités
       }
     } else {
       createUser(userData, userIndex, false);
