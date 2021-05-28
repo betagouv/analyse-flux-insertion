@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useReducer } from "react";
+import { Fragment, useEffect, useState, useReducer } from "react";
 import { useRouter } from "next/router";
 import * as XLSX from "xlsx";
 
@@ -165,17 +165,11 @@ export default function Ardennes() {
         const fileData = new Uint8Array(event.target.result);
         const xls = XLSX.read(fileData, { type: "array", cellDates: true, dateNF: "dd/mm/yyyy" });
         const worksheet = xls.Sheets[xls.SheetNames[0]];
-        // Limiter la capture aux colonnes A-V
-        const range = XLSX.utils.decode_range(worksheet["!ref"]);
-        range.s.c = 0; // 0 == XLSX.utils.decode_col("A")
-        range.e.c = 24; // 24 == XLSX.utils.decode_col("Y")
-        const new_range = XLSX.utils.encode_range(range);
 
         let jsonData = XLSX.utils.sheet_to_json(worksheet, {
           blankrows: false,
           raw: false,
           defval: "",
-          range: new_range,
         });
 
         // we remove line breaks from all keys
@@ -254,7 +248,7 @@ export default function Ardennes() {
                       <tbody>
                         {/* reverse est utilisé pour que les utilisateurs les plus récents apparaissent en haut */}
                         {[...usersData].reverse().map((user, index) => (
-                          <React.Fragment key={index}>
+                          <Fragment key={index}>
                             {user["DATE"] !== "" && (
                               <tr>
                                 <td className={styles.center}>{user["DATE"]}</td>
@@ -295,7 +289,7 @@ export default function Ardennes() {
                                 {user["ID RDV"] === "" && <td className={styles.center}></td>}
                               </tr>
                             )}
-                          </React.Fragment>
+                          </Fragment>
                         ))}
                       </tbody>
                     </table>
