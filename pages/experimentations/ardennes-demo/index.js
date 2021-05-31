@@ -105,9 +105,7 @@ export default function Ardennes() {
 
   async function createUser(userData, userIndex) {
     const address = userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
-    userData["N°CAF"].trim().length == 13 || userData["N°CAF"].trim().length == 15
-      ? userData["N°CAF"] = ""
-      : userData["N°CAF"] = userData["N°CAF"];
+    if ([13, 15].includes(userData["N°CAF"].trim().length)) { userData["N°CAF"] = "" }
 
     let user = {
       first_name: userData["PRENOM"],
