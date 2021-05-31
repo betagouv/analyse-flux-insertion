@@ -107,6 +107,7 @@ export default function Ardennes() {
     if (userId != null) {
       const result = await getUser(userId);
 
+      // Vérifie d'abord si l'utilisateur avec le même email est un doublon
       if (
         result &&
         result.user.first_name.toUpperCase() === userData["PRENOM"].toUpperCase() &&
@@ -125,10 +126,10 @@ export default function Ardennes() {
         checkUserInvitationStatus(userId, userIndex);
         alert("Un compte associé à cet email existe déjà");
       } else {
-        createUser(userData, userIndex, false, userId);
+        createUser(userData, userIndex, false, userId); // Si ce n'est pas un doublon, crée un utilisateur en tant que "proche" de l'utilisateur existant
       }
     } else {
-      createUser(userData, userIndex, false);
+      createUser(userData, userIndex, false); // crée un utilisateur sans email
     }
   }
 
