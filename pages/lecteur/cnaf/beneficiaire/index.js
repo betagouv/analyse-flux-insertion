@@ -122,9 +122,7 @@ export default function Beneficiaire() {
 
           // if it is the first chunk we retrieve the infos from <IdentificationFlux> only
           if (offset === 0) {
-            let matchedText = textChunk.match(
-              new RegExp(/<IdentificationFlux>[\s\S]*?<\/IdentificationFlux>/)
-            );
+            let matchedText = textChunk.match(/<IdentificationFlux>[\s\S]*?<\/IdentificationFlux>/);
             let textToProcess = matchedText && matchedText[0];
             const fluxBeneficiaire = new FluxBeneficiaire(textToProcess);
             offset += textToProcess.length + matchedText.index;
@@ -147,9 +145,7 @@ export default function Beneficiaire() {
           }
 
           // we take all the applications in the chunk
-          let allMatches = [
-            ...textChunk.matchAll(new RegExp(/<InfosFoyerRSA>[\s\S]*?<\/InfosFoyerRSA>/g)),
-          ];
+          let allMatches = [...textChunk.matchAll(/<InfosFoyerRSA>[\s\S]*?<\/InfosFoyerRSA>/g)];
 
           let textToProcess = allMatches.map(match => match[0]).join("");
 

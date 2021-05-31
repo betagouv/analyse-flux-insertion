@@ -8,7 +8,12 @@ import { useState, useReducer } from "react";
 import { initReducer, reducerFactory } from "../../../lib/reducerFactory";
 import FluxBeneficiaire from "../../../models/FluxBeneficiaire";
 import FluxInstruction from "../../../models/FluxInstruction";
-import { FLUX_ORIGINS, APPLICATION_ROLES, FLUX_FREQUENCIES } from "../../../lib/cnafGlossary";
+import {
+  FLUX_ORIGINS,
+  APPLICATION_ROLES,
+  FLUX_FREQUENCIES,
+  APPLICATION_STATUS,
+} from "../../../lib/cnafGlossary";
 import { getDateTimeString, applicationStringToDate } from "../../../lib/dates";
 import { csvExport } from "../../../lib/csvExport";
 
@@ -67,15 +72,13 @@ export default function identificationBeneficiaire() {
 
           // if it is the first chunk we retrieve the infos from <IdentificationFlux> only
           if (offset === 0) {
-            let matchedText = textChunk.match(
-              new RegExp(/<IdentificationFlux>[\s\S]*?<\/IdentificationFlux>/)
-            );
+            let matchedText = textChunk.match(/<IdentificationFlux>[\s\S]*?<\/IdentificationFlux>/);
             let textToProcess = matchedText && matchedText[0];
             const fluxBeneficiaire = new FluxBeneficiaire(textToProcess);
             const fluxOrigin = FLUX_ORIGINS[fluxBeneficiaire.origin];
             const fluxFrequency = FLUX_FREQUENCIES[fluxBeneficiaire.frequency];
 
-            if (fluxOrigin !== "Bénéficiaires" && fluxFrequency !== "Mensuel") {
+            if (fluxOrigin !== "Bénéficiaires" || fluxFrequency !== "Mensuel") {
               alert(`Vous n'avez pas uploadé un flux bénéficiaires mensuel 🛑!`);
               return;
             }
@@ -112,9 +115,7 @@ export default function identificationBeneficiaire() {
           }
 
           // we take all the applications in the chunk
-          let allMatches = [
-            ...textChunk.matchAll(new RegExp(/<InfosFoyerRSA>[\s\S]*?<\/InfosFoyerRSA>/g)),
-          ];
+          let allMatches = [...textChunk.matchAll(/<InfosFoyerRSA>[\s\S]*?<\/InfosFoyerRSA>/g)];
 
           let textToProcess = allMatches.map(match => match[0]).join("");
 
@@ -228,7 +229,7 @@ export default function identificationBeneficiaire() {
       reader.onload = function (event) {
         const fluxInstruction = new FluxInstruction(event.target.result);
         if (FLUX_ORIGINS[fluxInstruction.origin] !== "Instructions") {
-          alert(`Vous n'avez pas uploadé un flux ${fluxToProcess} 🛑!`);
+          alert(`Vous n'avez pas uploadé un flux instruction 🛑!`);
           resolve();
           return;
         }
@@ -279,7 +280,7 @@ export default function identificationBeneficiaire() {
     const dataToExport = currentFlux.applicantsWithRights.map(applicant => {
       return [
         applicant.rsaApplicationNumber || "",
-        applicant.applicationStatusCode || "",
+        APPLICATION_STATUS[applicant.applicationStatusCode] || "",
         applicant.socialSecurityNumber || "",
         applicant.lastName || "",
         applicant.firstName || "",
@@ -293,7 +294,7 @@ export default function identificationBeneficiaire() {
 
     const csvHeader = [
       "NUMERO DEMANDE RSA",
-      "ETATDOSRSA",
+      "STATUT DE LA DEMANDE",
       "NIR",
       "NOM",
       "PRENOM",
