@@ -15,12 +15,6 @@ export default class FluxBeneficiaire extends BaseFlux {
     });
   }
 
-  get applicantsEligibleAsNew() {
-    return this.applicants.filter(applicant => {
-      return applicant.eligibleAsNew();
-    });
-  }
-
   get applicantsWithDroitsOuvertsEtVersables() {
     return this.applicants.filter(applicant => {
       return applicant.application.withDroitsOuvertsEtVersables();
@@ -29,7 +23,7 @@ export default class FluxBeneficiaire extends BaseFlux {
 
   get applicantsWithRights() {
     return this.applicants.filter(applicant => {
-      return applicant.application.eligibleAsNew() && applicant.withDroitsEtDevoirs();
+      return applicant.withRights();
     });
   }
 

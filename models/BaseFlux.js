@@ -16,13 +16,6 @@ export default class BaseFlux {
     });
   }
 
-  // { 123123-Dupont-Jean-DEM: { firstName: ... }, ... }
-  get applicantsObject() {
-    return this.applicants.reduce((applicantsObject, applicant) => {
-      applicantsObject[applicant.id] = applicant;
-      return applicantsObject;
-    }, {});
-  }
   get applicantsCount() {
     return this.applicants.length;
   }
