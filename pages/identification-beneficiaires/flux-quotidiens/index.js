@@ -3,58 +3,194 @@ import FileHandler from "../../../components/fileHandler";
 import NewApplicantsRules from "../../../components/NewApplicantsRules/Quotidien";
 
 import styles from "../../../styles/Home.module.css";
-import { FLUX_ORIGINS, APPLICATION_ROLES } from "../../../lib/cnafGlossary";
+import {
+  FLUX_ORIGINS,
+  APPLICATION_ROLES,
+  FLUX_FREQUENCIES,
+  APPLICATION_STATUS,
+} from "../../../lib/cnafGlossary";
 import { useState, useReducer } from "react";
 import { initReducer, reducerFactory } from "../../../lib/reducerFactory";
 import FluxBeneficiaire from "../../../models/FluxBeneficiaire";
 import FluxInstruction from "../../../models/FluxInstruction";
 import { csvExport } from "../../../lib/csvExport";
-import { getDateTimeString, yesterdayApplicationDate } from "../../../lib/dates";
+import { getDateTimeString, applicationStringToDate } from "../../../lib/dates";
 
 const reducer = reducerFactory("Identification nouveaux demandeurs quotidiens");
 export default function identificationBeneficiaire() {
   const [fileSize, setFileSize] = useState(0);
   const [isPending, setIsPending] = useState(false);
+  const [processedApplicationsCount, setProcessedApplicationsCount] = useState(0);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
-  const [fluxToProcess, setFluxToProcess] = useState("bénéficiaires");
+  const [previousMonth, dispatchPreviousMonth] = useReducer(reducer, [], initReducer);
+  const [previousMonthDate, setPreviousMonthDate] = useState(null);
+  const [step, setStep] = useState("previousMonth");
   const [showRules, setShowRules] = useState(false);
-  let itemsToDispatch = [];
+  const [enrichedApplicantsCount, setEnrichedApplicantsCount] = useState(0);
+
+  const CHUNK_SIZE = 512 * 1024;
+  let dispatchedApplicantsIds = [];
 
   const handleFileUpload = async file => {
-    if (fluxToProcess == "bénéficiaires") {
-      await processFluxBeneficiaire(file);
-    } else {
-      await processFluxInstruction(file);
+    switch (step) {
+      case "previousMonth":
+        return await handlePreviousMonth(file);
+      case "daily":
+        return await handleDailyFlux(file);
+      case "instruction":
+        return await handleInstruction(file);
     }
   };
 
   const handleReset = () => {
     dispatchRuns({ type: "reset" });
-    setFluxToProcess("bénéficiaires");
+    setStep("previousMonth");
   };
 
-  const processFluxBeneficiaire = async file => {
+  // takes a file, a function and initial data, and process every chunk with that function to retrieve data
+  const retrieveDataFromMonthlyFlux = async (
+    file,
+    seed,
+    processChunk,
+    initialData,
+    additonnalArgs = []
+  ) => {
+    let offset = 0;
+    let dataToRetrieve = initialData;
+
+    while (offset < file.size) {
+      await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          let buffer = new Uint8Array(event.target.result);
+
+          if (offset > file.size) {
+            resolve();
+            return;
+          }
+
+          const textChunk = new TextDecoder().decode(buffer);
+
+          // if it is the first chunk we retrieve the infos from <IdentificationFlux> only
+          if (offset === 0) {
+            let matchedText = textChunk.match(/<IdentificationFlux>[\s\S]*?<\/IdentificationFlux>/);
+            let textToProcess = matchedText && matchedText[0];
+            const fluxBeneficiaire = new FluxBeneficiaire(textToProcess);
+            const creationDate = fluxBeneficiaire.creationDate;
+            const fluxOrigin = FLUX_ORIGINS[fluxBeneficiaire.origin];
+            const fluxFrequency = FLUX_FREQUENCIES[fluxBeneficiaire.frequency];
+
+            if (fluxOrigin !== "Bénéficiaires" || fluxFrequency !== "Mensuel") {
+              alert(`Vous n'avez pas uploadé un flux bénéficiaires mensuel 🛑!`);
+              window.location.reload(true);
+              return;
+            }
+
+            setPreviousMonthDate(creationDate);
+
+            offset += textToProcess.length + matchedText.index;
+
+            dispatchPreviousMonth({
+              type: "append",
+              item: {
+                fileName: file.name,
+                seed: seed,
+                fileSize: file.size,
+                fileDatetime: fluxBeneficiaire.fileDatetime,
+                fileDate: fluxBeneficiaire.creationDate,
+                frequency: fluxFrequency,
+                origin: fluxOrigin,
+              },
+            });
+            resolve();
+            return;
+          }
+
+          // we take all the applications in the chunk
+          let allMatches = [...textChunk.matchAll(/<InfosFoyerRSA>[\s\S]*?<\/InfosFoyerRSA>/g)];
+
+          let textToProcess = allMatches.map(match => match[0]).join("");
+
+          if (textToProcess.length === 0) {
+            offset += CHUNK_SIZE;
+            resolve();
+            return;
+          }
+
+          const lastMatch = allMatches[allMatches.length - 1];
+
+          // we update the offset so that next chunk begins when the last match ends
+          offset += lastMatch.index + lastMatch[0].length;
+
+          // we have to put the entire xml content between tags for it to be correctly parsed
+          const fluxChunk = new FluxBeneficiaire("<Racine>" + textToProcess + "</Racine>");
+
+          dataToRetrieve = processChunk(fluxChunk, dataToRetrieve, additonnalArgs);
+
+          setProcessedApplicationsCount(
+            prevApplicationsCount => prevApplicationsCount + fluxChunk.applicationsCount
+          );
+          resolve();
+        };
+        let slice = file.slice(offset, offset + CHUNK_SIZE);
+        reader.readAsArrayBuffer(slice);
+      });
+    }
+    return dataToRetrieve;
+  };
+
+  const handlePreviousMonth = async file => {
     setFileSize(file.size);
+    let offset = 0;
+    const seed = "previousMonth";
+    const startTime = new Date();
+
+    let applicantsWithRightsIds = await retrieveDataFromMonthlyFlux(
+      file,
+      seed,
+      function (fluxChunk, applicantsWithRightsIds, _additonnalArgs) {
+        return applicantsWithRightsIds.concat(
+          fluxChunk.applicantsWithRights.map(applicant => applicant.id)
+        );
+      },
+      []
+    );
+    dispatchPreviousMonth({
+      type: "update",
+      item: {
+        seed: seed,
+        applicantsWithRightsIds: applicantsWithRightsIds,
+      },
+    });
+    setProcessedApplicationsCount(0);
+    setStep("daily");
+    alert(
+      "Les demandeurs du mois précédent ont été identifiés ✅.\n" +
+        "Veuillez maintenant uploader les flux quotidiens à traiter."
+    );
+  };
+
+  const handleDailyFlux = async file => {
+    setFileSize(file.size);
+    let newApplicantsData = [];
 
     await new Promise(resolve => {
       var reader = new FileReader();
       reader.onload = function (event) {
-        const fluxBeneficaire = new FluxBeneficiaire(event.target.result);
-        const applicantsEligibleAsNew = fluxBeneficaire.applicantsEligibleAsNew;
-        const applicantsObject = fluxBeneficaire.applicantsObject;
-        let newApplicantsData = fluxBeneficaire.topEntrants.reduce((applicantsData, applicant) => {
-          applicantsData[applicant.id] = {
-            ...applicant.personalData(),
-            isTopEntrant: true,
-          };
-          return applicantsData;
-        }, {});
-        const creationDate = fluxBeneficaire.creationDate;
+        const fluxBeneficiaire = new FluxBeneficiaire(event.target.result);
 
-        if (FLUX_ORIGINS[fluxBeneficaire.origin] !== "Bénéficiaires") {
-          alert(`Vous n'avez pas uploadé un flux ${fluxToProcess} 🛑!`);
+        const creationDate = fluxBeneficiaire.creationDate;
+        const fluxOrigin = FLUX_ORIGINS[fluxBeneficiaire.origin];
+        const fluxFrequency = FLUX_FREQUENCIES[fluxBeneficiaire.frequency];
+
+        if (fluxOrigin !== "Bénéficiaires" || fluxFrequency !== "Quotidien") {
+          alert(`Vous n'avez pas uploadé un flux bénéficiaire quotidien 🛑!`);
           resolve();
           return;
+        }
+
+        if (applicationStringToDate(creationDate) < applicationStringToDate(previousMonthDate)) {
+          alert(`Attention ❗\nLe flux ${file.name} est antérieur au flux du mois précédent ⚠ !`);
         }
 
         if (runs.map(run => run.fileName).includes(file.name)) {
@@ -63,74 +199,46 @@ export default function identificationBeneficiaire() {
           return;
         }
 
-        // We check if there is a flux from the day before to check if there are new applicants
-        // fitting the J-1 -> J condition.
-        // We do these checks on the `runs` for the previous uploads and on the `itemsToDispatch` for the current uploads
-        // in cases where we upload several files at the same time
-        [runs, itemsToDispatch].forEach(resources => {
-          let applicantsFromDayBefore = resources.find(
-            item => item.creationDate === yesterdayApplicationDate(creationDate)
-          )?.applicants;
+        // existing applicant ids are ids of applicants from previous month and ids
+        // of new applicants detected in the batch
+        const existingApplicantsWithRightsIds = previousMonth[0].applicantsWithRightsIds.concat(
+          dispatchedApplicantsIds
+        );
 
-          if (applicantsFromDayBefore) {
-            applicantsEligibleAsNew.forEach(applicant => {
-              const yesterdayApplicant = applicantsFromDayBefore[applicant.id];
-
-              if (!yesterdayApplicant) {
-                return;
-              }
-
-              if (applicant.withDroitsEtDevoirs() && !yesterdayApplicant.withDroitsEtDevoirs()) {
-                newApplicantsData[applicant.id] = {
-                  ...newApplicantsData[applicant.id],
-                  ...applicant.personalData(),
-                  category: "1-2-3",
-                };
-              }
-              if (
-                applicant.eligibleAsNewInFoyer() &&
-                !yesterdayApplicant.inFoyerWithDroitsEtDevoirs()
-              ) {
-                newApplicantsData[applicant.id] = {
-                  ...newApplicantsData[applicant.id],
-                  ...applicant.personalData(),
-                  category: "4",
-                };
-              }
+        fluxBeneficiaire.applicantsWithRights.forEach(applicant => {
+          if (!existingApplicantsWithRightsIds.includes(applicant.id)) {
+            newApplicantsData.push({
+              ...applicant.personalData(),
+              applicationStatusCode: applicant.applicationStatusCode,
+              isTopEntrant: applicant.isTopEntrant(),
             });
+            dispatchedApplicantsIds.push(applicant.id);
           }
         });
 
-        const itemToDispatch = {
-          seed: Math.random(),
-          newApplicantsData: newApplicantsData,
-          applicants: applicantsObject,
-          applicantsEligibleAsNew: applicantsEligibleAsNew,
-          fileName: file.name,
-          creationDate: creationDate,
-        };
-
-        itemsToDispatch.push(itemToDispatch);
-
-        dispatchRuns({
-          type: "append",
-          item: itemToDispatch,
-        });
         resolve();
         return;
       };
       reader.readAsText(file);
     });
+    dispatchRuns({
+      type: "append",
+      item: {
+        seed: Math.random(),
+        newApplicantsData: newApplicantsData,
+        fileName: file.name,
+      },
+    });
   };
 
-  const processFluxInstruction = async file => {
+  const handleInstruction = async file => {
     setFileSize(file.size);
     await new Promise(resolve => {
       var reader = new FileReader();
       reader.onload = function (event) {
         const fluxInstruction = new FluxInstruction(event.target.result);
         if (FLUX_ORIGINS[fluxInstruction.origin] !== "Instructions") {
-          alert(`Vous n'avez pas uploadé un flux ${fluxToProcess} 🛑!`);
+          alert(`Vous n'avez pas uploadé un flux instruction 🛑!`);
           resolve();
           return;
         }
@@ -162,28 +270,30 @@ export default function identificationBeneficiaire() {
     instructionFileName,
     newApplicantsData
   ) => {
-    Object.entries(newApplicantsData).forEach(([applicantId, applicant]) => {
+    return newApplicantsData.map(applicant => {
       const instructionApplicant = instructionApplicants.find(instructionApplicant => {
         return instructionApplicant.rsaApplicationNumber === applicant.rsaApplicationNumber;
       });
       if (instructionApplicant) {
-        newApplicantsData[applicantId] = {
+        setEnrichedApplicantsCount(prevCount => prevCount + 1);
+        return {
           instructionFileName,
           ...applicant,
           ...instructionApplicant.contactInfos(),
         };
       }
+      return applicant;
     });
-    return newApplicantsData;
   };
 
   const handleCsvExport = () => {
     const dataToExport = [];
     runs.forEach(run => {
-      Object.values(run.newApplicantsData).forEach(applicant => {
+      run.newApplicantsData.forEach(applicant => {
         // We want to export the applicants data along with the file name
         dataToExport.push([
           applicant.rsaApplicationNumber || "",
+          APPLICATION_STATUS[applicant.applicationStatusCode] || "",
           applicant.socialSecurityNumber || "",
           applicant.lastName || "",
           applicant.firstName || "",
@@ -191,7 +301,6 @@ export default function identificationBeneficiaire() {
           applicant.emailAddress || "",
           applicant.phoneNumber || "",
           applicant.isTopEntrant ? "OUI" : "NON",
-          applicant.category === undefined ? "NON" : `OUI - Catégorie ${applicant.category}`,
           run.fileName,
           applicant.instructionFileName || "",
         ]);
@@ -200,6 +309,7 @@ export default function identificationBeneficiaire() {
 
     const csvHeader = [
       "NUMERO DEMANDE RSA",
+      "STATUT DE LA DEMANDE",
       "NIR",
       "NOM",
       "PRENOM",
@@ -207,7 +317,6 @@ export default function identificationBeneficiaire() {
       "EMAIL",
       "TELEPHONE",
       "ENTRANT SELON TOPPERSENTDRODEVORSA",
-      "ENTRANT SELON AUTRES CRITERES",
       "FICHIER SOURCE",
       "FICHIER D'INSTRUCTION",
     ];
@@ -217,11 +326,11 @@ export default function identificationBeneficiaire() {
   };
 
   const someWithEmail = runs.some(run => {
-    return Object.values(run.newApplicantsData).some(personalData => personalData.emailAddress);
+    return run.newApplicantsData.some(personalData => personalData.emailAddress);
   });
 
   const someWithPhone = runs.some(run => {
-    return Object.values(run.newApplicantsData).some(personalData => personalData.phoneNumber);
+    return run.newApplicantsData.some(personalData => personalData.phoneNumber);
   });
 
   const someWithContactInfos = someWithEmail || someWithPhone;
@@ -232,17 +341,16 @@ export default function identificationBeneficiaire() {
         <h1>Identifiez les nouveaux demandeurs à l'aide des flux CNAF</h1>
 
         <ol>
-          <li style={fluxToProcess === "bénéficiaires" ? { fontWeight: "bold" } : {}}>
-            Uploadez le ou les fichiers "bénéficiaires" pour identifier les nouveaux demandeurs{" "}
-            {"(< 100 Mo) "}
+          <li style={step === "previousMonth" ? { fontWeight: "bold" } : {}}>
+            Uploadez le flux mensuel du mois précédent le fichier que vous voulez analyser (
+            <strong>M - 1</strong>)
           </li>
           <br />
-          <li>
-            {" "}
-            Une fois les flux bénéficiaires uploadés, cliquez sur "Passer aux flux d'instructions"
+          <li style={step === "daily" ? { fontWeight: "bold" } : {}}>
+            Uploadez les flux bénéficiaires quotidiens que vous voulez analyser
           </li>
           <br />
-          <li style={fluxToProcess === "instructions" ? { fontWeight: "bold" } : {}}>
+          <li style={step === "instruction" ? { fontWeight: "bold" } : {}}>
             Uploadez le ou les fichiers "instructions" associés pour récupérer les données de
             contact des demandeurs.
           </li>
@@ -264,28 +372,30 @@ export default function identificationBeneficiaire() {
           handleFile={handleFileUpload}
           isPending={isPending}
           fileSize={fileSize}
-          sortFilesByFluxDate={true}
-          uploadMessage={[
-            "Glissez et déposez les flux ",
-            <strong>{fluxToProcess}</strong>,
-            " à analyser ou sélectionnez-les.",
-          ]}
-          pendingMessage={[
-            "Traitement en cours, merci de patienter.",
-            <br />,
-            "L'identification peut prendre du temps (> 1 minute) lorsque plusieurs fichiers sont uploadés",
-          ]}
+          uploadMessage={"Glissez et déposez les flux à analyser ou sélectionnez-les."}
+          pendingMessage={
+            step === "previousMonth"
+              ? `${processedApplicationsCount} demandes traitées`
+              : step === "instruction"
+              ? "Matching en cours..."
+              : "Traitement en cours..."
+          }
+          multiple={step !== "previousMonth"}
         />
+
+        {step === "instruction" && enrichedApplicantsCount > 0 && (
+          <h3>{enrichedApplicantsCount} demandeurs retrouvés dans les flux instructions</h3>
+        )}
 
         {runs && runs.length > 0 && (
           <>
-            {fluxToProcess === "bénéficiaires" && (
-              <button className={styles.button} onClick={() => setFluxToProcess("instructions")}>
+            {step === "daily" && (
+              <button className={styles.button} onClick={() => setStep("instruction")}>
                 Passer aux flux instructions
               </button>
             )}
-            {fluxToProcess === "instructions" && (
-              <button className={styles.button} onClick={() => setFluxToProcess("bénéficiaires")}>
+            {step === "instruction" && (
+              <button className={styles.button} onClick={() => setStep("daily")}>
                 Revenir aux flux bénéficiaires
               </button>
             )}
@@ -314,46 +424,45 @@ export default function identificationBeneficiaire() {
                     {someWithEmail && <th>Email</th>}
                     {someWithPhone && <th>Téléphone</th>}
                     <th>Entrant selon TOPPERSENTDRODEVORSA</th>
-                    <th>Entrant selon d'autres critères</th>
                     <th>Ficher source </th>
                     {someWithContactInfos && <th>Fichier d'instruction</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {runs.map(({ newApplicantsData, fileName, ...run }) => {
-                    // { newApplicantsData: { id: applicantData }, fileName: ... } => [{ id, applicantData, fileName }, ...]
-                    return Object.entries(newApplicantsData).map(([applicantId, applicantData]) => {
-                      const keyId = [applicantId, fileName].join("-");
+                    return newApplicantsData.map(applicant => {
+                      const keyId = [
+                        applicant.rsaApplicationNumber,
+                        applicant.lastName.split(" ").join("-"),
+                        applicant.firstName.split(" ").join("-"),
+                        applicant.role,
+                        fileName,
+                      ].join("-");
 
                       return (
                         <tr key={keyId}>
-                          <td>{applicantData.rsaApplicationNumber}</td>
-                          <td>{applicantData.socialSecurityNumber}</td>
-                          <td>{applicantData.lastName}</td>
-                          <td>{applicantData.firstName}</td>
-                          <td>{APPLICATION_ROLES[applicantData.role]}</td>
+                          <td>{applicant.rsaApplicationNumber}</td>
+                          <td>{applicant.socialSecurityNumber}</td>
+                          <td>{applicant.lastName}</td>
+                          <td>{applicant.firstName}</td>
+                          <td>{APPLICATION_ROLES[applicant.role]}</td>
                           {someWithEmail && (
                             <>
-                              <td>{applicantData.emailAddress || ""}</td>
+                              <td>{applicant.emailAddress || ""}</td>
                             </>
                           )}
                           {someWithPhone && (
                             <>
-                              <td>{applicantData.phoneNumber || ""}</td>
+                              <td>{applicant.phoneNumber || ""}</td>
                             </>
                           )}
                           <td className={styles.center}>
-                            {applicantData.isTopEntrant ? "OUI" : "NON"}
-                          </td>
-                          <td className={styles.center}>
-                            {applicantData.category === undefined
-                              ? "NON"
-                              : `OUI - Catégorie ${applicantData.category}`}
+                            {applicant.isTopEntrant ? "OUI" : "NON"}
                           </td>
                           <td>{fileName}</td>
                           {someWithContactInfos && (
                             <>
-                              <td>{applicantData.instructionFileName || ""}</td>
+                              <td>{applicant.instructionFileName || ""}</td>
                             </>
                           )}
                         </tr>
