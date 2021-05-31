@@ -125,14 +125,14 @@ export default function Ardennes() {
         checkUserInvitationStatus(userId, userIndex);
         alert("Un compte associé à cet email existe déjà");
       } else {
-        createUser(userData, userIndex, false); // pourra être remplacé par createRelative lorsque l'endpoint aura été créé côté RDV-Solidarités
+        createUser(userData, userIndex, false, userId);
       }
     } else {
       createUser(userData, userIndex, false);
     }
   }
 
-  async function createUser(userData, userIndex, withEmail = true) {
+  async function createUser(userData, userIndex, withEmail = true, responsible_id = null) {
     const address = userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
 
     let user = {
@@ -144,6 +144,7 @@ export default function Ardennes() {
       caisse_affiliation: "caf",
       affiliation_number: userData["N°CAF"],
       organisation_ids: [orgaID],
+      responsible_id: responsible_id
     };
     if (withEmail === true) user.email = userData["MAIL"];
 
