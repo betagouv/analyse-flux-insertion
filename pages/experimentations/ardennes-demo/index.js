@@ -103,38 +103,33 @@ export default function Ardennes() {
     setUsersData(newUsersData);
   }
 
-  async function invalidOrTakenMail(userData, userIndex, userId = null) {
-    if (userId != null) {
-      const result = await getUser(userId);
+  async function handleUserWithProblematicEmail(userData, userIndex, address, userId) {
+    const result = await getUser(userId);
 
-      // Vérifie d'abord si l'utilisateur avec le même email est un doublon
-      if (
-        result &&
-        result.user.first_name.toUpperCase() === userData["PRENOM"].toUpperCase() &&
-        result.user.last_name.toUpperCase() === userData["NOM"].toUpperCase() &&
-        result.user.birth_date === applicationDateToString(stringToDate(userData["DATE DE NAISSANCE"])) &&
-        result.user.address.toUpperCase() ===
-          userData["ADRESSE"].toUpperCase() +
-            " - " +
-            userData["CODE POSTAL"].toUpperCase() +
-            " " +
-            userData["VILLE"].toUpperCase()
-      ) {
-        let newUsersData = [...usersData];
-        newUsersData[userIndex]["ID RDV"] = userId;
-        setUsersData(newUsersData);
-        checkUserInvitationStatus(userId, userIndex);
-        alert("Un compte associé à cet email existe déjà");
-      } else {
-        createUser(userData, userIndex, false, userId); // Si ce n'est pas un doublon, crée un utilisateur en tant que "proche" de l'utilisateur existant
-      }
+    // Vérifie d'abord si l'utilisateur avec le même email est un doublon
+    if (
+      result &&
+      result.user.first_name.toUpperCase() === userData["PRENOM"].toUpperCase() &&
+      result.user.last_name.toUpperCase() === userData["NOM"].toUpperCase() &&
+      result.user.birth_date === applicationDateToString(stringToDate(userData["DATE DE NAISSANCE"])) &&
+      result.user.address.toUpperCase() === address.toUpperCase()
+    ) {
+      let newUsersData = [...usersData];
+      newUsersData[userIndex]["ID RDV"] = userId;
+      setUsersData(newUsersData);
+      checkUserInvitationStatus(userId, userIndex);
+      alert("Un compte associé à cet email existe déjà");
     } else {
-      createUser(userData, userIndex, false); // crée un utilisateur sans email
+      createUser(userData, userIndex, false, userId); // Si ce n'est pas un doublon, crée un utilisateur en tant que "proche" de l'utilisateur existant
     }
   }
 
+  const displayAddress = (userData) => {
+    return userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
+  }
+
   async function createUser(userData, userIndex, withEmail = true, responsible_id = null) {
-    const address = userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
+    const address = displayAddress(userData);
 
     let user = {
       first_name: userData["PRENOM"],
@@ -157,11 +152,17 @@ export default function Ardennes() {
       setUsersData(newUsersData);
       generateInvitationUrl(result.user.id, userIndex);
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "taken") {
-      invalidOrTakenMail(userData, userIndex, result.errors.email[0].id);
+      handleUserWithProblematicEmail(userData, userIndex, address, result.errors.email[0].id);
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "invalid") {
-      invalidOrTakenMail(userData, userIndex)
-    } else if (result.errors && result.errors.first_name && result.errors.first_name[0].error === "déjà utilisé") {
-      alert("La création du compte a échoué. L'utilisateur semble exister mais n'a pu être récupéré.");
+      createUser(userData, userIndex, false);
+    } else if (
+      result.errors &&
+      result.errors.first_name &&
+      result.errors.first_name[0].error === "déjà utilisé"
+    ) {
+      alert(
+        "La création du compte a échoué. L'utilisateur semble exister mais n'a pu être récupéré."
+      );
     } else if (result.errors && result.errors[0] && result.errors[0].base === "forbidden") {
       alert("Votre compte agent RDV-Solidarités ne vous permet pas d'effectuer cette action.");
     } else if (result.errors && result.errors[0]) {
