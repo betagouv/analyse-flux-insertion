@@ -103,16 +103,20 @@ export default function Ardennes() {
     setUsersData(newUsersData);
   }
 
-  async function handleUserWithProblematicEmail(userData, userIndex, address, userId) {
+  const displayAddress = userData => {
+    return userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
+  }
+
+  async function handleUserWithProblematicEmail(userData, userIndex, userId) {
     const result = await getUser(userId);
 
     // Vérifie d'abord si l'utilisateur avec le même email est un doublon
     if (
-      result &&
+      result && result.user &&
       result.user.first_name.toUpperCase() === userData["PRENOM"].toUpperCase() &&
       result.user.last_name.toUpperCase() === userData["NOM"].toUpperCase() &&
       result.user.birth_date === applicationDateToString(stringToDate(userData["DATE DE NAISSANCE"])) &&
-      result.user.address.toUpperCase() === address.toUpperCase()
+      result.user.address.toUpperCase() === displayAddress(userData).toUpperCase()
     ) {
       let newUsersData = [...usersData];
       newUsersData[userIndex]["ID RDV"] = userId;
@@ -122,10 +126,6 @@ export default function Ardennes() {
     } else {
       createUser(userData, userIndex, false, userId); // Si ce n'est pas un doublon, crée un utilisateur en tant que "proche" de l'utilisateur existant
     }
-  }
-
-  const displayAddress = (userData) => {
-    return userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
   }
 
   async function createUser(userData, userIndex, withEmail = true, responsible_id = null) {
@@ -152,7 +152,7 @@ export default function Ardennes() {
       setUsersData(newUsersData);
       generateInvitationUrl(result.user.id, userIndex);
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "taken") {
-      handleUserWithProblematicEmail(userData, userIndex, address, result.errors.email[0].id);
+      handleUserWithProblematicEmail(userData, userIndex, result.errors.email[0].id);
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "invalid") {
       createUser(userData, userIndex, false);
     } else if (
