@@ -49,7 +49,7 @@ export default class Application {
     return this.dom.getElementsByTagName("TOPFOYDRODEVORSA")[0]?.innerHTML;
   }
 
-  eligibleAsNew() {
+  withRights() {
     return (
       this.withDroitsOuvertsEtVersables() ||
       (this.withDroitsOuvertsSuspendu() &&
