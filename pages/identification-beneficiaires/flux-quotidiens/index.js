@@ -242,26 +242,22 @@ export default function identificationBeneficiaire() {
           resolve();
           return;
         }
-        dispatchRuns({
-          type: "replace",
-          items: augmentItemsWithInstruction(fluxInstruction, file.name),
+        runs.forEach(run => {
+          dispatchRuns({
+            type: "update",
+            item: {
+              seed: run.seed,
+              newApplicantsData: augmentApplicantsDataWithInstruction(
+                fluxInstruction.applicants,
+                file.name,
+                run.newApplicantsData
+              ),
+            },
+          });
         });
         resolve();
       };
       reader.readAsText(file);
-    });
-  };
-
-  const augmentItemsWithInstruction = (fluxInstruction, fileName) => {
-    return runs.map(run => {
-      return {
-        ...run,
-        newApplicantsData: augmentApplicantsDataWithInstruction(
-          fluxInstruction.applicants,
-          fileName,
-          run.newApplicantsData
-        ),
-      };
     });
   };
 
@@ -281,8 +277,9 @@ export default function identificationBeneficiaire() {
           ...applicant,
           ...instructionApplicant.contactInfos(),
         };
+      } else {
+        return applicant;
       }
-      return applicant;
     });
   };
 
