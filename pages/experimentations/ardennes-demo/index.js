@@ -107,15 +107,17 @@ export default function Ardennes() {
     return userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
   }
 
-  async function handleUserWithProblematicEmail(userData, userIndex, userId) {
+  async function handleUserWithTakenEmail(userData, userIndex, userId) {
     const result = await getUser(userId);
 
     // Vérifie d'abord si l'utilisateur avec le même email est un doublon
     if (
-      result && result.user &&
+      result &&
+      result.user &&
       result.user.first_name.toUpperCase() === userData["PRENOM"].toUpperCase() &&
       result.user.last_name.toUpperCase() === userData["NOM"].toUpperCase() &&
-      result.user.birth_date === applicationDateToString(stringToDate(userData["DATE DE NAISSANCE"])) &&
+      result.user.birth_date ===
+        applicationDateToString(stringToDate(userData["DATE DE NAISSANCE"])) &&
       result.user.address.toUpperCase() === displayAddress(userData).toUpperCase()
     ) {
       let newUsersData = [...usersData];
@@ -152,7 +154,7 @@ export default function Ardennes() {
       setUsersData(newUsersData);
       generateInvitationUrl(result.user.id, userIndex);
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "taken") {
-      handleUserWithProblematicEmail(userData, userIndex, result.errors.email[0].id);
+      handleUserWithTakenEmail(userData, userIndex, result.errors.email[0].id);
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "invalid") {
       createUser(userData, userIndex, false);
     } else if (
