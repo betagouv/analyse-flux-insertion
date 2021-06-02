@@ -242,26 +242,22 @@ export default function identificationBeneficiaire() {
           resolve();
           return;
         }
-        dispatchRuns({
-          type: "replace",
-          items: augmentItemsWithInstruction(fluxInstruction, file.name),
+        runs.forEach(run => {
+          dispatchRuns({
+            type: "update",
+            item: {
+              seed: run.seed,
+              newApplicantsData: augmentApplicantsDataWithInstruction(
+                fluxInstruction.applicants,
+                file.name,
+                run.newApplicantsData
+              ),
+            },
+          });
         });
         resolve();
       };
       reader.readAsText(file);
-    });
-  };
-
-  const augmentItemsWithInstruction = (fluxInstruction, fileName) => {
-    return runs.map(run => {
-      return {
-        ...run,
-        newApplicantsData: augmentApplicantsDataWithInstruction(
-          fluxInstruction.applicants,
-          fileName,
-          run.newApplicantsData
-        ),
-      };
     });
   };
 
@@ -281,8 +277,9 @@ export default function identificationBeneficiaire() {
           ...applicant,
           ...instructionApplicant.contactInfos(),
         };
+      } else {
+        return applicant;
       }
-      return applicant;
     });
   };
 
@@ -342,7 +339,7 @@ export default function identificationBeneficiaire() {
 
         <ol>
           <li style={step === "previousMonth" ? { fontWeight: "bold" } : {}}>
-            Uploadez le flux mensuel du mois précédent le fichier que vous voulez analyser (
+            Uploadez le flux mensuel du mois précédant le fichier que vous voulez analyser (
             <strong>M - 1</strong>)
           </li>
           <br />

@@ -71,12 +71,7 @@ export default class Applicant {
 
   // string used to identify applicants
   get id() {
-    return [
-      this.rsaApplicationNumber,
-      this.lastName.split(" ").join("-"),
-      this.firstName.split(" ").join("-"),
-      this.role,
-    ].join("-");
+    return [this.rsaApplicationNumber, this.role].join("-");
   }
 
   personalData() {
@@ -101,15 +96,8 @@ export default class Applicant {
     return this.topEntrant === "1";
   }
 
-  eligibleAsNew() {
-    return (
-      this.application.eligibleAsNew() &&
-      (this.withDroitsEtDevoirs() || this.eligibleAsNewInFoyer())
-    );
-  }
-
-  eligibleAsNewInFoyer() {
-    return this.inFoyerWithDroitsEtDevoirs() && ["ENF", "AUT"].includes(this.role);
+  withRights() {
+    return this.application.withRights() && this.withDroitsEtDevoirs();
   }
 
   inFoyerWithDroitsEtDevoirs() {

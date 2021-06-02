@@ -315,7 +315,7 @@ export default function identificationBeneficiaire() {
         <h1>Identifiez les nouveaux demandeurs à l'aide des flux CNAF</h1>
         <ol>
           <li style={step === "previousMonth" ? { fontWeight: "bold" } : {}}>
-            Uploadez le flux mensuel du mois précédent le fichier que vous voulez analyser (
+            Uploadez le flux mensuel du mois précédant le fichier que vous voulez analyser (
             <strong>M - 1</strong>)
           </li>
           <br />
