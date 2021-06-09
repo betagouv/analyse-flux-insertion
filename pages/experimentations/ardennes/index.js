@@ -10,7 +10,12 @@ import styles from "../../../styles/Home.module.css";
 
 import { appFetch } from "../../../lib/appFetch";
 import { initReducer, reducerFactory } from "../../../lib/reducerFactory";
-import { getDateTimeString, getFrenchFormatDateString, stringToDate } from "../../../lib/dates";
+import {
+  applicationDateToString,
+  getDateTimeString,
+  getFrenchFormatDateString,
+  stringToDate,
+} from "../../../lib/dates";
 
 const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
 
@@ -112,7 +117,7 @@ export default function Ardennes() {
       last_name: userData["NOM"],
       email: userData["MAIL"],
       phone_number: userData["TELEPHONE"].replace(/\s+/g, ""),
-      birth_date: stringToDate(userData["DATE DE NAISSANCE"]),
+      birth_date: applicationDateToString(stringToDate(userData["DATE DE NAISSANCE"])),
       address: address,
       caisse_affiliation: "caf",
       affiliation_number: userData["N°CAF"],
