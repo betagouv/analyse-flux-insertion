@@ -10,7 +10,12 @@ import styles from "../../../styles/Home.module.css";
 
 import { appFetch } from "../../../lib/appFetch";
 import { initReducer, reducerFactory } from "../../../lib/reducerFactory";
-import { applicationDateToString, getDateTimeString, getFrenchFormatDateString, stringToDate } from "../../../lib/dates";
+import {
+  applicationDateToString,
+  getDateTimeString,
+  getFrenchFormatDateString,
+  stringToDate,
+} from "../../../lib/dates";
 
 const reducer = reducerFactory("Expérimentation Ardennes - CNAF - Bénéficiaire");
 
