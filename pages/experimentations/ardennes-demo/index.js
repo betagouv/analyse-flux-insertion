@@ -138,7 +138,7 @@ export default function Ardennes() {
       first_name: userData["PRENOM"],
       last_name: userData["NOM"],
       phone_number: userData["TELEPHONE"].replace(/\s+/g, ""),
-      birth_date: stringToDate(userData["DATE DE NAISSANCE"]),
+      birth_date: applicationDateToString(stringToDate(userData["DATE DE NAISSANCE"])),
       address: address,
       caisse_affiliation: "caf",
       affiliation_number: userData["N°CAF"],
