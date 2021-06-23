@@ -16,7 +16,7 @@ import FluxInstruction from "../../../models/FluxInstruction";
 import { csvExport } from "../../../lib/csvExport";
 import { getDateTimeString, applicationStringToDate } from "../../../lib/dates";
 
-const reducer = reducerFactory("Identification nouveaux demandeurs quotidiens");
+const reducer = reducerFactory("Identification nouveaux bénéficiaires quotidiens");
 export default function identificationBeneficiaire() {
   const [fileSize, setFileSize] = useState(0);
   const [isPending, setIsPending] = useState(false);
@@ -165,7 +165,7 @@ export default function identificationBeneficiaire() {
     setProcessedApplicationsCount(0);
     setStep("daily");
     alert(
-      "Les demandeurs du mois précédent ont été identifiés ✅.\n" +
+      "Les bénéficiaires du mois précédent ont été identifiés ✅.\n" +
         "Veuillez maintenant uploader les flux quotidiens à traiter."
     );
   };
@@ -335,7 +335,7 @@ export default function identificationBeneficiaire() {
   return (
     <Layout className={styles.container} handleFile={handleFileUpload}>
       <main className={styles.main}>
-        <h1>Identifiez les nouveaux demandeurs à l'aide des flux CNAF</h1>
+        <h1>Identifiez les nouveaux bénéficiaires à l'aide des flux CNAF</h1>
 
         <ol>
           <li style={step === "previousMonth" ? { fontWeight: "bold" } : {}}>
@@ -349,7 +349,7 @@ export default function identificationBeneficiaire() {
           <br />
           <li style={step === "instruction" ? { fontWeight: "bold" } : {}}>
             Uploadez le ou les fichiers "instructions" associés pour récupérer les données de
-            contact des demandeurs.
+            contact des bénéficiaires.
           </li>
         </ol>
 
@@ -381,7 +381,7 @@ export default function identificationBeneficiaire() {
         />
 
         {step === "instruction" && enrichedApplicantsCount > 0 && (
-          <h3>{enrichedApplicantsCount} demandeurs retrouvés dans les flux instructions</h3>
+          <h3>{enrichedApplicantsCount} bénéficiaires retrouvés dans les flux instructions</h3>
         )}
 
         {runs && runs.length > 0 && (

@@ -11,7 +11,7 @@ export default function NewApplicantsRules() {
       <p>
         Pour les identifier dans les flux mensuels, nous identifions d'abord tous les bénéficiaires
         du RSA du mois précédent à l'aide du flux mensuel du mois précédent. Ensuite nous
-        identifions les demandeurs du mois qui nous intéresse, et nous ne gardons que ceux qui n'ont
+        identifions les bénéficaires du mois qui nous intéresse, et nous ne gardons que ceux qui n'ont
         pas été identifiés comme bénéficiaires au mois précédent.
       </p>
       <p>Pour le moment, nous considérons qu'un demandeur bénéficie du RSA si:</p>

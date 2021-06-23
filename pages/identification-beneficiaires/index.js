@@ -7,7 +7,7 @@ export default function Home() {
   return (
     <Layout className={styles.container}>
       <main className={styles.main}>
-        <h1 className={styles.title}>Identification nouveaux demandeurs</h1>
+        <h1 className={styles.title}>Identification nouveaux entrants</h1>
 
         <p className={styles.description}>Choisissez le type de flux bénéficiaire à analyser</p>
 
@@ -17,7 +17,7 @@ export default function Home() {
               <h3>Flux quotidiens &rarr;</h3>
               <p>
                 Uploadez plusieurs flux quotidiens pour en extraire la liste des nouveaux
-                demandeurs&nbsp;
+                entrants&nbsp;
               </p>
             </a>
           </Link>
@@ -26,7 +26,7 @@ export default function Home() {
               <h3>Flux mensuels &rarr;</h3>
               <p>
                 Uploadez deux flux mensuels à un mois d'intervalle pour en extraire la liste des
-                nouveaux demandeurs&nbsp;
+                nouveaux entrants&nbsp;
               </p>
             </a>
           </Link>
