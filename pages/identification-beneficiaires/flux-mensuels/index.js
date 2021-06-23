@@ -17,7 +17,7 @@ import {
 import { getDateTimeString, applicationStringToDate } from "../../../lib/dates";
 import { csvExport } from "../../../lib/csvExport";
 
-const reducer = reducerFactory("Identification nouveaux demandeurs quotidiens");
+const reducer = reducerFactory("Identification nouveaux entrants quotidiens");
 
 export default function identificationBeneficiaire() {
   const [fileSize, setFileSize] = useState(0);
@@ -173,7 +173,7 @@ export default function identificationBeneficiaire() {
     setProcessedApplicationsCount(0);
     setStep("currentMonth");
     alert(
-      "Les demandeurs du mois précédent ont été identifiés ✅.\n" +
+      "Les bénéficiaires du mois précédent ont été identifiés ✅.\n" +
         "Veuillez maintenant uploader le flux du mois à traiter."
     );
   };
@@ -217,7 +217,7 @@ export default function identificationBeneficiaire() {
     setStep("instruction");
 
     alert(
-      `${applicantsWithRights.length} nouveaux demandeurs ont étés identifiés  ✅!\n` +
+      `${applicantsWithRights.length} nouveaux bénéficaires ont étés identifiés  ✅!\n` +
         "Ajouter des flux instructions pour retrouver des données de contacts et exporter le tout."
     );
   };
@@ -325,7 +325,7 @@ export default function identificationBeneficiaire() {
           <br />
           <li style={step === "instruction" ? { fontWeight: "bold" } : {}}>
             Uploadez le ou les fichiers "instructions" associés pour récupérer les données de
-            contact des demandeurs.
+            contact des bénéficaires.
           </li>
         </ol>
 
@@ -357,7 +357,7 @@ export default function identificationBeneficiaire() {
             <div style={{ marginRight: "20px" }}>
               <button className={styles.button} onClick={handleCsvExport}>
                 {" "}
-                Exporter les {newApplicantsCount} nouveaux demandeurs au format CSV{" "}
+                Exporter les {newApplicantsCount} nouveaux bénéficiaires au format CSV{" "}
               </button>
             </div>
             <div>
@@ -368,7 +368,7 @@ export default function identificationBeneficiaire() {
           </div>
         )}
         {step === "instruction" && enrichedApplicantsCount > 0 && (
-          <h3>{enrichedApplicantsCount} demandeurs retrouvés dans les flux instructions</h3>
+          <h3>{enrichedApplicantsCount} bénéficiaires retrouvés dans les flux instructions</h3>
         )}
       </main>
     </Layout>

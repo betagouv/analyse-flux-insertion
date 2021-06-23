@@ -28,8 +28,8 @@ export default function Home() {
 
           <Link href="/identification-beneficiaires">
             <a className={styles.card}>
-              <h3>Identifier demandeurs &rarr;</h3>
-              <p>Identifiez les nouveaux demandeurs RSA à partir de vos flux CNAF</p>
+              <h3>Identifier nouveaux entrants &rarr;</h3>
+              <p>Identifiez les nouveaux entrants RSA à partir de vos flux CNAF</p>
             </a>
           </Link>
         </div>

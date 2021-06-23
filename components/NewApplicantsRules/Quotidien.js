@@ -11,7 +11,7 @@ export default function NewApplicantsRules() {
       <p>
         Pour les identifier dans les flux quotidiens, nous identifions d'abord tous les
         bénéficiaires du RSA du mois précédent à l'aide du flux mensuel du mois précédent. Ensuite
-        nous identifions les demandeurs dans les flux quotidiens <strong>postérieurs</strong> à ce
+        nous identifions les bénéficiaires dans les flux quotidiens <strong>postérieurs</strong> à ce
         flux mensuel, et nous ne gardons que ceux qui n'ont pas été identifiés comme bénéficiaires
         au mois précédent.
       </p>
