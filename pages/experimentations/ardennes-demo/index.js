@@ -75,9 +75,10 @@ export default function Ardennes() {
     const result = await appFetch(invitationUrl, token);
 
     let newUsersData = [...usersData];
-    if (result.invitation_url) {
+    let userEmail = newUsersData[userIndex]["MAIL"]
+    if (userEmail && userEmail.length > 0) {
       newUsersData[userIndex]["Lien d'invitation"] = result.invitation_url;
-    } else if (result.invitation_token) {
+    } else {
       newUsersData[userIndex]["Code d'invitation"] = result.invitation_token;
     }
     newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
