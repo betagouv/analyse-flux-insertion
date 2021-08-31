@@ -1,6 +1,36 @@
 import Applicant from "./Applicant";
 
-const ELIGIBLE_SUSPENSION_MOTIVES = ["01", "05", "06", "35", "36"];
+/*
+Valeurs :
+"01" : Ressources trop élévées
+"02" : Moins 25 ans sans enft/autre person. à charge
+"03" : Activité non conforme
+"04" : Titre de séjour non valide
+"05" : RSA inférieur au seuil
+"06" : Déclaration Trimestrielle Ressources non fournie
+"09" : Résidence non conforme
+"19" : Pas d'isolement
+"31" : Prestation exclue affil partielle
+"34" : Régime non conforme
+"35" : Demande avantage vielliesse absent ou tardif
+"36" : Titre de séjour absent
+"44" : Hospitalisation
+"70" : Action non engagée
+"78" : Surface pondérée > plafond ou inconnue
+"84" : Droit éteint
+"85" : Pas d'allocataire
+"97" : Bénéficiaire AAH réduite
+"AB" : Allocataire absent du foyer
+"CV"  : Attente décision PCG (le droit reste théorique jusqu'au retour)
+"CG" : Application Sanction -> integré dans les ETATDOSRSA=2
+"CZ" : Activité antérieure insuffisante
+"DA" : Activité antérieure absente
+"DB" : Etudiant rémunération insuff.
+"DC" : Activité antérieure non conforme
+*/
+const REAL_ELIGIBLE_SUSPENSION_MOTIVES = ["05", "44", "70"]
+const THEORICAL_ELIGIBLE_SUSPENSION_MOTIVES = ["01", "06", "35", "36"]
+const ELIGIBLE_SUSPENSION_MOTIVES = REAL_ELIGIBLE_SUSPENSION_MOTIVES.concat(THEORICAL_ELIGIBLE_SUSPENSION_MOTIVES)
 
 export default class Application {
   constructor(dom) {
@@ -52,7 +82,8 @@ export default class Application {
   withRights() {
     return (
       this.withDroitsOuvertsEtVersables() ||
-      (this.withDroitsOuvertsSuspendu() &&
+      this.statusCode === "3" || // Droit ouvert mais suspendu
+      (this.statusCode === "4" && // Droit ouvert mais suspendu (réel ou théorique)
         ELIGIBLE_SUSPENSION_MOTIVES.includes(this.suspensionMotive))
     );
   }
@@ -83,10 +114,6 @@ export default class Application {
 
   withDroitsOuvertsEtVersables() {
     return this.statusCode === "2";
-  }
-
-  withDroitsOuvertsSuspendu() {
-    return this.statusCode === "4";
   }
 
   withDSP() {
