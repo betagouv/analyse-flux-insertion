@@ -53,7 +53,7 @@ export default function Ardennes() {
   useEffect(() => {
     if (usersData && userStatusChecked === false) {
       usersData.forEach((user, userIndex) => {
-        if (user["ID RDV"] != "") {
+        if (user["ID RDV"] && user["ID RDV"].length > 0 && !user["Date d'inscription"]) {
           checkUserInvitationStatus(user["ID RDV"], userIndex);
         }
       });
@@ -85,13 +85,13 @@ export default function Ardennes() {
     setUsersData(newUsersData);
   }
 
-  async function getUser(userId, token) {
+  async function getUser(userId) {
     const getUserUrl = userUrl + `/${userId}`;
     return await appFetch(getUserUrl, token);
   }
 
   async function checkUserInvitationStatus(userId, userIndex) {
-    const result = await getUser(userId, token);
+    const result = await getUser(userId);
 
     let newUsersData = [...usersData];
     if (result.user.invitation_created_at) {
@@ -109,21 +109,49 @@ export default function Ardennes() {
     setUsersData(newUsersData);
   }
 
-  async function createUser(userData, userIndex) {
-    const address = userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
+  const displayAddress = userData => {
+    return userData["ADRESSE"] + " - " + userData["CODE POSTAL"] + " " + userData["VILLE"];
+  }
+
+  async function handleUserWithTakenEmail(userData, userIndex, userId) {
+    const result = await getUser(userId);
+
+    // Vérifie d'abord si l'utilisateur avec le même email est un doublon
+    if (
+      result &&
+      result.user &&
+      result.user.first_name.toUpperCase() === userData["PRENOM"].toUpperCase() &&
+      result.user.last_name.toUpperCase() === userData["NOM"].toUpperCase() &&
+      result.user.birth_date ===
+        applicationDateToString(stringToDate(userData["DATE DE NAISSANCE"])) &&
+      result.user.address.toUpperCase() === displayAddress(userData).toUpperCase()
+    ) {
+      let newUsersData = [...usersData];
+      newUsersData[userIndex]["ID RDV"] = userId;
+      setUsersData(newUsersData);
+      checkUserInvitationStatus(userId, userIndex);
+      alert("Un compte associé à cet email existe déjà");
+    } else {
+      createUser(userData, userIndex, false, userId); // Si ce n'est pas un doublon, crée un utilisateur en tant que "proche" de l'utilisateur existant
+    }
+  }
+
+  async function createUser(userData, userIndex, withEmail = true, responsible_id = null) {
+    const address = displayAddress(userData);
     if ([13, 15].includes(userData["N°CAF"].trim().length)) userData["N°CAF"] = ""
 
     let user = {
       first_name: userData["PRENOM"],
       last_name: userData["NOM"],
-      email: userData["MAIL"],
       phone_number: userData["TELEPHONE"].replace(/\s+/g, ""),
       birth_date: applicationDateToString(stringToDate(userData["DATE DE NAISSANCE"])),
       address: address,
       caisse_affiliation: "caf",
       affiliation_number: userData["N°CAF"],
       organisation_ids: [orgaID],
+      responsible_id: responsible_id
     };
+    if (withEmail === true) user.email = userData["MAIL"];
 
     const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
 
@@ -133,12 +161,9 @@ export default function Ardennes() {
       setUsersData(newUsersData);
       generateInvitationUrl(result.user.id, userIndex);
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "taken") {
-      newUsersData[userIndex]["ID RDV"] = result.errors.email[0].id;
-      setUsersData(newUsersData);
-      checkUserInvitationStatus(result.errors.email[0].id, userIndex);
-      alert("Un compte associé à cet email existe déjà");
+      handleUserWithTakenEmail(userData, userIndex, result.errors.email[0].id);
     } else if (result.errors && result.errors.email && result.errors.email[0].error === "invalid") {
-      alert("L'adresse mail n'est pas valide");
+      createUser(userData, userIndex, false);
     } else if (
       result.errors &&
       result.errors.first_name &&
@@ -187,7 +212,6 @@ export default function Ardennes() {
           }, {});
         });
 
-        jsonData == null && setIsPending(false);
         setUserStatusChecked(false);
         setUsersData(jsonData);
         dispatchRuns({
