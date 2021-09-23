@@ -35,6 +35,7 @@ export default function Ardennes() {
   const [devFile, setDevFile] = useState(null);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [usersData, setUsersData] = useState(null);
+  const [existingUsers, setExistingUsers] = useState(null);
   const [userStatusChecked, setUserStatusChecked] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [isLogged, setIsLogged] = useState(false);
@@ -45,21 +46,26 @@ export default function Ardennes() {
   });
 
   useEffect(() => {
-    if (devFile) {
-      handleFile(devFile);
-    }
-  }, [devFile]);
-
-  useEffect(() => {
     if (usersData && userStatusChecked === false) {
-      usersData.forEach((user, userIndex) => {
-        if (user["ID RDV"] != "") {
-          checkUserInvitationStatus(user["ID RDV"], userIndex);
-        }
-      });
-      setUserStatusChecked(true);
+      retrieveExistingUsers();
     }
   }, [usersData]);
+
+  useEffect(() => {
+    if (existingUsers && userStatusChecked === false) {
+      usersData.forEach((user, userIndex) => {
+      if (user["ID RDV"] != "" && user["Date d'inscription"] == "") {
+        checkUserInvitationStatus(user["ID RDV"], userIndex);
+      }
+    });
+    setUserStatusChecked(true);
+    }
+  }, [existingUsers]);
+
+  async function retrieveExistingUsers() {
+    const result = await appFetch(userUrl, token);
+    setExistingUsers(result.users);
+  }
 
   const writeFile = () => {
     const outWorkbook = XLSX.utils.book_new();
@@ -90,17 +96,17 @@ export default function Ardennes() {
   }
 
   async function checkUserInvitationStatus(userId, userIndex) {
-    const result = await getUser(userId);
+    const user = existingUsers.some(user => user.id == userId)
 
     let newUsersData = [...usersData];
-    if (result.user.invitation_created_at) {
-      let invitation_date = result.user.invitation_created_at // Date au format : 2021-04-15 14:53:56 +0200
+    if (user.invitation_created_at) {
+      let invitation_date = user.invitation_created_at // Date au format : 2021-04-15 14:53:56 +0200
         .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
       invitation_date = new Date(invitation_date); // Créer une date JS
       newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(invitation_date);
     }
-    if (result.user.invitation_accepted_at) {
-      let inscription_date = result.user.invitation_accepted_at // Date au format : 2021-04-15 14:53:56 +0200
+    if (user.invitation_accepted_at) {
+      let inscription_date = user.invitation_accepted_at // Date au format : 2021-04-15 14:53:56 +0200
         .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
       inscription_date = new Date(inscription_date); // Créer une date JS
       newUsersData[userIndex]["Date d'inscription"] = getFrenchFormatDateString(inscription_date);
