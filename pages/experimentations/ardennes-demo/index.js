@@ -53,7 +53,7 @@ export default function Ardennes() {
   useEffect(() => {
     if (usersData && userStatusChecked === false) {
       usersData.forEach((user, userIndex) => {
-        if (user["ID RDV"] != "") {
+        if (user["ID RDV"] && user["ID RDV"].length > 0 && !user["Date d'inscription"]) {
           checkUserInvitationStatus(user["ID RDV"], userIndex);
         }
       });
