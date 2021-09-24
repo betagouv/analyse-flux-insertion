@@ -30,13 +30,14 @@ export default function Ardennes() {
   const RDV_SOLIDARITES_URL = isDemo
     ? process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL
     : process.env.NEXT_PUBLIC_RDV_SOLIDARITES_PROD_URL;
-  const userUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
+  const usersUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
 
   const [devFile, setDevFile] = useState(null);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [usersData, setUsersData] = useState(null);
-  const [existingUsers, setExistingUsers] = useState(null);
-  const [userStatusChecked, setUserStatusChecked] = useState(false);
+  const [existingUsers, setExistingUsers] = useState([]);
+  const [usersRetrieved, setUsersRetrieved] = useState(false);
+  const [usersStatusChecked, setUserStatusChecked] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [isLogged, setIsLogged] = useState(false);
   const [token, setToken] = useState({
@@ -46,13 +47,13 @@ export default function Ardennes() {
   });
 
   useEffect(() => {
-    if (usersData && userStatusChecked === false) {
+    if (usersData && !usersRetrieved) {
       retrieveExistingUsers();
     }
   }, [usersData]);
 
   useEffect(() => {
-    if (existingUsers && userStatusChecked === false) {
+    if (usersRetrieved && !usersStatusChecked) {
       usersData.forEach((user, userIndex) => {
         if (user["ID RDV"] && user["ID RDV"].length > 0 && !user["Date d'inscription"]) {
           checkUserInvitationStatus(user["ID RDV"], userIndex);
@@ -60,11 +61,23 @@ export default function Ardennes() {
       });
       setUserStatusChecked(true);
     }
-  }, [existingUsers]);
+  }, [usersRetrieved]);
 
   async function retrieveExistingUsers() {
-    const result = await appFetch(userUrl, token);
-    setExistingUsers(result.users);
+    let page = 1;
+    let next_page = false;
+    do {
+      let retrieveUsersUrl = usersUrl + `?page=${page}`
+      const result = await appFetch(retrieveUsersUrl, token);
+      setExistingUsers(existingUsers => [...existingUsers, ...result.users]);
+      if (result.meta.next_page) {
+        next_page = true
+        page += 1
+      } else {
+        next_page = false
+        setUsersRetrieved(true);
+      }
+    } while (next_page);
   }
 
   const writeFile = () => {
@@ -77,7 +90,7 @@ export default function Ardennes() {
   };
 
   async function generateInvitationUrl(userId, userIndex) {
-    const invitationUrl = userUrl + `/${userId}/invite`;
+    const invitationUrl = usersUrl + `/${userId}/invite`;
     const result = await appFetch(invitationUrl, token);
 
     let newUsersData = [...usersData];
@@ -92,7 +105,7 @@ export default function Ardennes() {
   }
 
   async function getUser(userId) {
-    const getUserUrl = userUrl + `/${userId}`;
+    const getUserUrl = usersUrl + `/${userId}`;
     return await appFetch(getUserUrl, token);
   }
 
@@ -159,7 +172,7 @@ export default function Ardennes() {
     };
     if (withEmail === true) user.email = userData["MAIL"];
 
-    const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
+    const result = await appFetch(usersUrl, token, "POST", JSON.stringify(user));
 
     let newUsersData = [...usersData];
     if (result.user) {
