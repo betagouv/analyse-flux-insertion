@@ -19,9 +19,9 @@ export default function NewApplicantsRules() {
       <ul>
         <li>
           <p>
-            <strong>ETATDOSRSA = 2</strong> OU (<strong>ETATDOSRSA = 4 </strong>&{" "}
+            <strong>ETATDOSRSA = 2</strong> OU <strong>ETATDOSRSA = 3</strong> OU (<strong>ETATDOSRSA = 4 </strong>&{" "}
             <strong>
-              MOTISUSVERSRSA compris dans les valeurs : ‘01’, ‘05’; ‘06’, ‘35’, ‘36’, ou ‘CV’
+              MOTISUSVERSRSA compris dans les valeurs : ‘01’, ‘05’; ‘06’, ‘35’, ‘36’, ‘44’ ou ‘70’
             </strong>
             )
           </p>

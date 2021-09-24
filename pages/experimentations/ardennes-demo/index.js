@@ -54,11 +54,11 @@ export default function Ardennes() {
   useEffect(() => {
     if (existingUsers && userStatusChecked === false) {
       usersData.forEach((user, userIndex) => {
-      if (user["ID RDV"] != "" && user["Date d'inscription"] == "") {
-        checkUserInvitationStatus(user["ID RDV"], userIndex);
-      }
-    });
-    setUserStatusChecked(true);
+        if (user["ID RDV"] && user["ID RDV"].length > 0 && !user["Date d'inscription"]) {
+          checkUserInvitationStatus(user["ID RDV"], userIndex);
+        }
+      });
+      setUserStatusChecked(true);
     }
   }, [existingUsers]);
 
@@ -81,9 +81,10 @@ export default function Ardennes() {
     const result = await appFetch(invitationUrl, token);
 
     let newUsersData = [...usersData];
-    if (result.invitation_url) {
+    let userEmail = newUsersData[userIndex]["MAIL"]
+    if (userEmail && userEmail.length > 0) {
       newUsersData[userIndex]["Lien d'invitation"] = result.invitation_url;
-    } else if (result.invitation_token) {
+    } else {
       newUsersData[userIndex]["Code d'invitation"] = result.invitation_token;
     }
     newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(new Date());
