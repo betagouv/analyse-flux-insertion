@@ -30,12 +30,14 @@ export default function Ardennes() {
   const RDV_SOLIDARITES_URL = isDemo
     ? process.env.NEXT_PUBLIC_RDV_SOLIDARITES_DEMO_URL
     : process.env.NEXT_PUBLIC_RDV_SOLIDARITES_PROD_URL;
-  const userUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
+  const usersUrl = RDV_SOLIDARITES_URL + "/api/v1/users";
 
   const [devFile, setDevFile] = useState(null);
   const [runs, dispatchRuns] = useReducer(reducer, [], initReducer);
   const [usersData, setUsersData] = useState(null);
-  const [userStatusChecked, setUserStatusChecked] = useState(false);
+  const [existingUsers, setExistingUsers] = useState([]);
+  const [usersRetrieved, setUsersRetrieved] = useState(false);
+  const [usersStatusChecked, setUserStatusChecked] = useState(false);
   const [fileSize, setFileSize] = useState(0);
   const [isLogged, setIsLogged] = useState(false);
   const [token, setToken] = useState({
@@ -45,13 +47,13 @@ export default function Ardennes() {
   });
 
   useEffect(() => {
-    if (devFile) {
-      handleFile(devFile);
+    if (usersData && !usersRetrieved) {
+      retrieveExistingUsers();
     }
-  }, [devFile]);
+  }, [usersData]);
 
   useEffect(() => {
-    if (usersData && userStatusChecked === false) {
+    if (usersRetrieved && !usersStatusChecked) {
       usersData.forEach((user, userIndex) => {
         if (user["ID RDV"] && user["ID RDV"].length > 0 && !user["Date d'inscription"]) {
           checkUserInvitationStatus(user["ID RDV"], userIndex);
@@ -59,7 +61,20 @@ export default function Ardennes() {
       });
       setUserStatusChecked(true);
     }
-  }, [usersData]);
+  }, [usersRetrieved]);
+
+  async function retrieveExistingUsers() {
+    let next_page = 1;
+    while (next_page) {
+      let retrieveUsersUrl = usersUrl + `?page=${next_page}`
+      const result = await appFetch(retrieveUsersUrl, token);
+      setExistingUsers(existingUsers => [...existingUsers, ...result.users]);
+      next_page = result.meta.next_page
+      if (!result.meta.next_page) {
+        setUsersRetrieved(true);
+      }
+    };
+  }
 
   const writeFile = () => {
     const outWorkbook = XLSX.utils.book_new();
@@ -71,7 +86,7 @@ export default function Ardennes() {
   };
 
   async function generateInvitationUrl(userId, userIndex) {
-    const invitationUrl = userUrl + `/${userId}/invite`;
+    const invitationUrl = usersUrl + `/${userId}/invite`;
     const result = await appFetch(invitationUrl, token);
 
     let newUsersData = [...usersData];
@@ -86,22 +101,22 @@ export default function Ardennes() {
   }
 
   async function getUser(userId) {
-    const getUserUrl = userUrl + `/${userId}`;
+    const getUserUrl = usersUrl + `/${userId}`;
     return await appFetch(getUserUrl, token);
   }
 
   async function checkUserInvitationStatus(userId, userIndex) {
-    const result = await getUser(userId);
+    const user = existingUsers.find(user => user.id == userId)
 
     let newUsersData = [...usersData];
-    if (result.user.invitation_created_at) {
-      let invitation_date = result.user.invitation_created_at // Date au format : 2021-04-15 14:53:56 +0200
+    if (user.invitation_created_at) {
+      let invitation_date = user.invitation_created_at // Date au format : 2021-04-15 14:53:56 +0200
         .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
       invitation_date = new Date(invitation_date); // Créer une date JS
       newUsersData[userIndex]["Date d'invitation"] = getFrenchFormatDateString(invitation_date);
     }
-    if (result.user.invitation_accepted_at) {
-      let inscription_date = result.user.invitation_accepted_at // Date au format : 2021-04-15 14:53:56 +0200
+    if (user.invitation_accepted_at) {
+      let inscription_date = user.invitation_accepted_at // Date au format : 2021-04-15 14:53:56 +0200
         .substring(0, 10); // Récupérer les 10 premiers chiffres (la date)
       inscription_date = new Date(inscription_date); // Créer une date JS
       newUsersData[userIndex]["Date d'inscription"] = getFrenchFormatDateString(inscription_date);
@@ -153,7 +168,7 @@ export default function Ardennes() {
     };
     if (withEmail === true) user.email = userData["MAIL"];
 
-    const result = await appFetch(userUrl, token, "POST", JSON.stringify(user));
+    const result = await appFetch(usersUrl, token, "POST", JSON.stringify(user));
 
     let newUsersData = [...usersData];
     if (result.user) {
