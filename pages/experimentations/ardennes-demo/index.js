@@ -64,20 +64,16 @@ export default function Ardennes() {
   }, [usersRetrieved]);
 
   async function retrieveExistingUsers() {
-    let page = 1;
-    let next_page = false;
-    do {
-      let retrieveUsersUrl = usersUrl + `?page=${page}`
+    let next_page = 1;
+    while (next_page) {
+      let retrieveUsersUrl = usersUrl + `?page=${next_page}`
       const result = await appFetch(retrieveUsersUrl, token);
       setExistingUsers(existingUsers => [...existingUsers, ...result.users]);
-      if (result.meta.next_page) {
-        next_page = true
-        page += 1
-      } else {
-        next_page = false
+      next_page = result.meta.next_page
+      if (!result.meta.next_page) {
         setUsersRetrieved(true);
       }
-    } while (next_page);
+    };
   }
 
   const writeFile = () => {
@@ -110,7 +106,7 @@ export default function Ardennes() {
   }
 
   async function checkUserInvitationStatus(userId, userIndex) {
-    const user = existingUsers.some(user => user.id == userId)
+    const user = existingUsers.find(user => user.id == userId)
 
     let newUsersData = [...usersData];
     if (user.invitation_created_at) {
