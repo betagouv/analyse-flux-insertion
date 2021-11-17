@@ -25,13 +25,6 @@ export default function Home() {
               <p>Ardennes, RDV-Solidarités</p>
             </a>
           </Link>
-
-          <Link href="/identification-beneficiaires">
-            <a className={styles.card}>
-              <h3>Identifier nouveaux entrants &rarr;</h3>
-              <p>Identifiez les nouveaux entrants RSA à partir de vos flux CNAF</p>
-            </a>
-          </Link>
         </div>
       </main>
     </Layout>
